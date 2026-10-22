@@ -36,13 +36,45 @@ def validate_inputs(values,manifest):
         elif f['type']=='milestone' and value not in ('','X'):raise ModelError('Invalid milestone')
         elif not isinstance(value,str) or len(value)>200:raise ModelError('Invalid text')
         normalized[key]=value
-    if sum(normalized.get(f['id'])=='X' for f in manifest['fields'] if f['type']=='milestone')!=1:raise ModelError('Choose exactly one facilities completion year')
+    milestones=[f for f in manifest['fields'] if f['type']=='milestone']
+    if milestones and sum(normalized.get(f['id'])=='X' for f in milestones)!=1:raise ModelError('Choose exactly one facilities completion year')
+    rules=manifest.get('inputRules',{})
+    if rules is None:rules={}
+    if not isinstance(rules,dict):raise ModelError('Invalid input validation rules')
+    fluid=rules.get('fluid')
+    if fluid is not None:
+        if not isinstance(fluid,dict) or not isinstance(fluid.get('field'),str) or not isinstance(fluid.get('units'),list) or not fluid['units']:
+            raise ModelError('Invalid fluid validation rules')
+        primary=normalized.get(fluid['field'])
+        suffix={'Oil':'(oil)','NG':'(gas)'}.get(primary)
+        if suffix is None:raise ModelError('Invalid primary fluid')
+        for key in fluid['units']:
+            if not isinstance(key,str) or key not in normalized:raise ModelError('Invalid fluid unit mapping')
+            value=normalized[key]
+            if not isinstance(value,str) or not value.lower().endswith(suffix):
+                label=next((f['label'] for f in manifest['fields'] if f['id']==key),key)
+                raise ModelError('Unit selection must match '+label+' and the primary fluid')
+    ascending=rules.get('ascending',[])
+    if not isinstance(ascending,list):raise ModelError('Invalid ordered input rules')
+    for rule in ascending:
+        if not isinstance(rule,dict) or not isinstance(rule.get('fields'),list) or len(rule['fields'])<2:
+            raise ModelError('Invalid ordered input rule')
+        keys=rule['fields']
+        if any(not isinstance(key,str) or key not in normalized for key in keys):
+            raise ModelError('Invalid ordered input mapping')
+        values_to_check=[normalized[key] for key in keys]
+        if any(isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) for value in values_to_check):
+            raise ModelError('Invalid ordered input value')
+        if any(left>=right for left,right in zip(values_to_check,values_to_check[1:])):
+            label=rule.get('label') if isinstance(rule.get('label'),str) else 'Capacity tiers'
+            raise ModelError(label+' must be strictly increasing')
     return normalized
 
-def inject_inputs(template,destination,values):
+def inject_inputs(template,destination,values,input_sheet: str='Inputs'):
     with zipfile.ZipFile(template) as zin:
         book=ET.fromstring(zin.read('xl/workbook.xml'));rels={r.attrib['Id']:r.attrib['Target'] for r in ET.fromstring(zin.read('xl/_rels/workbook.xml.rels'))}
-        s=next(s for s in book.find('m:sheets',NS) if s.attrib['name']=='Inputs')
+        s=next((s for s in book.find('m:sheets',NS) if s.attrib['name']==input_sheet),None)
+        if s is None:raise ModelError('Input worksheet not found')
         t=rels[s.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']]
         path=t.lstrip('/') if t.startswith('/') else 'xl/'+t
         root=ET.fromstring(zin.read(path));cells={c.attrib['r']:c for c in root.findall('.//m:sheetData/m:row/m:c',NS)}
@@ -68,9 +100,9 @@ def inject_inputs(template,destination,values):
                     data=ET.tostring(sheet,encoding='utf-8',xml_declaration=True)
                 zout.writestr(n,data)
 
-def recalculate(template,values,folder,timeout=90):
+def recalculate(template,values,folder,timeout=90,input_sheet: str='Inputs'):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);out=folder/'calculated';out.mkdir();source=folder/'run.xlsx'
-    inject_inputs(template,source,values)
+    inject_inputs(template,source,values,input_sheet=input_sheet)
     command=[os.environ.get('SOFFICE_BIN','soffice'),'--headless','--nologo','--nodefault','--norestore',f'-env:UserInstallation={(folder/"profile").resolve().as_uri()}','--convert-to','xlsx:Calc MS Excel 2007 XML','--outdir',str(out),str(source)]
     result=subprocess.run(command,capture_output=True,timeout=timeout)
     path=out/'run.xlsx'
@@ -112,6 +144,13 @@ def extract(wb):
     return {'metrics':metrics,'annual':annual}
 
 def run_model(template,manifest,inputs,output,with_sensitivity=True):
+    outputs=manifest.get('outputs')
+    if isinstance(outputs,dict) and isinstance(outputs.get('views'),list):
+        from .model_preview import PreviewError, run_saved_model
+        try:
+            return run_saved_model(template,manifest,inputs,output)
+        except PreviewError as exc:
+            raise ModelError(exc.code) from None
     from .exporter import export_results, inspect_export
     values=validate_inputs(inputs,manifest)
     if hashlib.sha256(Path(template).read_bytes()).hexdigest()!=manifest['runtimeSha256']:raise ModelError('Runtime model checksum does not match its version')

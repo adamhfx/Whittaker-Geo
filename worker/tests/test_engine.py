@@ -4,7 +4,7 @@ from pathlib import Path
 import openpyxl
 import pytest
 
-from worker.engine import ModelError, extract, inject_inputs, payout_year, validate_inputs
+from worker.engine import ModelError, extract, inject_inputs, payout_year, run_model, validate_inputs
 
 
 def manifest():
@@ -34,6 +34,50 @@ def test_validate_required_zero_and_injection_inputs():
         validate_inputs({"rate": 1, "m1": "X", "m2": "", "unknown": 2}, m)
     result = validate_inputs({"rate": 1, "note": "=HYPERLINK(\"https://evil\")", "m1": "X", "m2": ""}, m)
     assert result["note"].startswith("=")
+
+
+def test_manifest_cross_field_rules_require_matching_units_and_ordered_capacities():
+    fields = [
+        {"id": "fluid", "label": "Fluid", "type": "select", "required": True, "options": ["Oil", "NG"]},
+        {"id": "volume", "label": "Volume unit", "type": "select", "required": True, "options": ["barrels(oil)", "m3(gas)"]},
+        {"id": "rate", "label": "Rate unit", "type": "select", "required": True, "options": ["tonnes(oil)", "scf(gas)"]},
+        {"id": "gas1", "label": "Gas tier 1", "type": "number", "required": True, "min": 0},
+        {"id": "gas2", "label": "Gas tier 2", "type": "number", "required": True, "min": 0},
+        {"id": "oil1", "label": "Oil tier 1", "type": "number", "required": True, "min": 0},
+        {"id": "oil2", "label": "Oil tier 2", "type": "number", "required": True, "min": 0},
+    ]
+    m = {"fields": fields, "inputRules": {
+        "fluid": {"field": "fluid", "units": ["volume", "rate"]},
+        "ascending": [
+            {"label": "Gas capacity", "fields": ["gas1", "gas2"]},
+            {"label": "Oil capacity", "fields": ["oil1", "oil2"]},
+        ],
+    }}
+    valid = {"fluid": "Oil", "volume": "barrels(oil)", "rate": "tonnes(oil)",
+             "gas1": 10, "gas2": 20, "oil1": 30, "oil2": 40}
+    assert validate_inputs(valid, m) == valid
+    with pytest.raises(ModelError, match="Unit selection"):
+        validate_inputs({**valid, "rate": "scf(gas)"}, m)
+    with pytest.raises(ModelError, match="strictly increasing"):
+        validate_inputs({**valid, "gas2": 10}, m)
+
+
+def test_new_output_view_manifest_dispatches_to_mapped_saved_run(tmp_path, monkeypatch):
+    expected = {"calculatorId": "new-model", "outputSheets": []}
+    called = {}
+
+    def fake_saved(template, model_manifest, inputs, output):
+        called.update(template=template, manifest=model_manifest, inputs=inputs, output=output)
+        return expected
+
+    monkeypatch.setattr("worker.model_preview.run_saved_model", fake_saved)
+    model_manifest = {"inputSheet": "UI", "outputs": {"views": [{"sheet": "Visible OUTPUT"}]}}
+    result = run_model(tmp_path / "private.xlsx", model_manifest, {"field": 7}, tmp_path / "result.xlsx")
+    assert result is expected
+    assert called == {
+        "template": tmp_path / "private.xlsx", "manifest": model_manifest,
+        "inputs": {"field": 7}, "output": tmp_path / "result.xlsx",
+    }
 
 
 def test_inject_inputs_never_overwrites_formula(tmp_path):
