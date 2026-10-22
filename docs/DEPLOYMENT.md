@@ -100,6 +100,16 @@ As of 2026-10-22, the user chose Render's Free live engine and deferred the save
 
 `SAVED_RUNS_ENABLED=false` is set on Cloudflare. Bootstrap exposes the capability, the interface disables **Save & run**, and the authenticated run API rejects new queue submissions while disabled. Input saves, live evaluations, existing run history, and earlier downloads remain available. Enable `SAVED_RUNS_ENABLED=true` only after a worker is provisioned and queued-run/export acceptance passes. Keep `BILLING_ENABLED=false`; hosting is separate from customer subscription billing.
 
+### Production browser acceptance, 2026-10-22
+
+The signed-in production browser completed the v2 evaluation path through Cloudflare and the Free Render engine. A gas-price multiplier change from 1 to 1.1 changed the investor NPV from $85.36M to $99.86M; restoring 1 reproduced the baseline. Warm evaluations displayed 4.18–4.49 seconds. The initial idle-service request recovered through bounded busy/timeout retries while the working indicator remained visible.
+
+The live dashboard displayed eight summary values and three charts. The cash-flow chart expanded to a large modal, and its return button closed the modal and restored focus. Detailed Annual Results rendered an 80px Year column. Section navigation kept the document scroll position at zero. A named input example was saved and its name and restored multiplier persisted after reload; no queued run or export was submitted.
+
+The Cloudflare deployment for commit `3561634` passed. The engine workflow's deploy-hook job returned HTTP 200 for `beb7aad`, and Render confirmed that commit Live on the Free plan. Final app tests passed 48 cases, deployment-helper tests passed 8 cases, and Linux CI passed 36 worker tests plus the synthetic UNO image smoke. Private workbook paths and server credentials remain excluded from Git.
+
+Workers outbound engine requests use `redirect: "manual"` and explicitly reject 3xx responses. Workers does not implement the Fetch `error` redirect mode; using it prevented the request from reaching Render. Keep the no-follow behavior to avoid forwarding the engine credential to a redirect destination. See [Cloudflare Request redirect behavior](https://developers.cloudflare.com/workers/runtime-apis/request/).
+
 ### Render deploys after engine CI
 
 The calculation-engine GitHub Actions workflow tests the worker contracts and builds the Docker image, including its synthetic UNO smoke test. After those steps pass, it can trigger the saved worker and live engine to deploy the exact tested `GITHUB_SHA`. This deploy step runs only for `main`; a manual workflow run from another branch will not deploy.
