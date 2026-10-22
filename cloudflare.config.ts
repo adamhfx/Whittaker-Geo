@@ -29,6 +29,8 @@ export default defineConfig({
       SUPABASE_URL: bindings.text("https://mkjlxkctrtqcvxucuzcs.supabase.co"),
       // Set the value in Cloudflare Secrets; never put it in source or build env.
       SUPABASE_SERVICE_ROLE_KEY: bindings.secret(),
+      CALC_ENGINE_URL: bindings.text("https://whittaker-geo-live-calculations.onrender.com"),
+      CALC_ENGINE_SECRET: bindings.secret(),
       BILLING_ENABLED: { type: "text", value: "false" },
     },
   }),
