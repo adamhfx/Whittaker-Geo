@@ -23,4 +23,6 @@ COPY worker /app/worker
 RUN useradd --create-home runner && chown -R runner:runner /app
 USER runner
 ENV PYTHONUNBUFFERED=1 UNO_PYTHON_BIN=/usr/bin/python3 SOFFICE_BIN=/opt/libreoffice26.8/program/soffice
+# Smoke the exact office/UNO pair with the final nonroot runtime account.
+RUN python -m worker.runtime_smoke
 CMD ["python", "-m", "worker.jobs"]

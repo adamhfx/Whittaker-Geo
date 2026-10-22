@@ -1,0 +1,30 @@
+name: Calculation engine image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/calculation-engine.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/calculation-engine.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calculation-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-linux-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the production calculation image and run its UNO smoke test
+        run: docker build --pull --file worker/Dockerfile --tag geoflow-calculation-engine:ci .
