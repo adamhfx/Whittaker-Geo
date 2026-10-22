@@ -8,6 +8,7 @@ export default defineConfig({
     compatibilityDate: "2026-10-22",
     compatibilityFlags: ["nodejs_compat"],
     workersDev: true,
+    previewUrls: true,
     triggers: [
       triggers.fetch({ pattern: "www.whittakergeo.com/*", zone: "whittakergeo.com" }),
       triggers.fetch({ pattern: "whittakergeo.com/*", zone: "whittakergeo.com" }),
