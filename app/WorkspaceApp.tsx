@@ -246,7 +246,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     ? [
         {
           id: "state-rent",
-          name: "State Rent Economics",
+          name: previewManifest.name,
           description: previewManifest.description,
           current_version: previewManifest.version,
         },
@@ -392,6 +392,21 @@ export default function App({ preview = false }: { preview?: boolean }) {
   async function openCalculation(c: Calculation) {
     navigate({ view: "editor", preview, calculationId: c.id });
   }
+  function selectInputSection(section: string, navigation: HTMLElement | null) {
+    if (!currentRoute) return;
+    navigate({ ...currentRoute, section });
+    // Keep the beginning of the new section below the persistent controls,
+    // including when the previous section was scrolled down to run history.
+    const panel = document.getElementById("calculator-input-panel");
+    if (!panel) return;
+    const toolbarHeight = document.querySelector(".calculator-toolbar")?.getBoundingClientRect().height ?? 0;
+    const navigationHeight = navigation && getComputedStyle(navigation).position === "sticky"
+      ? navigation.getBoundingClientRect().height : 0;
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + panel.getBoundingClientRect().top - toolbarHeight - navigationHeight - 16),
+      behavior: "instant",
+    });
+  }
   function updateInput(id: string, value: string | number | null) {
     setInputs((old) => changeInput(manifest, old, id, value));
     if (manifest && inputs[id] !== value && (manifest.fields.some((field) => field.dependsOn === id) || (manifest.id === "state-rent" && id === "C5")))
@@ -535,6 +550,46 @@ export default function App({ preview = false }: { preview?: boolean }) {
         onSignOut={signOut}
       />
     ) : null;
+  const isCalculatorWorkspace = currentRoute?.view === "editor" || currentRoute?.view === "results";
+  const returnToSaved = !!currentRoute?.calculationId;
+  const editorActions = (
+    <div className="actions">
+      <button
+        className="btn"
+        disabled={!calculation || !workspace?.canWrite || busy}
+        onClick={duplicate}
+      >
+        <Copy size={16} />
+        Duplicate saved inputs
+      </button>
+      <button
+        className="btn"
+        disabled={preview || !editable || busy}
+        onClick={() =>
+          perform(async () => {
+            await saveDraft();
+          })
+        }
+      >
+        <Save size={16} />
+        Save
+      </button>
+      <button
+        className="btn primary"
+        disabled={
+          preview ||
+          !editable ||
+          !approved ||
+          busy ||
+          runs.some((r) => ["queued", "running"].includes(r.status))
+        }
+        onClick={runCalculation}
+      >
+        <Zap size={16} />
+        Save & run
+      </button>
+    </div>
+  );
   if (loading || (routeLoading && !workspace && !preview))
     return <LoadingSpinner fullPage />;
   if (routeError) return <div className="empty"><Brand /><h1>Unable to open this page</h1><p>{routeError}</p><a className="btn primary" href={preview ? "/preview" : "/workspace"}>Back to workspace</a></div>;
@@ -582,8 +637,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
       />
     );
   return (
-    <div className="app">
-      <aside className="side">
+    <div className={`app${isCalculatorWorkspace ? " app--calculator" : ""}`}>
+      {!isCalculatorWorkspace && <aside className="side">
         <Brand href={preview ? "/preview" : "/workspace"} onNavigate={() => setView("overview")} />
         <nav className="nav" aria-label="Main navigation">
           {(
@@ -622,7 +677,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
             </button>
           )}
         </div>
-      </aside>
+      </aside>}
       <main className="main">
         {preview && (
           <div className="preview-bar">
@@ -631,7 +686,27 @@ export default function App({ preview = false }: { preview?: boolean }) {
               : "INTERFACE PREVIEW · Changes stay in this browser session"}
           </div>
         )}
-        <header className="top">
+        {isCalculatorWorkspace ? (
+          <header className="calculator-toolbar">
+            <div className="calculator-toolbar__identity">
+              <button className="btn ghost calculator-toolbar__back" onClick={() => setView(returnToSaved ? "saved" : "catalog")}>
+                <ArrowLeft size={18} aria-hidden="true" />
+                <span>{returnToSaved ? "Saved Calculations" : "Calculators"}</span>
+              </button>
+              <span className="calculator-toolbar__divider" aria-hidden="true" />
+              <img className="calculator-toolbar__mark" src="/whittaker-geo-icon.png" width="34" height="34" alt="" />
+              <div className="calculator-toolbar__model">
+                <h1>{routeLoading ? "Opening calculator…" : manifest?.name || "Calculator workspace"}</h1>
+                <span>{currentRoute?.view === "results" ? "Saved calculation results" : "Calculator workspace"}</span>
+              </div>
+            </div>
+            <div className="calculator-toolbar__actions">
+              {currentRoute?.view === "editor" && !routeLoading && editorActions}
+              {accountControls}
+            </div>
+          </header>
+        ) : (
+          <header className="top">
           <div className="crumb">
             <strong>
               {view === "editor"
@@ -662,6 +737,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
             {accountControls}
           </div>
         </header>
+        )}
         <div className="content">
           {routeLoading ? <LoadingSpinner /> : <>
           {error && (
@@ -809,90 +885,45 @@ export default function App({ preview = false }: { preview?: boolean }) {
           )}
           {view === "editor" && manifest && (
             <>
-              <div className="row wrap">
-                <button
-                  className="btn ghost"
-                  onClick={() => setView("saved")}
-                >
-                  <ArrowLeft size={16} />
-                  Calculations
-                </button>
-                <div className="actions">
-                  <button
-                    className="btn"
-                    disabled={!calculation || !workspace?.canWrite || busy}
-                    onClick={duplicate}
-                  >
-                    <Copy size={16} />
-                    Duplicate saved inputs
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={preview || !editable || busy}
-                    onClick={() =>
-                      perform(async () => {
-                        await saveDraft();
-                      })
-                    }
-                  >
-                    <Save size={16} />
-                    Save
-                  </button>
-                  <button
-                    className="btn primary"
-                    disabled={
-                      preview ||
-                      !editable ||
-                      !approved ||
-                      busy ||
-                      runs.some((r) => ["queued", "running"].includes(r.status))
-                    }
-                    onClick={runCalculation}
-                  >
-                    <Zap size={16} />
-                    Save & run
-                  </button>
+              <div className="calculator-context">
+                <div className="calculator-context__name">
+                  <label className="form-label" htmlFor="calculation-name">
+                    Calculation name{dirty ? " · Unsaved changes" : ""}
+                  </label>
+                  <input
+                    id="calculation-name"
+                    className="text-input project-title"
+                    maxLength={120}
+                    disabled={!editable}
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setDirty(true);
+                    }}
+                  />
                 </div>
+                <p className="calculator-context__description">{manifest.description}</p>
               </div>
-              <div className="eyebrow" style={{ marginTop: 28 }}>
-                {manifest.name}
-              </div>
-              <label className="form-label" htmlFor="calculation-name">
-                Calculation name{dirty ? " · Unsaved changes" : ""}
-              </label>
-              <input
-                id="calculation-name"
-                className="text-input project-title"
-                maxLength={120}
-                disabled={!editable}
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setDirty(true);
-                }}
-              />
-              <p className="subtitle" style={{ marginTop: 10 }}>
-                {manifest.description}
-              </p>
               {!approved && !isLocalModelReview && (
                 <div className="notice">
                   This model is under numerical review. Live calculations will
                   be available after approval.
                 </div>
               )}
+              <nav className="calculator-section-nav" aria-label="Input sections">
+                {manifest.groups.map((g) => (
+                  <button
+                    key={g.id}
+                    className={g.id === group ? "active" : ""}
+                    aria-current={g.id === group ? "true" : undefined}
+                    onClick={(event) => selectInputSection(g.id, event.currentTarget.closest("nav"))}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </nav>
               <div className={manifest.outputViews?.length ? "model-workbench" : undefined}>
-              <div className="form-layout">
-                <nav className="group-nav" aria-label="Input sections">
-                  {manifest.groups.map((g) => (
-                    <button
-                      key={g.id}
-                      className={g.id === group ? "active" : ""}
-                      onClick={() => currentRoute && navigate({ ...currentRoute, section: g.id })}
-                    >
-                      {g.name}
-                    </button>
-                  ))}
-                </nav>
+              <div className="form-layout" id="calculator-input-panel">
                 <section className="card group-card">
                   <div className="model-section-heading">
                     <h3>{manifest.groups.find((g) => g.id === group)?.name}</h3>
@@ -941,67 +972,62 @@ export default function App({ preview = false }: { preview?: boolean }) {
                   blockedReason={!approved ? "This model is awaiting numerical approval. You can explore the inputs and guide notes now." : preview ? "Sign in to calculate with your own inputs." : "An active subscription is required for live calculations."} />
               </aside> : null}
               </div>
-              <section className="card group-card">
-                <div className="section-head" style={{ marginTop: 0 }}>
-                  <h2>
-                    <History size={17} /> Run history
-                  </h2>
-                  <span className="small">
-                    Each run preserves its submitted inputs
-                  </span>
-                </div>
-                {runs.length ? (
-                  <div className="table-scroll">
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>Submitted</th>
-                          <th>Input revision</th>
-                          <th>Status</th>
-                          <th>Results</th>
-                          <th>Export</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {runs.map((r) => (
-                          <tr key={r.id}>
-                            <td>{when(r.created_at)}</td>
-                            <td>{r.calculation_revision}</td>
-                            <td>
-                              <span className="tag">{r.status}</span>
-                            </td>
-                            <td>
-                              <button
-                                className="btn"
-                                onClick={() => selectRun(r)}
-                              >
-                                View run
-                              </button>
-                            </td>
-                            <td>
-                              <button
-                                className="btn"
-                                aria-label={
-                                  "Download run " + when(r.created_at)
-                                }
-                                disabled={busy || r.status !== "succeeded"}
-                                onClick={() => download(r)}
-                              >
-                                <Download size={15} />
-                              </button>
-                            </td>
+              <details className="calculator-history">
+                <summary><History size={17} aria-hidden="true" /><span>Run history</span><span className="calculator-history__count">{runs.length} {runs.length === 1 ? "run" : "runs"}</span></summary>
+                <section className="card group-card">
+                  {runs.length ? (
+                    <div className="table-scroll">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Submitted</th>
+                            <th>Input revision</th>
+                            <th>Status</th>
+                            <th>Results</th>
+                            <th>Export</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="subtitle">
-                    Completed runs will appear here. Editing inputs never
-                    replaces earlier results.
-                  </p>
-                )}
-              </section>
+                        </thead>
+                        <tbody>
+                          {runs.map((r) => (
+                            <tr key={r.id}>
+                              <td>{when(r.created_at)}</td>
+                              <td>{r.calculation_revision}</td>
+                              <td>
+                                <span className="tag">{r.status}</span>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn"
+                                  onClick={() => selectRun(r)}
+                                >
+                                  View run
+                                </button>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn"
+                                  aria-label={
+                                    "Download run " + when(r.created_at)
+                                  }
+                                  disabled={busy || r.status !== "succeeded"}
+                                  onClick={() => download(r)}
+                                >
+                                  <Download size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="subtitle">
+                      Completed runs will appear here. Editing inputs never
+                      replaces earlier results.
+                    </p>
+                  )}
+                </section>
+              </details>
             </>
           )}
           {view === "results" && selectedRun && (

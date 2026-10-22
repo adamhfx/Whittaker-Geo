@@ -4,6 +4,10 @@ The 2.0.0-candidate.1 Resource-to-Value model has 195 operational inputs across 
 
 The public interface contains only input definitions, examples, guide text, validation, and output view names. Source workbooks, runtime templates, cell mappings, presentation source ranges, preparation tools, checksums, and numerical review records remain in ignored owner-only folders. They must be supplied separately on another computer. Git does not synchronize them or `.env.local`.
 
+## Calculator workspace
+
+Choosing **New calculation** in **Calculators** opens a dedicated full-width workspace. The library sidebar gives way to a compact toolbar with save actions, horizontal input sections, and a wider form beside live results. **Run history** is a collapsed disclosure below the editor. The back button returns to the calculator library (or Saved Calculations for an existing saved project); browser Back, direct links, and session drafts retain the existing route and recovery behavior. Smaller screens stack inputs and results.
+
 ## Try the candidate locally
 
 The local review deliberately runs without changing the database's model approval. It uses a private engine bound to `127.0.0.1`, a matching-origin development route, and an explicit banner. It is unavailable in production builds even if review flags are present. Edits remain in the browser's session draft and do not create saved runs.
