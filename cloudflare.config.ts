@@ -22,7 +22,7 @@ export default defineConfig({
       ASSETS: bindings.assets(),
       APP_URL: {
         type: "text",
-        value: "https://geoflow-preview.roger-d-whittaker.workers.dev",
+        value: "https://whittakergeo.com",
       },
       NEXT_PUBLIC_SUPABASE_URL: bindings.text("https://mkjlxkctrtqcvxucuzcs.supabase.co"),
       NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text("sb_publishable_tMTYs8cmQMMWO5L3WsGGeg_NkJy-2b1"),

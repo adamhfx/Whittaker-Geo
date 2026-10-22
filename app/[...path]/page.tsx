@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import LoadingSpinner from "../LoadingSpinner";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { canonicalPageUrl } from "@/lib/canonical-page";
 import App from "../WorkspaceApp";
 import { parsePageRoute } from "@/lib/routes";
 
@@ -17,6 +19,11 @@ export default async function WorkspacePage({ params, searchParams }: {
   }
   const route = parsePageRoute("/" + path.join("/"), query.toString());
   if (!route) notFound();
+  if (!route.preview) {
+    const destination = "/" + path.join("/") + (query.size ? "?" + query.toString() : "");
+    const canonical = canonicalPageUrl(destination, (await headers()).get("host"), process.env.APP_URL, process.env.NODE_ENV === "production");
+    if (canonical) redirect(canonical);
+  }
   return <Suspense fallback={<LoadingSpinner fullPage />}><App preview={route.preview} /></Suspense>;
 }
 

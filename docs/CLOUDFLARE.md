@@ -62,16 +62,16 @@ do not change the browser's TypeScript definitions.
 
 ## whittakergeo.com
 
-On October 22, 2026, Cloudflare reported invalid/pending nameservers for this
-domain, registered at Namecheap. Cloudflare assigned these nameservers:
+The domain now serves the current application. `APP_URL` is
+`https://whittakergeo.com`; production sign-in and workspace pages opened through
+the older Workers hostname redirect to this origin before starting authentication.
+Preview routes remain available on the Workers hostname. Local development keeps
+its configured loopback origin.
 
-- `mitchell.ns.cloudflare.com`
-- `sara.ns.cloudflare.com`
-
-Before changing nameservers, verify that the DNS records for the current
-website and any email service are present in Cloudflare. After activation,
-connect the intended hostname to this Worker in Cloudflare. This configuration
-does not change DNS or replace the existing domain's website.
+Supabase Auth's Site URL must be `https://whittakergeo.com` and its Redirect URLs
+must include exactly `https://whittakergeo.com/auth/callback`. A missing exact
+callback makes Supabase fall back to the Site URL, which previously sent users
+to the old Render deployment. Keep the existing local callbacks for development.
 
 ## Laptop-only material
 
@@ -96,11 +96,12 @@ secret in ignored `.env.local`, then restart the development server. Set local
 `APP_URL` to `http://127.0.0.1:3000` for the configured development hostname.
 
 Supabase Auth must allow these exact callback URLs:
+- `https://whittakergeo.com/auth/callback`
 - `https://geoflow-preview.roger-d-whittaker.workers.dev/auth/callback`
 - `http://127.0.0.1:3000/auth/callback`
 - `http://localhost:3000/auth/callback`
 
 Preserve existing Render callback URLs while that deployment remains in use. Add
-the custom-domain callback only when the domain connection is ready. API keys do
+future custom-domain callbacks only after confirming their ownership and route. API keys do
 not apply SQL migrations, approve the private numerical model, start the separate
 calculation worker, or enable billing.
