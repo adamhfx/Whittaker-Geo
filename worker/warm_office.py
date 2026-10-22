@@ -84,7 +84,9 @@ class WarmOffice:
             self.soffice_bin, '--headless', '--nologo', '--nodefault', '--norestore',
             '-env:UserInstallation=' + Path(self._folder.name).as_uri(),
             '--accept=pipe,name=' + pipe + ';urp;StarOffice.ServiceManager',
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **process_options)
+        ], stdout=subprocess.DEVNULL,
+           stderr=None if self.diagnostic_synthetic else subprocess.DEVNULL,
+           **process_options)
         helper_command = [
             self.python_bin, str(Path(__file__).with_name('uno_runner.py')), pipe,
         ]

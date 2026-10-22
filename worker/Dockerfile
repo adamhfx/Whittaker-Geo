@@ -16,6 +16,13 @@ RUN apt-get update \
  && ldd /opt/libreoffice26.8/program/soffice.bin > /tmp/soffice-ldd.txt \
  && cat /tmp/soffice-ldd.txt \
  && ( ! grep -q 'not found' /tmp/soffice-ldd.txt ) \
+ && for library in /opt/libreoffice26.8/program/libsc*.so /opt/libreoffice26.8/program/libmergedlo.so; do \
+      [ -f "$library" ] || continue; \
+      echo "Checking LibreOffice runtime library: $library"; \
+      ldd "$library" > /tmp/soffice-ldd.txt || exit 1; \
+      cat /tmp/soffice-ldd.txt; \
+      if grep -q 'not found' /tmp/soffice-ldd.txt; then echo "Unresolved dependency in $library" >&2; exit 1; fi; \
+    done \
  && rm -f /tmp/soffice-ldd.txt \
  && /opt/libreoffice26.8/program/soffice --headless --version \
  && /usr/bin/python3 -c "import uno" \

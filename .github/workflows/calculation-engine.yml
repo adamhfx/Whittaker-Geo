@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "worker/**"
+      - "scripts/register_model.py"
       - ".github/workflows/calculation-engine.yml"
   pull_request:
     branches: [main]
     paths:
       - "worker/**"
+      - "scripts/register_model.py"
       - ".github/workflows/calculation-engine.yml"
   workflow_dispatch:
 
@@ -26,5 +28,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+      - name: Test calculation and immutable model registration contracts
+        run: |
+          python3 -m venv "$RUNNER_TEMP/calculation-tests"
+          "$RUNNER_TEMP/calculation-tests/bin/python" -m pip install -r worker/requirements.txt
+          "$RUNNER_TEMP/calculation-tests/bin/python" -m pytest worker/tests -q -p no:cacheprovider
       - name: Build the production calculation image and run its UNO smoke test
         run: docker build --pull --file worker/Dockerfile --tag geoflow-calculation-engine:ci .
