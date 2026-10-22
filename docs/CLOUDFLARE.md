@@ -107,6 +107,7 @@ secret in ignored `.env.local`, then restart the development server. Set local
 `APP_URL` to `http://127.0.0.1:3000` for the configured development hostname.
 
 Supabase Auth must allow these exact callback URLs:
+
 - `https://whittakergeo.com/auth/callback`
 - `https://geoflow-preview.roger-d-whittaker.workers.dev/auth/callback`
 - `http://127.0.0.1:3000/auth/callback`
