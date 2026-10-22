@@ -1,4 +1,10 @@
-import type { Annual, InputValues, Result } from "./types";
+import type {
+  Annual,
+  InputValues,
+  LiveChart,
+  LiveSummaryItem,
+  Result,
+} from "./types";
 
 export type OutputCellValue = string | number | null;
 export type OutputCell = {
@@ -17,6 +23,8 @@ export type LiveCalculationResult = {
   durationSeconds: number;
   metrics?: Result["metrics"];
   annual?: Annual[];
+  summary?: LiveSummaryItem[];
+  charts?: LiveChart[];
 };
 
 export const LIVE_BUSY_RETRY_DELAYS_MS = [500, 1_000, 2_000] as const;
@@ -27,13 +35,16 @@ export function liveEvaluationKey(
   calculatorId: string,
   version: string,
   inputs: InputValues,
+  endpoint?: string,
 ): string {
   const inputKey = JSON.stringify(
     Object.keys(inputs)
       .sort()
       .map((id) => [id, inputs[id]]),
   );
-  return JSON.stringify([calculatorId, version, inputKey]);
+  const requestEndpoint =
+    endpoint ?? `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`;
+  return JSON.stringify([calculatorId, version, requestEndpoint, inputKey]);
 }
 
 export type EvaluationLease = {
@@ -192,6 +203,62 @@ function isOutputSheet(value: unknown): value is OutputSheet {
   );
 }
 
+function isPresentationSummary(value: unknown): value is LiveSummaryItem {
+  return (
+    isRecord(value) &&
+    (value.section === undefined ||
+      (typeof value.section === "string" && value.section.length <= 100)) &&
+    typeof value.label === "string" &&
+    value.label.length > 0 &&
+    value.label.length <= 120 &&
+    (value.value === null ||
+      (typeof value.value === "string" && value.value.length <= 500) ||
+      isFiniteNumber(value.value)) &&
+    (value.format === undefined ||
+      (typeof value.format === "string" && value.format.length <= 200)) &&
+    (value.unit === undefined ||
+      (typeof value.unit === "string" && value.unit.length <= 100))
+  );
+}
+
+function isPresentationChart(value: unknown): value is LiveChart {
+  if (
+    !isRecord(value) ||
+    typeof value.title !== "string" ||
+    value.title.length === 0 ||
+    value.title.length > 120 ||
+    (value.kind !== "line" && value.kind !== "column") ||
+    !Array.isArray(value.categories) ||
+    value.categories.length < 1 ||
+    value.categories.length > 100 ||
+    !Array.isArray(value.series) ||
+    value.series.length < 1 ||
+    value.series.length > 10
+  ) return false;
+
+  const categories = value.categories;
+  return (
+    categories.every(
+      (category) =>
+        (typeof category === "string" && category.length <= 100) ||
+        isFiniteNumber(category),
+    ) &&
+    value.series.every(
+      (series) =>
+        isRecord(series) &&
+        typeof series.name === "string" &&
+        series.name.length > 0 &&
+        series.name.length <= 100 &&
+        Array.isArray(series.values) &&
+        series.values.length === categories.length &&
+        series.values.length <= 100 &&
+        series.values.every(
+          (point) => point === null || isFiniteNumber(point),
+        ),
+    )
+  );
+}
+
 export function isLiveCalculationResult(
   value: unknown,
 ): value is LiveCalculationResult {
@@ -205,8 +272,57 @@ export function isLiveCalculationResult(
     value.durationSeconds >= 0 &&
     (value.metrics === undefined || isMetrics(value.metrics)) &&
     (value.annual === undefined ||
-      (Array.isArray(value.annual) && value.annual.every(isAnnual)))
+      (Array.isArray(value.annual) && value.annual.every(isAnnual))) &&
+    (value.summary === undefined ||
+      (Array.isArray(value.summary) &&
+        value.summary.length <= 30 &&
+        value.summary.every(isPresentationSummary))) &&
+    (value.charts === undefined ||
+      (Array.isArray(value.charts) &&
+        value.charts.length <= 8 &&
+        value.charts.every(isPresentationChart)))
   );
+}
+
+function sanitizeLiveResult(value: LiveCalculationResult): LiveCalculationResult {
+  const result: LiveCalculationResult = {
+    calculatorId: value.calculatorId,
+    calculatorVersion: value.calculatorVersion,
+    durationSeconds: value.durationSeconds,
+    outputSheets: value.outputSheets.map((sheet) => ({
+      name: sheet.name,
+      rows: sheet.rows.map((row) => ({
+        cells: row.cells.map((cell) => ({
+          column: cell.column,
+          value: cell.value,
+          ...(cell.format === undefined ? {} : { format: cell.format }),
+        })),
+      })),
+    })),
+  };
+  if (value.metrics !== undefined) result.metrics = value.metrics;
+  if (value.annual !== undefined) result.annual = value.annual;
+  if (value.summary !== undefined) {
+    result.summary = value.summary.map((item) => ({
+      ...(item.section === undefined ? {} : { section: item.section }),
+      label: item.label,
+      value: item.value,
+      ...(item.format === undefined ? {} : { format: item.format }),
+      ...(item.unit === undefined ? {} : { unit: item.unit }),
+    }));
+  }
+  if (value.charts !== undefined) {
+    result.charts = value.charts.map((chart) => ({
+      title: chart.title,
+      kind: chart.kind,
+      categories: [...chart.categories],
+      series: chart.series.map((series) => ({
+        name: series.name,
+        values: [...series.values],
+      })),
+    }));
+  }
+  return result;
 }
 
 export async function requestLiveCalculation(
@@ -216,12 +332,14 @@ export async function requestLiveCalculation(
   signal: AbortSignal,
   fetcher: typeof fetch = fetch,
   waitForRetry: RetryWait = waitForRetryDelay,
+  endpoint?: string,
 ): Promise<LiveCalculationResult> {
   let retryIndex = 0;
 
   while (true) {
     const response = await fetcher(
-      `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`,
+      endpoint ??
+        `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`,
       {
         method: "POST",
         credentials: "same-origin",
@@ -273,7 +391,7 @@ export async function requestLiveCalculation(
         "The results came from a different calculator version. Try again.",
       );
 
-    return resultPayload;
+    return sanitizeLiveResult(resultPayload);
   }
 }
 

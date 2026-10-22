@@ -2,12 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const sourcePath = path.join(
-  root,
-  "models",
-  "state-rent",
-  "1.0.0-candidate.1.json",
-);
+const manifestArgument = process.argv.indexOf("--manifest");
+const sourcePath = manifestArgument >= 0
+  ? path.resolve(process.argv[manifestArgument + 1] || "")
+  : path.join(root, "models", "state-rent", "2.0.0-candidate.1.json");
 const outputPath = path.join(root, "app", "preview", "manifest.ts");
 const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
 
@@ -15,7 +13,6 @@ const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
 // runtime/source hashes, paths, formulas, or review metadata to the browser.
 const fieldKeys = [
   "id",
-  "cell",
   "label",
   "unit",
   "group",
@@ -31,21 +28,32 @@ const fieldKeys = [
   "exclusiveMin",
   "exclusiveMax",
   "integer",
+  "role",
+  "dependsOn",
+  "optionsByDependencyValue",
+  "optionLabels",
+  "radioGroup",
 ];
-const fields = source.fields.map((field) =>
-  Object.fromEntries(
+const fields = source.fields.map((field) => ({
+  ...Object.fromEntries(
     fieldKeys
       .filter((key) => Object.hasOwn(field, key))
       .map((key) => [key, field[key]]),
   ),
-);
+  ...(field.help && typeof field.help.title === "string" && typeof field.help.body === "string"
+    ? { help: { title: field.help.title, body: field.help.body } } : {}),
+}));
 const manifest = {
   id: source.id,
   version: source.version,
   name: source.name,
   description: source.description,
   releaseStatus: source.releaseStatus,
-  groups: source.groups.map(({ id, name }) => ({ id, name })),
+  groups: source.groups.map(({ id, name, help }) => ({ id, name,
+    ...(help ? { help: { title: help.title, body: help.body } } : {}) })),
+  ...(source.inputRules?.ascending ? { inputRules: { ascending: source.inputRules.ascending.map(({label, fields}) => ({label, fields})) } } : {}),
+  ...(!Array.isArray(source.outputs) && source.outputs?.views ? { outputViews:
+    source.outputs.views.map(({id,label,sheet}) => ({id,name:label,sheet})) } : {}),
   fields,
 };
 

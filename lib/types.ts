@@ -1,4 +1,6 @@
 export type InputValues = Record<string, string | number | null>;
+export type HelpNote = { title: string; body: string };
+export type OutputView = { id: string; name: string; sheet: string };
 export type Field = {
   id: string;
   cell: string;
@@ -6,12 +8,18 @@ export type Field = {
   unit: string;
   group: string;
   type: string;
-  default: string | number;
+  default: string | number | null;
   required: boolean;
   blankOnNew: boolean;
   options?: string[];
   year?: number;
   scheduleRow?: number;
+  help?: HelpNote;
+  role?: string;
+  dependsOn?: string;
+  optionsByDependencyValue?: Record<string, string[]>;
+  optionLabels?: Record<string, string>;
+  radioGroup?: string;
   min?: number;
   max?: number;
   exclusiveMin?: number;
@@ -23,10 +31,13 @@ export type Manifest = {
   version: string;
   name: string;
   description: string;
-  groups: { id: string; name: string }[];
+  groups: { id: string; name: string; help?: HelpNote }[];
+  inputSheet?: string;
+  inputRules?: { ascending?: { label: string; fields: string[] }[] };
+  outputViews?: OutputView[];
   fields: Field[];
   releaseStatus: string;
-  outputs: string[];
+  outputs: string[] | { views: { id: string; label: string; sheet: string; sourceRange: string; [key: string]: unknown }[] };
   multipliers: string[];
   runtimeSha256: string;
 };
@@ -78,8 +89,32 @@ export type Run = {
   calculation_revision: number;
   status: "queued" | "running" | "succeeded" | "failed";
   inputs: InputValues;
-  result: Result | null;
+  result: Result | LiveResult | null;
   created_at: string;
   finished_at: string | null;
   error_code: string | null;
+};
+
+export type LiveOutputCell = { column: number; value: string | number | null; format?: string };
+export type LiveOutputSheet = { name: string; rows: { cells: LiveOutputCell[] }[] };
+export type LiveSummaryItem = {
+  section?: string;
+  label: string;
+  value: string | number | null;
+  format?: string;
+  unit?: string;
+};
+export type LiveChart = {
+  title: string;
+  kind: "line" | "column";
+  categories: (number | string)[];
+  series: { name: string; values: (number | null)[] }[];
+};
+export type LiveResult = {
+  calculatorId: string;
+  calculatorVersion: string;
+  outputSheets: LiveOutputSheet[];
+  durationSeconds: number;
+  summary?: LiveSummaryItem[];
+  charts?: LiveChart[];
 };

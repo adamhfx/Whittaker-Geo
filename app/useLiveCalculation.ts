@@ -37,15 +37,22 @@ export function useLiveCalculation({
   manifest,
   inputs,
   enabled,
+  endpoint,
 }: {
   manifest: Manifest;
   inputs: InputValues;
   enabled: boolean;
+  endpoint?: string;
 }): LiveCalculationState & { retry: () => void } {
   const [gate] = useState(() => new LatestEvaluationGate());
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const inputKey = liveEvaluationKey(manifest.id, manifest.version, inputs);
+  const inputKey = liveEvaluationKey(
+    manifest.id,
+    manifest.version,
+    inputs,
+    endpoint,
+  );
   const validationErrors = validateInputs(inputs, manifest, true);
   const validationKey = validationErrors.join("\u0000");
 
@@ -65,6 +72,9 @@ export function useLiveCalculation({
         manifest.version,
         inputs,
         lease.signal,
+        undefined,
+        undefined,
+        endpoint,
       )
         .then((result) => {
           if (!lease.isCurrent()) return;
@@ -93,6 +103,7 @@ export function useLiveCalculation({
     inputKey,
     manifest.id,
     manifest.version,
+    endpoint,
     retryCount,
     validationKey,
   ]);

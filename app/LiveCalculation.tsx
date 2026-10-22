@@ -9,6 +9,7 @@ import {
   type OutputSheet,
   type OutputView,
 } from "@/lib/live-calculation";
+import { OutputPresentation } from "./OutputPresentation";
 import { HelpDialog } from "./HelpDialog";
 import { useLiveCalculation } from "./useLiveCalculation";
 import "./live-calculation.css";
@@ -22,6 +23,8 @@ type LiveCalculationProps = {
   enabled: boolean;
   blockedReason?: string;
   help?: LiveHelp;
+  endpoint?: string;
+  reviewMode?: boolean;
 };
 
 export function LiveCalculation({
@@ -30,8 +33,10 @@ export function LiveCalculation({
   enabled,
   blockedReason,
   help,
+  endpoint,
+  reviewMode = false,
 }: LiveCalculationProps) {
-  const live = useLiveCalculation({ manifest, inputs, enabled });
+  const live = useLiveCalculation({ manifest, inputs, enabled, endpoint });
   const result = live.status === "success" ? live.result : null;
   const titleId = useId();
 
@@ -39,7 +44,9 @@ export function LiveCalculation({
     <section className="card live-calculation" aria-labelledby={titleId}>
       <header className="live-calculation__header">
         <div>
-          <div className="eyebrow">Live calculation</div>
+          <div className="eyebrow">
+            {reviewMode ? "Local model review" : "Live calculation"}
+          </div>
           <h2 id={titleId}>Results update as you edit</h2>
         </div>
       </header>
@@ -64,7 +71,7 @@ export function WorkbookOutputs({
   manifest,
   help,
 }: {
-  result: Pick<LiveCalculationResult, "outputSheets">;
+  result: Pick<LiveCalculationResult, "outputSheets" | "summary" | "charts">;
   manifest: LiveManifest;
   help?: LiveHelp;
 }) {
@@ -81,12 +88,15 @@ export function WorkbookOutputs({
     }));
   }, [manifest.outputViews, result.outputSheets]);
   const activeView =
-    views.find((view) => view.id === selectedViewId) ?? views[0];
+    views.find((view) => view.id === selectedViewId) ??
+    views.find((view) => view.id === "executive-dashboard") ??
+    views[0];
   const activeSheet = activeView
     ? (result.outputSheets.find((sheet) => sheet.name === activeView.sheet) ??
       null)
     : null;
   const helpText = activeView ? help?.outputViews?.[activeView.id] : undefined;
+  const isExecutiveDashboard = activeView?.id === "executive-dashboard";
 
   if (!activeView || !activeSheet) {
     return (
@@ -128,7 +138,17 @@ export function WorkbookOutputs({
           />
         )}
       </div>
-      <OutputTable sheet={activeSheet} label={activeView.name} />
+      {isExecutiveDashboard && (result.summary?.length || result.charts?.length) ? (
+        <OutputPresentation summary={result.summary} charts={result.charts} />
+      ) : null}
+      {isExecutiveDashboard ? (
+        <details className="live-calculation__raw-output">
+          <summary>Detailed output cells</summary>
+          <OutputTable sheet={activeSheet} label={activeView.name} />
+        </details>
+      ) : (
+        <OutputTable sheet={activeSheet} label={activeView.name} />
+      )}
     </div>
   );
 }

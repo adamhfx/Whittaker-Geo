@@ -5,6 +5,9 @@ import { parsePageRoute, routeHref, type AppRoute } from "@/lib/routes";
 import { safeReturnPath } from "@/lib/auth-helpers";
 import AccountSettings from "./AccountSettings";
 import LoadingSpinner from "./LoadingSpinner";
+import { HelpDialog } from "./HelpDialog";
+import { LiveCalculation, WorkbookOutputs } from "./LiveCalculation";
+import "./model-editor.css";
 import {
   ArrowLeft,
   ArrowRight,
@@ -146,8 +149,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
       preview ? (previewManifest as unknown as Manifest) : null,
     ),
     [approved, setApproved] = useState(false);
+  const [localModelReview, setLocalModelReview] = useState(false);
   const [calculation, setCalculation] = useState<Calculation | null>(null),
     [inputs, setInputs] = useState<InputValues>({}),
+    [numericDrafts, setNumericDrafts] = useState<Record<string, string>>({}),
     [name, setName] = useState(""),
     [group, setGroup] = useState("reservoir");
   const [runs, setRuns] = useState<Run[]>([]),
@@ -158,6 +163,16 @@ export default function App({ preview = false }: { preview?: boolean }) {
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    const loopbackHosts = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+    setLocalModelReview(
+      preview &&
+        process.env.NODE_ENV === "development" &&
+        process.env.NEXT_PUBLIC_LOCAL_MODEL_REVIEW === "true" &&
+        loopbackHosts.has(window.location.hostname.toLowerCase()),
+    );
+  }, [preview]);
+  const isLocalModelReview = preview && localModelReview;
   const submitting = useRef(false),
     submission = useRef<{ revision: number; key: string } | null>(null);
   const request = useCallback(
@@ -335,6 +350,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         setRuns(history);
         setSelectedRun(null);
         setName(draft?.name ?? c?.name ?? (route.mode === "example" ? m!.name + " example" : "Untitled calculation"));
+        setNumericDrafts({});
         setInputs(draft?.inputs ?? c?.inputs ?? initialInputs(m!, route.mode || "blank"));
         setDirty(!!draft || !c);
         setDraftKey(key);
@@ -378,9 +394,32 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }
   function updateInput(id: string, value: string | number | null) {
     setInputs((old) => changeInput(manifest, old, id, value));
-    if (manifest?.id === "state-rent" && id === "C5" && inputs.C5 !== value)
+    if (manifest && inputs[id] !== value && (manifest.fields.some((field) => field.dependsOn === id) || (manifest.id === "state-rent" && id === "C5")))
       setNotice("Choose units for the selected fluid and review the volume and flow rate amounts. Numeric values have not been converted.");
     setDirty(true);
+  }
+  function updateNumericDraft(id: string, rawValue: string) {
+    setNumericDrafts((old) => ({ ...old, [id]: rawValue }));
+    const trimmed = rawValue.trim();
+    if (!trimmed) {
+      updateInput(id, null);
+      return;
+    }
+    const isDecimal = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed);
+    const parsed = Number(trimmed);
+    updateInput(id, isDecimal && Number.isFinite(parsed) ? parsed : rawValue);
+  }
+  function finishNumericDraft(id: string, rawValue: string) {
+    const trimmed = rawValue.trim();
+    const isDecimal = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed);
+    if (!trimmed || (isDecimal && Number.isFinite(Number(trimmed)))) {
+      setNumericDrafts((old) => {
+        if (!(id in old)) return old;
+        const next = { ...old };
+        delete next[id];
+        return next;
+      });
+    }
   }
   async function saveDraft() {
     if (!manifest) throw new Error("Choose a calculator first.");
@@ -453,6 +492,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       );
       setCalculation(c);
       setName(c.name);
+      setNumericDrafts({});
       setInputs(c.inputs);
       setRuns([]);
       setSelectedRun(null);
@@ -586,7 +626,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
       <main className="main">
         {preview && (
           <div className="preview-bar">
-            INTERFACE PREVIEW · Changes stay in this browser session
+            {isLocalModelReview
+              ? "LOCAL MODEL REVIEW · Private candidate calculations; changes stay in this browser session"
+              : "INTERFACE PREVIEW · Changes stay in this browser session"}
           </div>
         )}
         <header className="top">
@@ -832,12 +874,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
               <p className="subtitle" style={{ marginTop: 10 }}>
                 {manifest.description}
               </p>
-              {!approved && (
+              {!approved && !isLocalModelReview && (
                 <div className="notice">
                   This model is under numerical review. Live calculations will
                   be available after approval.
                 </div>
               )}
+              <div className={manifest.outputViews?.length ? "model-workbench" : undefined}>
               <div className="form-layout">
                 <nav className="group-nav" aria-label="Input sections">
                   {manifest.groups.map((g) => (
@@ -851,12 +894,18 @@ export default function App({ preview = false }: { preview?: boolean }) {
                   ))}
                 </nav>
                 <section className="card group-card">
-                  <h3>{manifest.groups.find((g) => g.id === group)?.name}</h3>
+                  <div className="model-section-heading">
+                    <h3>{manifest.groups.find((g) => g.id === group)?.name}</h3>
+                    {manifest.groups.find((g) => g.id === group)?.help && <HelpDialog {...manifest.groups.find((g) => g.id === group)!.help!} />}
+                  </div>
                   {group === "schedule" ? (
                     <Schedule
                       fields={manifest.fields.filter((f) => f.group === group)}
                       inputs={inputs}
                       setValue={updateInput}
+                      numericDrafts={numericDrafts}
+                      setNumericDraft={updateNumericDraft}
+                      finishNumericDraft={finishNumericDraft}
                       disabled={!editable}
                     />
                   ) : (
@@ -868,9 +917,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
                             key={f.id}
                             field={f}
                             options={inputOptions(manifest, f, inputs)}
-                            help={isFluidUnit(manifest, f) && !inputs.C5 ? "Choose a primary reservoir fluid first." : undefined}
+                            help={isFluidUnit(manifest, f) && !(f.dependsOn ? inputs[f.dependsOn] : inputs.C5) ? "Choose a primary reservoir fluid first." : undefined}
                             value={inputs[f.id]}
                             setValue={(v) => updateInput(f.id, v)}
+                            numericDraft={numericDrafts[f.id]}
+                            setNumericDraft={(raw) => updateNumericDraft(f.id, raw)}
+                            finishNumericDraft={(raw) => finishNumericDraft(f.id, raw)}
                             disabled={!editable}
                           />
                         ))}
@@ -880,6 +932,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     Project amounts use USD.
                   </p>
                 </section>
+              </div>
+              {manifest.outputViews?.length ? <aside className="model-live-panel">
+                <LiveCalculation manifest={manifest} inputs={inputs}
+                  enabled={isLocalModelReview || (!preview && !!workspace?.canWrite && approved)}
+                  endpoint={isLocalModelReview ? "/api/local-model-review" : undefined}
+                  reviewMode={isLocalModelReview}
+                  blockedReason={!approved ? "This model is awaiting numerical approval. You can explore the inputs and guide notes now." : preview ? "Sign in to calculate with your own inputs." : "An active subscription is required for live calculations."} />
+              </aside> : null}
               </div>
               <section className="card group-card">
                 <div className="section-head" style={{ marginTop: 0 }}>
@@ -1297,6 +1357,9 @@ function Input({
   compact = false,
   options,
   help,
+  numericDraft,
+  setNumericDraft,
+  finishNumericDraft,
 }: {
   field: Field;
   value: string | number | null | undefined;
@@ -1305,16 +1368,36 @@ function Input({
   compact?: boolean;
   options?: string[];
   help?: string;
+  numericDraft?: string;
+  setNumericDraft?: (rawValue: string) => void;
+  finishNumericDraft?: (rawValue: string) => void;
 }) {
   return (
     <div className="field">
       {!compact && (
-        <label className="form-label" htmlFor={"f-" + f.id}>
-          {f.label}
-          <span className="unit">{f.unit}</span>
-        </label>
+        <div className="model-field-heading">
+          <label className="form-label" htmlFor={"f-" + f.id}>
+            {f.label}<span className="unit">{f.unit}</span>
+          </label>
+          {f.help && <HelpDialog {...f.help} triggerLabel={`Help for ${f.label}`} />}
+        </div>
       )}
-      {f.type === "select" || f.type === "milestone" ? (
+      {f.type === "milestone" ? (
+        <label className="model-year-choice">
+          <input id={"f-" + f.id} type="radio" name={f.radioGroup || "facilities-completion"}
+            aria-label={`${f.label}, year ${f.year}`} disabled={disabled}
+            checked={value === "X"} onChange={() => setValue("X")} />
+          <span className="sr-only">Year {f.year}</span>
+        </label>
+      ) : f.type === "select" && f.options?.length === 2 ? (
+        <div className="model-radio-options" role="radiogroup" aria-label={f.label}>
+          {(options ?? f.options).map((option) => <label key={option}>
+            <input type="radio" name={f.id} value={option} checked={value === option} disabled={disabled}
+              onChange={() => setValue(option)} />
+            <span>{f.optionLabels?.[option] || optionLabel(option)}</span>
+          </label>)}
+        </div>
+      ) : f.type === "select" ? (
         <select
           id={"f-" + f.id}
           aria-label={compact ? f.label + " year " + f.year : undefined}
@@ -1323,11 +1406,11 @@ function Input({
           value={value ?? ""}
           onChange={(e) => setValue(e.target.value)}
         >
-          <option value="">{f.type === "milestone" ? "—" : "Select…"}</option>
+          <option value="">Select…</option>
           {f.type === "select" && value && !(options ?? f.options ?? []).includes(String(value)) && <option value={value} disabled>{optionLabel(String(value))} — select a matching unit</option>}
-          {(f.type === "milestone" ? ["X"] : options ?? f.options ?? []).map((o) => (
+          {(options ?? f.options ?? []).map((o) => (
             <option key={o} value={o}>
-              {optionLabel(o)}
+              {f.optionLabels?.[o] || optionLabel(o)}
             </option>
           ))}
         </select>
@@ -1337,20 +1420,14 @@ function Input({
           aria-label={compact ? f.label + " year " + f.year : undefined}
           className="text-input"
           disabled={disabled}
-          type={f.type === "number" ? "number" : "text"}
-          step={f.integer ? 1 : "any"}
-          min={f.min}
-          max={f.max}
-          value={value ?? ""}
-          onChange={(e) =>
-            setValue(
-              e.target.value === ""
-                ? null
-                : f.type === "number"
-                  ? Number(e.target.value)
-                  : e.target.value,
-            )
-          }
+          type="text"
+          inputMode={f.type === "number" ? "decimal" : undefined}
+          value={f.type === "number" ? numericDraft ?? value ?? "" : value ?? ""}
+          onChange={(e) => {
+            if (f.type === "number") setNumericDraft?.(e.target.value);
+            else setValue(e.target.value === "" ? null : e.target.value);
+          }}
+          onBlur={f.type === "number" ? (e) => finishNumericDraft?.(e.target.value) : undefined}
         />
       )}
       {help && <p className="small">{help}</p>}
@@ -1361,11 +1438,17 @@ function Schedule({
   fields,
   inputs,
   setValue,
+  numericDrafts,
+  setNumericDraft,
+  finishNumericDraft,
   disabled,
 }: {
   fields: Field[];
   inputs: InputValues;
   setValue: (id: string, v: string | number | null) => void;
+  numericDrafts: Record<string, string>;
+  setNumericDraft: (id: string, rawValue: string) => void;
+  finishNumericDraft: (id: string, rawValue: string) => void;
   disabled: boolean;
 }) {
   const years = Array.from(new Set(fields.map((f) => f.year!))).sort(
@@ -1395,7 +1478,9 @@ function Schedule({
               return (
                 <tr key={r}>
                   <th>
-                    {first.label}
+                    <div className="model-field-heading"><span>{first.label}</span>
+                      {first.help && <HelpDialog {...first.help} triggerLabel={`Help for ${first.label}`} />}
+                    </div>
                     <div className="small">{first.unit}</div>
                   </th>
                   {years.map((y) => {
@@ -1409,6 +1494,9 @@ function Schedule({
                             field={f}
                             value={inputs[f.id]}
                             setValue={(v) => setValue(f.id, v)}
+                            numericDraft={numericDrafts[f.id]}
+                            setNumericDraft={(raw) => setNumericDraft(f.id, raw)}
+                            finishNumericDraft={(raw) => finishNumericDraft(f.id, raw)}
                             disabled={disabled}
                             compact
                           />
@@ -1442,7 +1530,8 @@ function Results({
   back: () => void;
   download: () => void;
 }) {
-  const result = run.result;
+  const workbookResult = run.result && "outputSheets" in run.result ? run.result : null;
+  const result = run.result && !("outputSheets" in run.result) ? run.result : null;
   return (
     <>
       <div className="row wrap">
@@ -1478,6 +1567,16 @@ function Results({
           Your inputs are safe. Return to the calculation to review them and
           submit a new run. Reference: {run.error_code || "CALCULATION_FAILED"}
         </div>
+      ) : workbookResult && manifest ? (
+        <section className="card group-card">
+          <WorkbookOutputs result={workbookResult} manifest={manifest} />
+          <details className="model-submitted-inputs"><summary>Submitted inputs</summary>
+            <table className="table"><tbody>{manifest.fields.map((field) => <tr key={field.id}>
+              <th>{field.label}{field.year ? ` · Year ${field.year}` : ""}</th>
+              <td>{run.inputs[field.id] ?? "—"} {field.unit}</td>
+            </tr>)}</tbody></table>
+          </details>
+        </section>
       ) : !result ? (
         <div role="status" className="notice">
           {run.status === "queued"

@@ -57,55 +57,7 @@ export async function manifestFor(id: string, version?: string) {
     approved: data.approved as boolean,
   };
 }
-export function publicManifest(manifest: Manifest) {
-  const fields = manifest.fields.map((f) => {
-    const {
-      id,
-      label,
-      unit,
-      group,
-      type,
-      default: defaultValue,
-      required,
-      blankOnNew,
-      options,
-      year,
-      scheduleRow,
-      min,
-      max,
-      exclusiveMin,
-      exclusiveMax,
-      integer,
-    } = f;
-    return {
-      id,
-      label,
-      unit,
-      group,
-      type,
-      default: defaultValue,
-      required,
-      blankOnNew,
-      ...(options ? { options } : {}),
-      ...(year !== undefined ? { year } : {}),
-      ...(scheduleRow !== undefined ? { scheduleRow } : {}),
-      ...(min !== undefined ? { min } : {}),
-      ...(max !== undefined ? { max } : {}),
-      ...(exclusiveMin !== undefined ? { exclusiveMin } : {}),
-      ...(exclusiveMax !== undefined ? { exclusiveMax } : {}),
-      ...(integer !== undefined ? { integer } : {}),
-    };
-  });
-  return {
-    id: manifest.id,
-    version: manifest.version,
-    name: manifest.name,
-    description: manifest.description,
-    groups: manifest.groups.map(({ id, name }) => ({ id, name })),
-    fields,
-    releaseStatus: manifest.releaseStatus,
-  };
-}
+export { publicManifest } from "./public-manifest";
 export async function body(request: Request) {
   const text = await request.text();
   if (text.length > 200000) throw new ApiError(413, "Request too large.");

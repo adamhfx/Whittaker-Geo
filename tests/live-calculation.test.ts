@@ -51,6 +51,10 @@ test("live snapshot identity changes when the model or workbook version changes"
 
   assert.notEqual(liveEvaluationKey("other-model", "1.0.0", inputs), original);
   assert.notEqual(liveEvaluationKey("state-rent", "1.0.1", inputs), original);
+  assert.notEqual(
+    liveEvaluationKey("state-rent", "1.0.0", inputs, "/api/local-model-review"),
+    original,
+  );
 });
 
 test("an invalidated request cannot overwrite a newer result even if it resolves late", async () => {
@@ -123,6 +127,28 @@ test("live evaluation posts an input snapshot to the no-store evaluate endpoint"
     inputs,
   });
   assert.equal(result.outputSheets[0].name, "OUTPUT");
+});
+
+test("live evaluation can target the opt-in local review endpoint", async () => {
+  let requestedUrl = "";
+  const fetcher: typeof fetch = async (input) => {
+    requestedUrl = String(input);
+    return new Response(JSON.stringify({ result: resultFixture() }), {
+      status: 200,
+    });
+  };
+
+  await requestLiveCalculation(
+    "state-rent",
+    "1.0.0",
+    {},
+    new AbortController().signal,
+    fetcher,
+    undefined,
+    "/api/local-model-review",
+  );
+
+  assert.equal(requestedUrl, "/api/local-model-review");
 });
 
 test("live evaluation rejects a response from a different workbook version", async () => {
