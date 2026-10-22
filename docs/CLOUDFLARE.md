@@ -26,13 +26,18 @@ commands remain available for local development and the legacy service.
 The Cloudflare Worker is configured to send live evaluations to
 `https://whittaker-geo-live-calculations.onrender.com`, using a server-only
 shared secret. This is a public HTTPS connection authenticated by the secret,
-not private networking between Cloudflare and Render. The Render service exists
-on its Free plan as a staging service, but its Docker/runtime behavior and the
-full request path have not been validated for production. Its requested $7 plan
-upgrade is pending; the saved-run worker upgrade is pending as well. The v2
-model candidate is registered with `approved=false`, while the active catalog
-pointer remains v1. The production interface can show the v2 preview, but that
-does not mean hosted live calculations for v2 are enabled or approved.
+not private networking between Cloudflare and Render. The owner chose the Free
+plan for now; no paid engine upgrade or saved-run worker was purchased. The
+Linux image passed its synthetic calculation/reset smoke, and hosted v2 baseline,
+gas-price change, and reset checks passed with two output views, eight summary
+values, and three charts. The first hosted calculation took about 36 seconds;
+subsequent edits took about 5–6 seconds. Idle shutdowns can add startup delay.
+
+Version `2.0.0-candidate.1` is approved and active for new calculations following
+explicit user release approval with fresh Excel recalculation still unverified.
+Existing saved projects retain their pinned versions. `SAVED_RUNS_ENABLED=false`
+defers new queued runs and new Excel exports while preserving saved inputs,
+live results, and access to earlier completed exports.
 
 Cloudflare's current Next.js integration uses vinext and the Cloudflare Vite
 plugin. These provide a separate build path. Their beta status means this setup
@@ -43,11 +48,18 @@ have been accepted.
 
 Create a Cloudflare API token limited to the account above, with Account /
 Workers Scripts / Edit and Account / Account Settings / Read. Store it as the
-`CLOUDFLARE_API_TOKEN` Actions secret only in `adamhfx/geoflowlab`.
+`CLOUDFLARE_API_TOKEN` Actions secret only in `adamhfx/Whittaker-Geo`.
 Do not put it in Git, source files, workflow YAML, logs, or chat.
 
 GitHub Actions supplies this credential only to the deployment step. Pull
 requests run checks without the Cloudflare token and cannot deploy.
+
+The deployment uploads a prebuilt Worker version tagged with the tested commit,
+then promotes exactly that version to 100% of traffic. Existing domain routes and
+preview settings are preserved; routine code deployment does not call the route
+editing API or require expanding the token to zone-route permissions. Manage
+domain-route changes deliberately in Cloudflare and keep the checked-in fetch
+triggers synchronized with those routes.
 
 This workflow does not change the existing Cloudflare GitHub App installation
 or its access to other repositories. Cloudflare's built-in connection did not

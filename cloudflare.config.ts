@@ -37,6 +37,7 @@ export default defineConfig({
       CALC_ENGINE_URL: bindings.text("https://whittaker-geo-live-calculations.onrender.com"),
       CALC_ENGINE_SECRET: bindings.secret(),
       BILLING_ENABLED: { type: "text", value: "false" },
+      SAVED_RUNS_ENABLED: bindings.text("false"),
     },
   }),
 });

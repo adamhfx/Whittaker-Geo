@@ -2,6 +2,7 @@ import { actor, failure, ok } from "../_route";
 import { DISPLAY_PRICES, billingEnabled } from "@/lib/billing";
 import { paidAccess } from "@/lib/validation";
 import { isAdministrator } from "@/lib/admin";
+import { savedRunsEnabled } from "@/lib/saved-runs";
 export async function GET(request: Request) {
   try {
     const { user, db } = await actor(request);
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
       calculators: calculators ?? [],
       calculations: calculations ?? [],
       billingEnabled: billingEnabled(),
+      savedRunsEnabled: savedRunsEnabled(),
       prices: DISPLAY_PRICES,
     });
   } catch (e) {

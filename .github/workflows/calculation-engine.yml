@@ -35,3 +35,105 @@ jobs:
           "$RUNNER_TEMP/calculation-tests/bin/python" -m pytest worker/tests -q -p no:cacheprovider
       - name: Build the production calculation image and run its UNO smoke test
         run: docker build --pull --file worker/Dockerfile --tag geoflow-calculation-engine:ci .
+
+  deploy-render:
+    name: Deploy validated commit to configured Render services
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build-linux-image
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger optional Render deploy hooks
+        env:
+          RENDER_LIVE_DEPLOY_HOOK: ${{ secrets.RENDER_LIVE_DEPLOY_HOOK }}
+          RENDER_SAVED_DEPLOY_HOOK: ${{ secrets.RENDER_SAVED_DEPLOY_HOOK }}
+          DEPLOY_COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+          from urllib.error import HTTPError
+          from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+          from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+          service_hooks = (
+              ("live calculation engine", "RENDER_LIVE_DEPLOY_HOOK"),
+              ("saved-run worker", "RENDER_SAVED_DEPLOY_HOOK"),
+          )
+          configured = []
+
+          def validate_hook_url(raw_url):
+              try:
+                  parsed = urlsplit(raw_url)
+                  query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+                  if (
+                      parsed.scheme != "https"
+                      or parsed.netloc != "api.render.com"
+                      or parsed.username is not None
+                      or parsed.password is not None
+                      or parsed.fragment
+                      or not re.fullmatch(r"/deploy/srv-[A-Za-z0-9]+", parsed.path)
+                      or len(query) != 1
+                      or query[0][0] != "key"
+                      or not query[0][1]
+                  ):
+                      raise ValueError
+              except (TypeError, ValueError):
+                  raise ValueError("invalid Render deploy hook configuration") from None
+              return parsed.path, query[0][1]
+
+          for service_name, secret_name in service_hooks:
+              raw_url = os.environ.get(secret_name, "")
+              if not raw_url:
+                  print(f"Skipping {service_name} deploy: {secret_name} is not configured.")
+                  continue
+              if raw_url != raw_url.strip():
+                  print(f"ERROR: {secret_name} has invalid formatting; no deploy hook was called.", file=sys.stderr)
+                  raise SystemExit(1)
+              try:
+                  path, key = validate_hook_url(raw_url)
+                  configured.append((service_name, path, key))
+              except ValueError:
+                  print(f"ERROR: {secret_name} is not a valid Render deploy hook URL; no deploy hook was called.", file=sys.stderr)
+                  raise SystemExit(1)
+
+          if not configured:
+              print("No Render deploy hooks are configured; CI validation completed without deploying.")
+              raise SystemExit(0)
+
+          commit = os.environ.get("DEPLOY_COMMIT", "")
+          if not re.fullmatch(r"[0-9a-f]{40}", commit):
+              print("ERROR: the tested commit reference is invalid; no deploy hook was called.", file=sys.stderr)
+              raise SystemExit(1)
+
+          # Add the exact tested commit only after all supplied hook URLs pass validation.
+          requests = []
+          for service_name, path, key in configured:
+              request_url = urlunsplit((
+                  "https", "api.render.com", path,
+                  urlencode((("key", key), ("ref", commit))), "",
+              ))
+              requests.append((service_name, Request(request_url, data=b"", method="POST")))
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, request, response, code, message, headers, new_url):
+                  return None
+
+          opener = build_opener(NoRedirect)
+          for service_name, request in requests:
+              try:
+                  with opener.open(request, timeout=30) as response:
+                      status = response.status
+              except HTTPError as error:
+                  status = error.code
+                  error.close()
+              except Exception:
+                  print(f"ERROR: {service_name} Render deploy request failed; inspect service status in Render.", file=sys.stderr)
+                  raise SystemExit(1) from None
+
+              if status not in (200, 202):
+                  print(f"ERROR: {service_name} Render deploy hook returned HTTP {status}.", file=sys.stderr)
+                  raise SystemExit(1)
+              print(f"Triggered {service_name} deployment for commit {commit[:12]} (HTTP {status}).")
+          PY

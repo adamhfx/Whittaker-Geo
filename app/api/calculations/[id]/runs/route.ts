@@ -1,12 +1,15 @@
-import { actor, body, dbError, failure, ok, owned } from "../../../_route";
+import { actor, body, dbError, failure, ok, owned, ApiError } from "../../../_route";
 import { manifestFor } from "@/lib/server";
 import { validateInputs } from "@/lib/validation";
+import { savedRunsEnabled } from "@/lib/saved-runs";
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { user, db } = await actor(request);
+    if (!savedRunsEnabled())
+      throw new ApiError(503, "Saved runs and new Excel exports are temporarily unavailable. You can still save inputs and view live results.");
     const key = request.headers.get("idempotency-key");
     if (
       !key ||

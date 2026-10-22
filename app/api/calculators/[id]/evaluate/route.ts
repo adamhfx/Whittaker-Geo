@@ -2,6 +2,16 @@ import { actor, body, failure, manifestFor, ok, ApiError } from "../../../_route
 import { paidAccess, validateInputs } from "@/lib/validation";
 import { engineEndpoint, evaluateDraft } from "@/lib/evaluation";
 
+function retryableCalculationResponse(message: string) {
+  return Response.json(
+    { error: message },
+    {
+      status: 503,
+      headers: { "Cache-Control": "private, no-store", "Retry-After": "5" },
+    },
+  );
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { user, db } = await actor(request);
@@ -22,13 +32,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     let endpoint: string;
     try { endpoint = engineEndpoint(process.env.CALC_ENGINE_URL, process.env.NODE_ENV === "development"); }
     catch { throw new ApiError(503, "The live calculation service is not connected yet."); }
+    const timeoutSignal = AbortSignal.timeout(25_000);
     try {
       const result = await evaluateDraft({ manifest, inputs: payload.inputs, requesterId: user.id,
-        secret, endpoint, signal: AbortSignal.any([request.signal, AbortSignal.timeout(25_000)]) });
+        secret, endpoint, signal: AbortSignal.any([request.signal, timeoutSignal]) });
+      if (!request.signal.aborted && timeoutSignal.aborted) {
+        return retryableCalculationResponse(
+          "This calculation is taking longer than expected. Retrying shortly.",
+        );
+      }
       return ok({ result });
     } catch (error) {
+      // A disconnected browser should never cause a retry for a newer snapshot.
+      // Only this route's own deadline is reported as retryable service-busy.
+      if (!request.signal.aborted && timeoutSignal.aborted) {
+        return retryableCalculationResponse(
+          "This calculation is taking longer than expected. Retrying shortly.",
+        );
+      }
       if (error instanceof Error && error.message === "ENGINE_BUSY")
-        throw new ApiError(503, "The calculation service is busy. Your inputs are preserved; please retry.");
+        return retryableCalculationResponse(
+          "The calculation service is busy. Your inputs are preserved; please retry.",
+        );
       throw new ApiError(503, "Live results could not be calculated. Your inputs are preserved; please retry.");
     }
   } catch (error) { return failure(error); }

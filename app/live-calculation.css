@@ -30,6 +30,27 @@
 .live-calculation__message.is-blocked {
   background: #f4f5f5;
 }
+.live-calculation__message.is-updating {
+  align-items: center;
+  background: #eef6f7;
+  border-color: rgba(0, 45, 67, 0.18);
+  color: var(--ink);
+  gap: 16px;
+  min-height: 100px;
+  padding: 20px 22px;
+}
+.live-calculation__updating-copy {
+  display: grid;
+  gap: 4px;
+}
+.live-calculation__updating-copy strong {
+  color: var(--primary-dark);
+  font-size: 16px;
+}
+.live-calculation__updating-copy span {
+  color: var(--muted);
+  font-size: 13px;
+}
 .live-calculation__message.is-invalid {
   align-items: flex-start;
   background: #fff8e9;
@@ -72,6 +93,10 @@
 }
 .live-calculation__spinner {
   animation: live-calculation-spin 0.9s linear infinite;
+  color: var(--primary-dark);
+  height: 34px;
+  stroke-width: 2.5;
+  width: 34px;
 }
 @keyframes live-calculation-spin {
   to {
@@ -185,6 +210,9 @@
   }
   .live-calculation__message {
     align-items: flex-start;
+  }
+  .live-calculation__message.is-updating {
+    align-items: center;
   }
   .live-calculation__duration {
     flex-basis: 100%;

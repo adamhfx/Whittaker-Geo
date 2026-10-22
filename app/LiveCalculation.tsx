@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { LoaderCircle, RotateCw } from "lucide-react";
 import type { InputValues, Manifest } from "@/lib/types";
 import {
@@ -39,9 +39,26 @@ export function LiveCalculation({
   const live = useLiveCalculation({ manifest, inputs, enabled, endpoint });
   const result = live.status === "success" ? live.result : null;
   const titleId = useId();
+  const isUpdating = live.status === "updating";
+  const [longWait, setLongWait] = useState(false);
+
+  useEffect(() => {
+    if (!isUpdating) {
+      setLongWait(false);
+      return;
+    }
+
+    setLongWait(false);
+    const timer = window.setTimeout(() => setLongWait(true), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [isUpdating]);
 
   return (
-    <section className="card live-calculation" aria-labelledby={titleId}>
+    <section
+      className="card live-calculation"
+      aria-labelledby={titleId}
+      aria-busy={live.status === "debouncing" || isUpdating}
+    >
       <header className="live-calculation__header">
         <div>
           <div className="eyebrow">
@@ -56,6 +73,7 @@ export function LiveCalculation({
         blockedReason={blockedReason}
         result={result}
         onRetry={live.retry}
+        longWait={longWait}
       />
 
       {result && (
@@ -158,11 +176,13 @@ function LiveStatus({
   blockedReason,
   result,
   onRetry,
+  longWait,
 }: {
   live: ReturnType<typeof useLiveCalculation>;
   blockedReason?: string;
   result: LiveCalculationResult | null;
   onRetry: () => void;
+  longWait: boolean;
 }) {
   if (live.status === "success") {
     return (
@@ -219,13 +239,25 @@ function LiveStatus({
 
   if (live.status === "updating") {
     return (
-      <p className="live-calculation__message" role="status" aria-live="polite">
+      <div
+        className="live-calculation__message is-updating"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         <LoaderCircle
           className="live-calculation__spinner"
           aria-hidden="true"
         />
-        Updating live results…
-      </p>
+        <div className="live-calculation__updating-copy">
+          <strong>Calculating...</strong>
+          <span>
+            {longWait
+              ? "The first calculation after inactivity can take one to two minutes. You can keep editing while it runs."
+              : "Your inputs remain available while the results update."}
+          </span>
+        </div>
+      </div>
     );
   }
 

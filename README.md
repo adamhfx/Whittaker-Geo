@@ -24,7 +24,7 @@ python -m pytest worker/tests -q
 
 The worker requires the dependencies in `worker/requirements.txt`. Its Docker image pins LibreOffice 26.8.1. The Render blueprint defines the web and background-worker services; see [deployment instructions](docs/DEPLOYMENT.md).
 
-For the separately configured Cloudflare interface preview and GitHub deployment
+For the Cloudflare production interface and GitHub deployment
 workflow, see [Cloudflare setup](docs/CLOUDFLARE.md). GitHub carries committed
 changes between computers; local environment settings and private models stay
 outside the repository.
@@ -37,8 +37,8 @@ The owner workspace includes private release preparation tools. The public regis
 
 ## Release status
 
-This is an implementation awaiting model and deployment approval. Checkout is disabled by default. State Rent is registered as an unapproved candidate; the server and worker both reject customer execution until approval.
+The production interface is hosted at `https://whittakergeo.com` with the v2 Resource-to-Value model approved and active for new calculations. The user approved release with fresh Excel recalculation still unverified. The live engine runs on Render's Free plan; no paid upgrades were applied. New saved runs and Excel exports are deferred with `SAVED_RUNS_ENABLED=false`. Users with editing access can save inputs and view live results with charts. Checkout remains disabled.
 
-Fresh LibreOffice recalculation and warm input changes are tested locally; approved Excel parity is still required. The new candidate uses a private compatibility runtime for eight nested LET expressions; the source workbook is unchanged. Details and release boundaries are in [model runtime and review](docs/MODEL_RUNTIME.md). The outstanding 12% calculation / 15% label decision has not been silently changed. Google OAuth, production email delivery, Stripe test-mode acceptance, and the Render Docker deployment must be configured and verified before launch.
+Fresh LibreOffice recalculation and input changes are tested locally and on the hosted Linux engine; fresh Excel parity remains unverified. The new candidate uses a private compatibility runtime for eight nested LET expressions; the source workbook is unchanged. Details and release boundaries are in [model runtime and review](docs/MODEL_RUNTIME.md). The outstanding 12% calculation / 15% label decision has not been silently changed. Google OAuth and the Render live Docker engine are connected. Production email delivery, Stripe acceptance, and the optional hosted saved-run worker remain separate launch work.
 
 No private credentials belong in Git or in `NEXT_PUBLIC_` variables. Use Render's secret settings for server and worker credentials.

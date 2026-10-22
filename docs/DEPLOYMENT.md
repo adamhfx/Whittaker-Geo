@@ -1,6 +1,6 @@
 # Whittaker Geo deployment
 
-The production frontend is the Cloudflare Worker serving `https://whittakergeo.com`. Render hosts the Python worker for saved runs and a separate HTTPS calculation engine for transient live edits. The legacy Node Render web service remains in the blueprint as a reference; it is not the production frontend. Git deployment and private model release are separate processes: pushing code does not upload a workbook, approve a model, or activate a version. See [Cloudflare setup](CLOUDFLARE.md) for the current hosting state.
+The production frontend is the Cloudflare Worker serving `https://whittakergeo.com`. Render hosts the HTTPS calculation engine for transient live edits. The optional saved-run Python worker is deferred under the current Free setup. The legacy Node Render web service remains in the blueprint as a reference; it is not the production frontend. Git deployment and private model release are separate processes: pushing code does not upload a workbook, approve a model, or activate a version. See [Cloudflare setup](CLOUDFLARE.md) for the current hosting state.
 
 ## Temporary sign-in entry
 
@@ -38,6 +38,7 @@ The browser can receive only variables prefixed with `NEXT_PUBLIC_`. These are i
 | `STRIPE_WEBHOOK_SECRET`         | Server only       | Signature verification for `/api/billing/webhook`.                                                                                                        |
 | `STRIPE_MONTHLY_PRICE_ID`       | Server            | Stripe price for the monthly CAD plan.                                                                                                                    |
 | `STRIPE_ANNUAL_PRICE_ID`        | Server            | Stripe price for the annual CAD plan.                                                                                                                     |
+| `SAVED_RUNS_ENABLED`            | Server            | Set `true` only after a background worker is running and queue/export acceptance passes; defaults to disabled. |
 | `BILLING_ENABLED`               | Server            | Keep `false` until live prices, webhook handling, and launch approval are complete.                                                                       |
 | `CALC_ENGINE_URL`               | Server            | HTTPS origin of the live engine; requests use the server-only shared secret and never come directly from the browser.                                     |
 | `CALC_ENGINE_SECRET`            | Server/engine     | Shared engine authentication secret, at least 32 bytes; server-only.                                                                                      |
@@ -69,7 +70,7 @@ The migrations create immutable calculator versions, user-owned calculations/run
 
 Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The new candidate is `state-rent@2.0.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
 
-The current catalog pointer remains `1.0.0-candidate.1`; `2.0.0-candidate.1` is registered with `approved=false`. The registration script verifies the runtime SHA-256, uploads the private template, and inserts an immutable candidate without changing that pointer:
+As of 2026-10-22, `2.0.0-candidate.1` is approved and active for new calculations. The user explicitly approved release with the fresh Excel recalculation limitation recorded privately. Existing saved calculations and runs remain pinned to their original versions. Registration and activation remain separate actions: the registration script verifies the runtime SHA-256, uploads the private template, and inserts a new immutable candidate with `approved=false` without changing the current pointer:
 
 ```text
 python scripts/register_model.py \
@@ -95,7 +96,22 @@ The checked-in `render.yaml` describes:
 - `whittaker-geo-saved-calculations`: the Docker background worker from `worker/Dockerfile`, running `python -m worker.jobs` for saved immutable runs. It requires `DATABASE_URL` and Supabase access.
 - `whittaker-geo-live-calculations`: the Docker HTTP engine from the same image, running `python -m worker.live`, health check `/health`, concurrency one. Cloudflare's server-side `CALC_ENGINE_URL` points to `https://whittaker-geo-live-calculations.onrender.com`; the Cloudflare secret and Render `CALC_ENGINE_SECRET` must match. The service uses public HTTPS plus shared-secret authentication; it is not a private Render network connection.
 
-As of 2026-10-22, the live calculation service exists on Render's Free plan as a staging service, but its Docker/runtime behavior has not been validated for production. The saved-run worker is prepared; its requested $7 plan upgrade and the live-engine upgrade are pending. Do not treat the `/health` response alone as model or runtime acceptance. Keep `BILLING_ENABLED=false` until the launch gates below are complete. When the paid services are approved, verify the saved worker's Postgres access and test the live engine through the Cloudflare-to-Render HTTPS path.
+As of 2026-10-22, the user chose Render's Free live engine and deferred the saved-run worker. No paid plans were applied. The Linux image's synthetic import/calculation/reset smoke passed. Hosted v2 baseline, gas-price change, and reset returned two output views, eight summary values, and three charts; the baseline matched local results within the documented numerical tolerances. Initial startup took about 36 seconds; warm requests took about 5–6 seconds on the Free instance. Free idle shutdowns can add startup delay. The interface displays a calculating spinner and a longer-wait explanation, and the API supplies bounded retry guidance for timeout/busy responses.
+
+`SAVED_RUNS_ENABLED=false` is set on Cloudflare. Bootstrap exposes the capability, the interface disables **Save & run**, and the authenticated run API rejects new queue submissions while disabled. Input saves, live evaluations, existing run history, and earlier downloads remain available. Enable `SAVED_RUNS_ENABLED=true` only after a worker is provisioned and queued-run/export acceptance passes. Keep `BILLING_ENABLED=false`; hosting is separate from customer subscription billing.
+
+### Render deploys after engine CI
+
+The calculation-engine GitHub Actions workflow tests the worker contracts and builds the Docker image, including its synthetic UNO smoke test. After those steps pass, it can trigger the saved worker and live engine to deploy the exact tested `GITHUB_SHA`. This deploy step runs only for `main`; a manual workflow run from another branch will not deploy.
+
+Render documents that services connected through a public Git repository URL require manual deploys, even if the dashboard's automatic-deploy setting appears enabled. The workflow uses each service's secret deploy-hook URL, supplied as a GitHub Actions repository secret:
+
+- `RENDER_LIVE_DEPLOY_HOOK`
+- `RENDER_SAVED_DEPLOY_HOOK`
+
+As of 2026-10-22, these secrets are not configured, so CI validates and builds but does not contact Render. Missing hooks are reported as skipped. When configured, the workflow accepts only `https://api.render.com/deploy/srv-...` hook URLs with a single `key` parameter, posts the tested commit through Render's `ref` parameter, and fails if Render does not return HTTP 200 or 202. It does not print hook URLs or response bodies. Keep the hooks only in GitHub Secrets and regenerate a hook if its URL is exposed.
+
+Render's documentation states that deploying a specific commit through a deploy hook disables that service's automatic deploys. Leave deployment to this tested workflow after the hooks are configured; a later change to the service's deploy behavior should be deliberate. See [Render deploy behavior](https://render.com/docs/deploys) and [Render deploy hooks](https://render.com/docs/deploy-hooks).
 
 ## Stripe
 
@@ -121,7 +137,7 @@ Deployment is not a model approval. Before setting a version `approved=true` or 
 - [ ] Stripe test checkout and signed webhook delivery have been verified before live prices are used.
 - [ ] `BILLING_ENABLED` is changed to `true` only after the above checks and live Price IDs are configured.
 
-The Dockerfile's synthetic smoke test and a local Next.js typecheck/build do not validate the deployed Render services. The live engine remains a Free-plan staging service pending Docker/runtime and request-path validation. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
+The deployed live engine has passed real v2 baseline, changed-input, and reset checks in addition to the synthetic Linux image smoke. The saved-run worker and queue/export flow remain deferred and unverified in hosted production. Fresh Excel recalculation remains unverified; the user accepted release with that limitation. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
 
 ## Official references
 

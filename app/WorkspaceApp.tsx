@@ -51,6 +51,7 @@ type Workspace = {
   user: { email: string; name?: string | null; avatarUrl?: string | null; isAdmin?: boolean };
   canWrite: boolean;
   billingEnabled: boolean;
+  savedRunsEnabled: boolean;
   subscription: {
     status: string;
     paid_until: string | null;
@@ -484,6 +485,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }
   async function runCalculation() {
     await perform(async () => {
+      if (!workspace?.savedRunsEnabled)
+        throw new Error("Saved runs and new Excel exports are temporarily unavailable. You can still save inputs and view live results.");
       if (!manifest || !approved)
         throw new Error("This calculator is awaiting numerical approval.");
       const errors = validateInputs(inputs, manifest, true);
@@ -569,6 +572,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
           {notice}
         </div>
       )}
+      {!preview && workspace?.canWrite && !workspace.savedRunsEnabled && currentRoute?.view === "editor" && (
+        <div className="notice" id="saved-runs-unavailable">
+          Saved runs and new Excel exports are temporarily unavailable. You can still save inputs and view live results.
+        </div>
+      )}
       {!editable && (
         <div className="notice">
           <ShieldCheck size={18} />
@@ -612,9 +620,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
           preview ||
           !editable ||
           !approved ||
+          !workspace?.savedRunsEnabled ||
           busy ||
           runs.some((r) => ["queued", "running"].includes(r.status))
         }
+        aria-describedby={!preview && !workspace?.savedRunsEnabled ? "saved-runs-unavailable" : undefined}
+        title={!preview && !workspace?.savedRunsEnabled ? "Saved runs and new Excel exports are temporarily unavailable" : undefined}
         onClick={runCalculation}
       >
         <Zap size={16} />
