@@ -16,6 +16,10 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: CALC_ENGINE_URL
+        sync: false
+      - key: CALC_ENGINE_SECRET
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -37,3 +41,22 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+
+  # Separate HTTP service for transient live edits; saved runs keep their worker.
+  - type: web
+    name: whittaker-geo-live-calculations
+    runtime: docker
+    dockerfilePath: ./worker/Dockerfile
+    dockerCommand: python -m worker.live
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CALC_ENGINE_SECRET
+        sync: false
+      - key: LIVE_MAX_CONCURRENCY
+        value: 1
+      - key: LIVE_EVALUATION_TIMEOUT_SECONDS
+        value: 24

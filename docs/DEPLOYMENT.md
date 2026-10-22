@@ -1,6 +1,6 @@
-# GeoFlow Lab deployment
+# Whittaker Geo deployment
 
-This application is a Next.js web service backed by Supabase and a separate Python calculation worker. The checked-in Render blueprint defines one Node web service and one Docker worker. The worker is responsible for processing queued immutable runs; the web service owns authentication, API requests, and signed download URLs.
+This application is a Next.js web service backed by Supabase and a separate Python calculation worker. The Render blueprint defines a Node web service, a Docker background worker, and a separate private HTTP calculation service for live edits. The Cloudflare frontend is configured separately; see [Cloudflare setup](CLOUDFLARE.md). The worker is responsible for processing queued immutable runs; the web service owns authentication, API requests, and signed download URLs.
 
 ## Local setup
 
@@ -31,6 +31,9 @@ The browser can receive only variables prefixed with `NEXT_PUBLIC_`. These are i
 | `STRIPE_MONTHLY_PRICE_ID`       | Server        | Stripe price for the monthly CAD plan.                                                    |
 | `STRIPE_ANNUAL_PRICE_ID`        | Server        | Stripe price for the annual CAD plan.                                                     |
 | `BILLING_ENABLED`               | Server        | Keep `false` until live prices, webhook handling, and launch approval are complete.       |
+| `CALC_ENGINE_URL`              | Server        | HTTPS origin of the private live engine; never a browser endpoint.                         |
+| `CALC_ENGINE_SECRET`           | Server/engine | Shared engine authentication secret, at least 32 bytes; server-only.                      |
+| `UNO_PYTHON_BIN`               | Worker        | Python with UNO bridge for a warm live process.                                          |
 | `SOFFICE_BIN`                   | Worker        | LibreOffice executable; default `soffice`.                                                |
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, Stripe secrets, or worker credentials in any `NEXT_PUBLIC_` variable.
@@ -56,38 +59,33 @@ The migrations create immutable calculator versions, user-owned calculations/run
 
 ## Registering a model version
 
-The original source workbook is preserved outside this repository at `<owner-source-workbook.xlsx>`. The checked-in `private/models/state-rent/1.0.0-candidate.1.xlsx` is the modified runtime candidate. Never pass the runtime candidate to `worker/prepare_model.py` as its source. If the owner must regenerate a candidate, use the original workbook as the source and write to the runtime destination:
+Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The new candidate is `state-rent@2.0.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
 
-```text
-python worker/prepare_model.py "<owner-source-workbook.xlsx>" \
-  --target private/models/state-rent/1.0.0-candidate.1.xlsx \
-  --manifest models/state-rent/1.0.0-candidate.1.json
-```
-
-Register the existing runtime candidate with the owner-only registration script. It verifies the runtime SHA-256 against the manifest, uploads the private template, and inserts an immutable review candidate with `approved=false`:
+The registration script verifies the runtime SHA-256, uploads the private template, and inserts an immutable candidate with `approved=false`:
 
 ```text
 python scripts/register_model.py \
-  --manifest models/state-rent/1.0.0-candidate.1.json \
-  --template private/models/state-rent/1.0.0-candidate.1.xlsx
+  --manifest models/state-rent/2.0.0-candidate.1.json \
+  --template private/models/state-rent/2.0.0-candidate.1.xlsx
 ```
 
-The command requires `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. A run is rejected by the database when its calculator version is not approved.
+It requires `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. Registration does not grant numerical approval. The database, frontend API, and worker reject customer execution of an unapproved version.
 
-The public preview manifest is generated separately with:
+Generate the allowlisted public preview separately:
 
 ```text
-node scripts/generate-preview-manifest.mjs
+node scripts/generate-preview-manifest.mjs --manifest models/state-rent/2.0.0-candidate.1.json
 ```
 
-That allowlisted artifact contains all 318 input fields and display/validation metadata only. It does not expose source/runtime hashes, repairs, formulas, paths, or review metadata.
+The new artifact contains 195 operational input definitions, guide notes, display choices and validation only. It excludes formulas, private mappings and presentation source ranges, hashes, paths, repairs, and review records.
 
 ## Render
 
 The checked-in `render.yaml` provisions:
 
 - `geoflow-lab-web`: Node 22, `pnpm build`, `pnpm start`, health check `/api/health`.
-- `geoflow-lab-calculations`: the Docker worker from `worker/Dockerfile`; `SOFFICE_BIN` is used by the worker's LibreOffice conversion path.
+- `geoflow-lab-calculations`: the Docker worker from `worker/Dockerfile` for saved immutable runs.
+- `whittaker-geo-live-calculations`: the private HTTP engine from the same image, `python -m worker.live`, health check `/health`, warm concurrency one. Configure its shared secret and Supabase access, then set `CALC_ENGINE_URL` and the same `CALC_ENGINE_SECRET` on the frontend. This service has not been provisioned by the local implementation.
 
 Create the Render services from the blueprint, set all `sync: false` values in the Render dashboard, and set `APP_URL` to the final HTTPS origin. Keep `BILLING_ENABLED=false` until the launch gates below are complete. Confirm the web service binds through the provided start command and that the worker can reach the same Supabase/Postgres project.
 
@@ -105,10 +103,10 @@ The server keeps checkout idempotent through the database checkout lease and app
 
 Deployment is not a model approval. Before setting a version `approved=true` or enabling billing, record these checks:
 
-- [ ] Numerical approval review, including the 12/15 checkpoint, is complete and signed off by the model owner.
+- [ ] Numerical review of the exact candidate and representative changed-input scenarios is signed off by the model owner. The legacy 12/15 checkpoint remains separate.
 - [ ] The candidate worker output has been reviewed against the source workbook.
 - [ ] No approved Excel parity claim has been made; Excel parity remains unapproved until explicitly validated.
-- [ ] The 30-year schedule, NPV rate labels, payout logic, and repaired workbook dependencies have been reviewed.
+- [ ] The candidate's 20-year schedule, source NPV labels, payout logic, compatibility preparation, and dependencies have been reviewed. Legacy versions retain their original schedule.
 - [ ] The exact source/runtime SHA-256 values and immutable version row are recorded.
 - [ ] Worker queue processing, retries, leases, and immutable run behavior have been exercised against the deployment database.
 - [ ] Google OAuth and email magic-link redirects work on the final HTTPS origin.

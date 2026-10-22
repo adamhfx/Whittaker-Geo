@@ -2,7 +2,7 @@
 
 Subscription calculator service with a Next.js interface, Supabase accounts and private storage, Stripe billing, and an isolated Python/LibreOffice calculation worker.
 
-The first calculator is State Rent Economics. The interface offers all 318 mapped inputs in eight groups, a 30-year editable schedule, example or blank starting points, saved projects, duplication, immutable run history, summary and annual results, and editable values-only Excel exports. Subscriptions are CAD $49.99 monthly or CAD $499.99 annually, covering all calculator types. Expired accounts retain viewing and download access.
+The current model candidate is Resource-to-Value Economic Model 2.0. It maps 195 editable inputs in six sections with a 20-year development schedule, workbook choice controls, User Guide help dialogs, and two values-only output views. Live edits use a private warm calculation process and do not create saved runs. Earlier saved calculations remain pinned to their original model version. The interface also supports example or blank starting points, saved projects, duplication, immutable run history, and values-only Excel exports. Subscriptions are CAD $49.99 monthly or CAD $499.99 annually, covering all calculator types. Expired accounts retain viewing and download access.
 
 ## Start locally
 
@@ -14,7 +14,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open `http://localhost:3000`. `/preview` shows the mapped form without signing in; it does not save or calculate results.
+Open `http://localhost:3000`. `/preview` normally shows the mapped form without signing in or calculating. A development-only local owner review mode can evaluate a private candidate on loopback; see [model runtime and review](docs/MODEL_RUNTIME.md).
 
 ```sh
 pnpm typecheck
@@ -22,7 +22,7 @@ pnpm test
 python -m pytest worker/tests -q
 ```
 
-The worker requires the dependencies in `worker/requirements.txt`. Its Docker image pins LibreOffice 26.8.0. The Render blueprint defines the web and background-worker services; see [deployment instructions](docs/DEPLOYMENT.md).
+The worker requires the dependencies in `worker/requirements.txt`. Its Docker image pins LibreOffice 26.8.1. The Render blueprint defines the web and background-worker services; see [deployment instructions](docs/DEPLOYMENT.md).
 
 For the separately configured Cloudflare interface preview and GitHub deployment
 workflow, see [Cloudflare setup](docs/CLOUDFLARE.md). GitHub carries committed
@@ -39,6 +39,6 @@ The owner workspace includes private release preparation tools. The public regis
 
 This is an implementation awaiting model and deployment approval. Checkout is disabled by default. State Rent is registered as an unapproved candidate; the server and worker both reject customer execution until approval.
 
-Fresh LibreOffice recalculation is tested locally; approved Excel parity is still required. The outstanding 12% calculation / 15% label decision has not been silently changed. Google OAuth, production email delivery, Stripe test-mode acceptance, and the Render Docker deployment must be configured and verified before launch.
+Fresh LibreOffice recalculation and warm input changes are tested locally; approved Excel parity is still required. The new candidate uses a private compatibility runtime for eight nested LET expressions; the source workbook is unchanged. Details and release boundaries are in [model runtime and review](docs/MODEL_RUNTIME.md). The outstanding 12% calculation / 15% label decision has not been silently changed. Google OAuth, production email delivery, Stripe test-mode acceptance, and the Render Docker deployment must be configured and verified before launch.
 
 No private credentials belong in Git or in `NEXT_PUBLIC_` variables. Use Render's secret settings for server and worker credentials.
