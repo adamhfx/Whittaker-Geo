@@ -1,0 +1,50 @@
+name: Deploy GeoFlow preview
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geoflow-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check the original Next.js build
+        run: pnpm build
+      - name: Run application tests
+        run: pnpm test
+      - name: Build for Cloudflare Workers
+        run: pnpm build:vinext
+      - name: Check Cloudflare configuration and generated bindings
+        run: pnpm typecheck:cloudflare
+      - name: Deploy the preview application
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: "032b3907437b929309a3bb9c45964a13"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Add the CLOUDFLARE_API_TOKEN repository secret before deploying."
+            exit 1
+          fi
+          pnpm exec cf deploy --prebuilt

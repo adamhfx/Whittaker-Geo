@@ -19,3 +19,6 @@ docs/MODEL_REVIEW.md
 docs/ENGINE_VALIDATION.json
 docs/CALCULATION_PROOF.json
 review/
+/dist/
+.vinext/
+.cloudflare/
