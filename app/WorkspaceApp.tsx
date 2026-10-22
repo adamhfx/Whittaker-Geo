@@ -72,7 +72,7 @@ const when = (v: string) =>
 function Brand({ href = "/", onNavigate }: { href?: string; onNavigate?: () => void }) {
   return (
     <div className="brand">
-      <a className="brand-link" href={href} aria-label={href === "/" ? "GeoFlow Lab home" : "GeoFlow Lab overview"} onClick={(event) => {
+      <a className="brand-link" href={href} aria-label={href === "/" ? "Whittaker Geo home" : "Whittaker Geo overview"} onClick={(event) => {
         if (onNavigate && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) {
           event.preventDefault();
           onNavigate();
@@ -80,17 +80,17 @@ function Brand({ href = "/", onNavigate }: { href?: string; onNavigate?: () => v
       }}>
       <img
         className="logo-full"
-        src="/geoflow-lab-logo.png"
-        alt="GeoFlow Lab"
-        width="1337"
-        height="343"
+        src="/whittaker-geo-logo.png"
+        alt="Whittaker Geo"
+        width="2172"
+        height="724"
       />
       <img
         className="logo-compact"
-        src="/geoflow-lab-logo.png"
-        alt="GeoFlow Lab"
-        width="343"
-        height="343"
+        src="/whittaker-geo-icon.png"
+        alt="Whittaker Geo"
+        width="1280"
+        height="1280"
       />
       </a>
     </div>
@@ -188,6 +188,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [preview, request]);
   useEffect(() => {
     if (preview) return;
+    // The public landing page also works before sign-in is configured.
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setLoading(false);
+      return;
+    }
     refresh();
     const { data } = browserClient().auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -1666,7 +1671,7 @@ function CashChart({ result }: { result: Result }) {
         {[min, (min + max) / 2, max].map((v, i) => (
           <g key={i}>
             <line x1="45" x2="665" y1={y(v)} y2={y(v)} className="chart-grid" />
-            <text x="0" y={y(v) + 4} fontSize="10" fill="#6c7e81">
+            <text x="0" y={y(v) + 4} fontSize="10" fill="var(--muted)">
               {(v / 1e6).toFixed(0)}
             </text>
           </g>
@@ -1674,13 +1679,13 @@ function CashChart({ result }: { result: Result }) {
         <path
           d={path("contractorCumulative")}
           fill="none"
-          stroke="#128c82"
+          stroke="var(--primary)"
           strokeWidth="3"
         />
         <path
           d={path("stateCumulative")}
           fill="none"
-          stroke="#e58352"
+          stroke="var(--accent)"
           strokeWidth="3"
         />
         <text x="45" y="195" fontSize="11">

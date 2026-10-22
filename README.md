@@ -1,4 +1,4 @@
-# GeoFlow Lab
+# Whittaker Geo
 
 Subscription calculator service with a Next.js interface, Supabase accounts and private storage, Stripe billing, and an isolated Python/LibreOffice calculation worker.
 

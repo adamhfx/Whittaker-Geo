@@ -1,0 +1,15 @@
+/* Whittaker Geo: shared palette sampled from the approved logo. */
+:root {
+  color-scheme: light;
+  --brand-navy: #002d43;
+  --brand-navy-dark: #002236;
+  --brand-olive: #596238;
+  --brand-olive-dark: #444c2b;
+  --brand-olive-light: #dfe4c9;
+  --brand-ink: #173345;
+  --brand-muted: #596b75;
+  --brand-line: #dce2e3;
+  --brand-paper: #f8f9f6;
+  --brand-surface: #edf0e7;
+  --brand-wash: #f1f3eb;
+}

@@ -44,7 +44,7 @@ export default function AccountSettings({
       <section className="card" style={{ marginTop: 30, maxWidth: 760, padding: 28 }} aria-labelledby="profile-title">
         <div className="section-head" style={{ marginTop: 0 }}>
           <h2 id="profile-title">Profile</h2>
-          <UserRound size={20} aria-hidden="true" color="var(--teal)" />
+          <UserRound size={20} aria-hidden="true" color="var(--primary)" />
         </div>
         <div className="account-profile" style={{ display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid var(--line)", padding: "5px 0 23px" }}>
           {user.avatarUrl && !photoFailed ? (
@@ -63,7 +63,7 @@ export default function AccountSettings({
       <section className="card" style={{ marginTop: 16, maxWidth: 760, padding: 28 }} aria-labelledby="workspace-title">
         <div className="section-head" style={{ marginTop: 0 }}>
           <h2 id="workspace-title">Workspace access</h2>
-          <ShieldCheck size={20} aria-hidden="true" color="var(--teal)" />
+          <ShieldCheck size={20} aria-hidden="true" color="var(--primary)" />
         </div>
         <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
           {user.isAdmin && <button className="btn" type="button" onClick={onModels}><Wrench size={17} /> Manage calculator workbooks</button>}
@@ -75,7 +75,7 @@ export default function AccountSettings({
         <div className="section-head" style={{ marginTop: 0 }}>
           <h2 id="session-title">Session</h2>
         </div>
-        <p className="small">Sign out of GeoFlow Lab on this device.</p>
+        <p className="small">Sign out of Whittaker Geo on this device.</p>
         <button className="btn" type="button" onClick={onSignOut} disabled={busy} style={{ marginTop: 8 }}><LogOut size={17} /> {busy ? "Signing out…" : "Sign out"}</button>
       </section>
     </main>

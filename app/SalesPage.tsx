@@ -47,8 +47,8 @@ const benefits = [
 
 const faqs = [
   [
-    "What is GeoFlow Lab?",
-    "GeoFlow Lab is a focused workspace for running practical calculators with your own inputs, saving private scenarios, and keeping a durable record of each run.",
+    "What is Whittaker Geo?",
+    "Whittaker Geo is a focused workspace for running practical calculators with your own inputs, saving private scenarios, and keeping a durable record of each run.",
   ],
   [
     "Which calculators are available?",
@@ -92,14 +92,14 @@ export default function SalesPage({
     <main className="sales-page">
       <div className="sales-grain" aria-hidden="true" />
       <nav className="sales-nav" aria-label="Primary navigation">
-        <a className="sales-brand" href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "GeoFlow Lab overview" : "GeoFlow Lab home"}>
-          <img src="/geoflow-lab-logo.png" alt="GeoFlow Lab" />
+        <a className="sales-brand" href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "Whittaker Geo overview" : "Whittaker Geo home"}>
+          <img src="/whittaker-geo-logo.png" alt="Whittaker Geo" width="2172" height="724" />
         </a>
         <div
           id="sales-nav-links"
           className={`sales-nav-links ${menuOpen ? "is-open" : ""}`}
         >
-          <a href="#why">Why GeoFlow</a>
+          <a href="#why">Why Whittaker Geo</a>
           <a href="#how">How it works</a>
           <a href="#plans">Plans</a>
           <a href="#faq">FAQ</a>
@@ -140,7 +140,7 @@ export default function SalesPage({
             Understand your project economics. <em>Keep every scenario.</em>
           </h1>
           <p className="sales-hero-lede">
-            GeoFlow Lab gives gas and oil development decisions a clear home:
+            Whittaker Geo gives gas and oil development decisions a clear home:
             editable schedules, saved inputs, revisions, and results you can
             take into the wider workflow.
           </p>
@@ -159,13 +159,13 @@ export default function SalesPage({
         </div>
         <div
           className="sales-hero-art"
-          aria-label="A preview of a GeoFlow Lab calculator workspace"
+          aria-label="A preview of a Whittaker Geo calculator workspace"
         >
           <div className="sales-window-bar">
             <span />
             <span />
             <span />
-            <b>GEOfLOW / STATE RENT</b>
+            <b>WHITTAKER GEO / STATE RENT</b>
           </div>
           <div className="sales-window-body">
             <div className="sales-window-kicker">
@@ -196,7 +196,7 @@ export default function SalesPage({
 
       <section
         className="sales-proof-strip"
-        aria-label="GeoFlow Lab principles"
+        aria-label="Whittaker Geo principles"
       >
         <span>Built for thoughtful decisions</span>
         <i />
@@ -218,7 +218,7 @@ export default function SalesPage({
         </div>
         <div className="sales-section-body">
           <p>
-            Development economics change as assumptions change. GeoFlow Lab
+            Development economics change as assumptions change. Whittaker Geo
             gives your inputs, schedules, and outputs enough structure to
             compare scenarios without losing the thread.
           </p>
@@ -286,7 +286,7 @@ export default function SalesPage({
           <h2>State Rent Economics, with room to think.</h2>
           <p>
             State Rent Economics is currently awaiting model approval. It will
-            be the first focused calculator in GeoFlow Lab, with future models
+            be the first focused calculator in Whittaker Geo, with future models
             joining the same private workspace.
           </p>
         </div>
@@ -329,7 +329,7 @@ export default function SalesPage({
               $49.99 <small>/ month CAD</small>
             </h3>
             <p className="sales-plan-description">
-              Flexible access while you make GeoFlow part of your process.
+              Flexible access while you make Whittaker Geo part of your process.
             </p>
             <button
               className="sales-button sales-button-secondary"
@@ -433,7 +433,7 @@ export default function SalesPage({
           className="sales-button sales-button-primary"
           onClick={signedIn ? onWorkspace : onSignIn}
         >
-          {signedIn ? "Open your workspace" : "Start with GeoFlow"}
+          {signedIn ? "Open your workspace" : "Start with Whittaker Geo"}
           <ArrowRight size={18} />
         </button>
       </section>
@@ -443,9 +443,9 @@ export default function SalesPage({
         </div>
       )}
       <footer className="sales-footer">
-        <a href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "GeoFlow Lab overview" : "GeoFlow Lab home"}><img src="/geoflow-lab-logo.png" alt="GeoFlow Lab" /></a>
+        <a href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "Whittaker Geo overview" : "Whittaker Geo home"}><img src="/whittaker-geo-logo.png" alt="Whittaker Geo" width="2172" height="724" /></a>
         <span>Private tools for considered decisions.</span>
-        <span>© GeoFlow Lab</span>
+        <span>© Whittaker Geo</span>
       </footer>
     </main>
   );
