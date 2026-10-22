@@ -1,0 +1,273 @@
+import type { Annual, InputValues, Result } from "./types";
+
+export type OutputCellValue = string | number | null;
+export type OutputCell = {
+  column: number;
+  value: OutputCellValue;
+  format?: string;
+};
+export type OutputRow = { cells: OutputCell[] };
+export type OutputSheet = { name: string; rows: OutputRow[] };
+export type OutputView = { id: string; name: string; sheet: string };
+
+export type LiveCalculationResult = {
+  calculatorId: string;
+  calculatorVersion: string;
+  outputSheets: OutputSheet[];
+  durationSeconds: number;
+  metrics?: Result["metrics"];
+  annual?: Annual[];
+};
+
+export function liveEvaluationKey(
+  calculatorId: string,
+  version: string,
+  inputs: InputValues,
+): string {
+  const inputKey = JSON.stringify(
+    Object.keys(inputs)
+      .sort()
+      .map((id) => [id, inputs[id]]),
+  );
+  return JSON.stringify([calculatorId, version, inputKey]);
+}
+
+export type EvaluationLease = {
+  signal: AbortSignal;
+  isCurrent: () => boolean;
+};
+
+/** Aborts old network work and gives each request a token that can reject late responses. */
+export class LatestEvaluationGate {
+  private generation = 0;
+  private controller: AbortController | null = null;
+
+  begin(): EvaluationLease {
+    this.controller?.abort();
+    const controller = new AbortController();
+    const generation = ++this.generation;
+    this.controller = controller;
+
+    return {
+      signal: controller.signal,
+      isCurrent: () =>
+        generation === this.generation &&
+        this.controller === controller &&
+        !controller.signal.aborted,
+    };
+  }
+
+  invalidate() {
+    this.generation += 1;
+    this.controller?.abort();
+    this.controller = null;
+  }
+}
+
+export function scheduleDebouncedEvaluation(
+  callback: () => void,
+  delayMs = 450,
+): () => void {
+  const timer = setTimeout(callback, delayMs);
+  return () => clearTimeout(timer);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isMetrics(value: unknown): value is Result["metrics"] {
+  return (
+    isRecord(value) &&
+    isFiniteNumber(value.contractorNpv10) &&
+    isFiniteNumber(value.stateNpv10) &&
+    isFiniteNumber(value.contractorCashFlow) &&
+    isFiniteNumber(value.capitalInvestment) &&
+    (value.irr === null || isFiniteNumber(value.irr)) &&
+    (value.payoutYear === null || isFiniteNumber(value.payoutYear))
+  );
+}
+
+function isAnnual(value: unknown): value is Annual {
+  return (
+    isRecord(value) &&
+    isFiniteNumber(value.year) &&
+    isFiniteNumber(value.contractor) &&
+    isFiniteNumber(value.contractorCumulative) &&
+    isFiniteNumber(value.state) &&
+    isFiniteNumber(value.stateCumulative) &&
+    isFiniteNumber(value.capex) &&
+    isFiniteNumber(value.opex) &&
+    isFiniteNumber(value.gas) &&
+    isFiniteNumber(value.oil)
+  );
+}
+
+function isOutputCell(value: unknown): value is OutputCell {
+  return (
+    isRecord(value) &&
+    Number.isInteger(value.column) &&
+    (value.column as number) >= 1 &&
+    (value.column as number) <= 16_384 &&
+    (value.value === null ||
+      typeof value.value === "string" ||
+      isFiniteNumber(value.value)) &&
+    (value.format === undefined || typeof value.format === "string")
+  );
+}
+
+function isOutputSheet(value: unknown): value is OutputSheet {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    value.name.length > 0 &&
+    Array.isArray(value.rows) &&
+    value.rows.every((row) => {
+      if (!isRecord(row) || !Array.isArray(row.cells)) return false;
+      const columns = new Set<number>();
+      for (const cell of row.cells) {
+        if (!isOutputCell(cell) || columns.has(cell.column)) return false;
+        columns.add(cell.column);
+      }
+      return true;
+    })
+  );
+}
+
+export function isLiveCalculationResult(
+  value: unknown,
+): value is LiveCalculationResult {
+  return (
+    isRecord(value) &&
+    typeof value.calculatorId === "string" &&
+    typeof value.calculatorVersion === "string" &&
+    Array.isArray(value.outputSheets) &&
+    value.outputSheets.every(isOutputSheet) &&
+    isFiniteNumber(value.durationSeconds) &&
+    value.durationSeconds >= 0 &&
+    (value.metrics === undefined || isMetrics(value.metrics)) &&
+    (value.annual === undefined ||
+      (Array.isArray(value.annual) && value.annual.every(isAnnual)))
+  );
+}
+
+export async function requestLiveCalculation(
+  calculatorId: string,
+  version: string,
+  inputs: InputValues,
+  signal: AbortSignal,
+  fetcher: typeof fetch = fetch,
+): Promise<LiveCalculationResult> {
+  const response = await fetcher(
+    `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ version, inputs }),
+      signal,
+    },
+  );
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    const message =
+      isRecord(payload) && typeof payload.error === "string"
+        ? payload.error
+        : `The calculation request failed (${response.status}).`;
+    throw new Error(message);
+  }
+  const resultPayload =
+    isRecord(payload) && "result" in payload ? payload.result : payload;
+  if (!isLiveCalculationResult(resultPayload))
+    throw new Error(
+      "The calculation returned results in an unexpected format.",
+    );
+  if (
+    resultPayload.calculatorId !== calculatorId ||
+    resultPayload.calculatorVersion !== version
+  )
+    throw new Error(
+      "The results came from a different calculator version. Try again.",
+    );
+
+  return resultPayload;
+}
+
+function numberFormatOptions(format: string) {
+  const sections = format.split(";");
+  const positive = sections[0] || "General";
+  const numberPattern = positive
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/"[^"]*"/g, "");
+  const decimals = numberPattern.match(/\.([0#?]+)/)?.[1];
+  const isGeneral = !format || /^General$|^@$/i.test(positive.trim());
+  return {
+    positive,
+    negative: sections[1] || "",
+    zero: sections[2] || "",
+    numberPattern,
+    decimals,
+    isGeneral,
+  };
+}
+
+/** Formats common workbook number formats while rendering all strings as plain text. */
+export function formatOutputValue(value: OutputCellValue, format = ""): string {
+  if (value === null) return "";
+  if (typeof value === "string") return value;
+  if (!Number.isFinite(value)) return "";
+
+  const sections = numberFormatOptions(format);
+  if (value === 0 && sections.zero) {
+    const zeroLiteral = sections.zero
+      .replace(/\[[^\]]+\]/g, "")
+      .replace(/"/g, "")
+      .trim();
+    if (/^[-–—]$/.test(zeroLiteral)) return zeroLiteral;
+  }
+
+  const pattern =
+    value < 0 && sections.negative ? sections.negative : sections.positive;
+  const cleanPattern = pattern
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/"[^"]*"/g, "");
+  const decimals = cleanPattern.match(/\.([0#?]+)/)?.[1];
+  if (/[Ee][+-]?[0#?]+/.test(cleanPattern))
+    return value.toExponential(decimals?.length ?? 2).replace("e", "E");
+
+  const percent = cleanPattern.includes("%");
+  const currencyCode =
+    /\[\$([A-Z]{3})(?:-[^\]]*)?\]/i.exec(format)?.[1]?.toUpperCase() ??
+    /\b(USD|CAD|EUR|GBP)\b/i.exec(format)?.[1]?.toUpperCase();
+  const currencySymbol = /[$€£¥]/.exec(format)?.[0];
+  const absoluteValue = Math.abs(value) * (percent ? 100 : 1);
+  const isGeneral = sections.isGeneral;
+  const minFractionDigits = decimals?.match(/0/g)?.length ?? 0;
+  const maxFractionDigits = isGeneral ? 8 : (decimals?.length ?? 0);
+  let formatted = new Intl.NumberFormat("en-CA", {
+    useGrouping: cleanPattern.includes(","),
+    minimumFractionDigits: minFractionDigits,
+    maximumFractionDigits: Math.max(minFractionDigits, maxFractionDigits),
+  }).format(absoluteValue);
+
+  if (currencyCode) formatted = `${currencyCode} ${formatted}`;
+  else if (currencySymbol) formatted = `${currencySymbol}${formatted}`;
+  if (percent) formatted += "%";
+  if (value < 0) {
+    if (pattern.includes("(") && pattern.includes(")")) return `(${formatted})`;
+    return `-${formatted}`;
+  }
+  return formatted;
+}
