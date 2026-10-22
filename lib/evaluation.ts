@@ -82,20 +82,22 @@ export function parseLiveResult(value: unknown, manifest: Manifest): LiveResult 
   return result;
 }
 
-export function engineEndpoint(configured: string | undefined, development = false) {
+export function engineEndpoint(configured: string | undefined, development = false, action: "evaluate" | "export" = "evaluate") {
   if (!configured) throw new Error("ENGINE_NOT_CONFIGURED");
   const url = new URL(configured);
   if (url.username || url.password || url.search || url.hash ||
     (url.protocol !== "https:" && !(development && url.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname))))
     throw new Error("ENGINE_NOT_CONFIGURED");
-  url.pathname = url.pathname.replace(/\/$/, "") + "/evaluate";
+  url.pathname = url.pathname.replace(/\/$/, "") + "/" + action;
   return url.toString();
 }
 
-export async function evaluateDraft(options: {
+type EvaluationOptions = {
   manifest: Manifest; inputs: InputValues; requesterId: string; signal: AbortSignal;
   endpoint: string; secret: string; fetcher?: typeof fetch;
-}): Promise<LiveResult> {
+};
+
+async function enginePayload(options: EvaluationOptions, maxLength: number): Promise<unknown> {
   let response: Response;
   try {
     response = await (options.fetcher ?? fetch)(options.endpoint, {
@@ -126,16 +128,33 @@ export async function evaluateDraft(options: {
     if (options.signal.aborted) throw error;
     throw new EngineEvaluationError("connection_failed");
   }
-  if (text.length > 2_000_000) throw new EngineEvaluationError("invalid_result");
+  if (text.length > maxLength) throw new EngineEvaluationError("invalid_result");
   let value: unknown;
   try {
     value = JSON.parse(text);
   } catch {
     throw new EngineEvaluationError("invalid_json");
   }
+  return value;
+}
+
+export async function evaluateDraft(options: EvaluationOptions): Promise<LiveResult> {
+  const value = await enginePayload(options, 2_000_000);
+  try { return parseLiveResult(value, options.manifest); }
+  catch { throw new EngineEvaluationError("invalid_result"); }
+}
+
+export async function evaluateSavedDraft(options: EvaluationOptions): Promise<{ result: LiveResult; workbook: Uint8Array }> {
+  const value = await enginePayload(options, 3_400_000);
   try {
-    return parseLiveResult(value, options.manifest);
-  } catch {
-    throw new EngineEvaluationError("invalid_result");
-  }
+    if (!value || typeof value !== "object") throw new Error();
+    const payload = value as Record<string, unknown>;
+    const encoded = payload.xlsxBase64;
+    if (typeof encoded !== "string" || encoded.length > 1_333_336 ||
+        (encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded))) throw new Error();
+    const workbook = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    if (workbook.length < 4 || workbook.length > 1_000_000 ||
+        workbook[0] !== 80 || workbook[1] !== 75 || workbook[2] !== 3 || workbook[3] !== 4) throw new Error();
+    return { result: parseLiveResult(payload.result, options.manifest), workbook };
+  } catch { throw new EngineEvaluationError("invalid_result"); }
 }

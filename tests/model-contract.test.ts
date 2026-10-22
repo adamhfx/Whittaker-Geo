@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { publicManifest } from "../lib/public-manifest";
-import { EngineEvaluationError, engineEndpoint, evaluateDraft, parseLiveResult } from "../lib/evaluation";
+import { EngineEvaluationError, engineEndpoint, evaluateDraft, evaluateSavedDraft, parseLiveResult } from "../lib/evaluation";
 import { validateInputs } from "../lib/validation";
 import type { Manifest } from "../lib/types";
 
@@ -144,4 +144,22 @@ test("engine request aborts preserve the original abort reason", async () => {
   controller.abort(abortReason);
   const fetcher = (async () => { throw abortReason; }) as typeof fetch;
   await assert.rejects(evaluateWith(fetcher, controller.signal), (error: unknown) => error === abortReason);
+});
+
+test("saved export transport validates version and bounded XLSX bytes", async () => {
+  const bytes = Buffer.from([80, 75, 3, 4, 1, 2, 3]);
+  const options = { manifest, inputs: { A1: 4 }, requesterId: "server-user",
+    endpoint: engineEndpoint("https://engine.test", false, "export"), secret: "server-only",
+    signal: new AbortController().signal };
+  assert.equal(options.endpoint, "https://engine.test/export");
+  const reply = (payload: unknown) => async () => new Response(JSON.stringify(payload));
+  const valid = await evaluateSavedDraft({ ...options, fetcher: reply({ result, xlsxBase64: bytes.toString("base64") }) });
+  assert.deepEqual(Array.from(valid.workbook), Array.from(bytes));
+  assert.equal(JSON.stringify(valid.result).includes("SECRET"), false);
+  for (const payload of [
+    { result, xlsxBase64: Buffer.from("not a workbook").toString("base64") },
+    { result: { ...result, calculatorVersion: "wrong" }, xlsxBase64: bytes.toString("base64") },
+    { result, xlsxBase64: "A".repeat(1_333_340) },
+    { result, xlsxBase64: "!!!!" },
+  ]) await assert.rejects(evaluateSavedDraft({ ...options, fetcher: reply(payload) }), /ENGINE_FAILED/);
 });

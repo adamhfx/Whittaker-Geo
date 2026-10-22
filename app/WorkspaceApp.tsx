@@ -228,22 +228,31 @@ export default function App({ preview = false }: { preview?: boolean }) {
       return;
     const id = selectedRun.id;
     let cancelled = false;
-    const poll = setInterval(async () => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    async function processRun() {
       try {
-        const { run } = await request("/api/runs/" + id);
-        if (!cancelled) {
-          setSelectedRun(run);
-          setRuns((old) => old.map((r) => (r.id === id ? run : r)));
-        }
-      } catch (e) {
-        if (!cancelled) setError((e as Error).message);
+        const { run } = await request("/api/runs/" + id + "/process", {
+          method: "POST", signal: controller.signal,
+        });
+        if (cancelled) return;
+        setSelectedRun(run);
+        setRuns((old) => old.map((r) => (r.id === id ? run : r)));
+        if (!["queued", "running"].includes(run.status)) return;
+      } catch {
+        if (cancelled) return;
+        // The immutable job survives a lost response. Retry its ID instead of
+        // submitting another run or discarding its saved input snapshot.
       }
-    }, 2500);
+      if (!cancelled) timer = setTimeout(() => void processRun(), 5000);
+    }
+    void processRun();
     return () => {
       cancelled = true;
-      clearInterval(poll);
+      controller.abort();
+      if (timer) clearTimeout(timer);
     };
-  }, [selectedRun?.id, selectedRun?.status, request]);
+  }, [selectedRun?.id, selectedRun && ["queued", "running"].includes(selectedRun.status), request]);
   const editable = preview || !!workspace?.canWrite;
   const catalog: CatalogItem[] = preview
     ? [
@@ -1631,9 +1640,12 @@ function Results({
         </section>
       ) : !result ? (
         <div role="status" className="notice">
-          {run.status === "queued"
-            ? "Your calculation is queued."
-            : "Calculating the baseline and sensitivity scenarios. This may take several minutes."}
+          <span className="loading-spinner" aria-hidden="true" />
+          <span>{run.status === "queued"
+            ? "Preparing your saved results and Excel file…"
+            : "Calculating and preparing your Excel file…"}
+            <span className="small" style={{ display: "block" }}>The first run after inactivity may take one to two minutes. Keep this page open; reopening it resumes an interrupted run.</span>
+          </span>
         </div>
       ) : (
         <>

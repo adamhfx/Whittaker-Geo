@@ -680,8 +680,8 @@ def export_preview_results(
     chart_formula_refs: list[str] = []
     try:
         book.set_properties({
-            "title": "GeoFlow calculation results",
-            "author": "GeoFlow",
+            "title": "Whittaker Geo calculation results",
+            "author": "Whittaker Geo",
             "comments": "Values-only mapped model outputs.",
         })
         for view in views:

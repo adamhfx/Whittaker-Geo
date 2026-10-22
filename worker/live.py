@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import base64
 import hmac
 import json
 import math
@@ -253,7 +254,7 @@ class PreviewService:
         except (UnicodeEncodeError, TypeError):
             return False
 
-    def evaluate(self, raw: bytes) -> dict[str, Any]:
+    def evaluate(self, raw: bytes, *, export: bool = False) -> dict[str, Any]:
         calculator_id, version, inputs, requester_id = _parse_body(raw)
         if not self.limiter.allow(requester_id):
             raise LiveError(429, "RATE_LIMITED")
@@ -274,10 +275,19 @@ class PreviewService:
                         template,
                         manifest,
                         inputs,
-                        timeout=self.timeout,
+                        timeout=90 if export else self.timeout,
                         workdir=temp,
                     )
-                    return _validate_result(result, calculator_id, version, manifest)
+                    validated = _validate_result(result, calculator_id, version, manifest)
+                    if export:
+                        from .export_evaluation import export_evaluation
+                        output = Path(temp) / 'result.xlsx'
+                        export_evaluation(template, manifest, validated, output)
+                        data = output.read_bytes()
+                        if len(data) > 1_000_000:
+                            raise LiveError(502, "CALCULATION_FAILED")
+                        return {"result": validated, "xlsxBase64": base64.b64encode(data).decode('ascii')}
+                    return validated
                 except PreviewError as exc:
                     status = 404 if exc.code == "MODEL_UNAVAILABLE" else (
                         400 if exc.code in {"INVALID_REQUEST", "OUTPUT_MAPPING_INVALID"} else 422
@@ -329,7 +339,7 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
         self._respond(404, {"error": "NOT_FOUND"})
 
     def do_POST(self) -> None:
-        if self.path != "/evaluate":
+        if self.path not in {"/evaluate", "/export"}:
             self._respond(404, {"error": "NOT_FOUND"})
             return
         if not self.server.service.authenticated(self.headers.get("X-GeoFlow-Engine-Secret")):
@@ -351,9 +361,9 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
             self._respond(400, {"error": "INVALID_REQUEST"})
             return
         try:
-            result = self.server.service.evaluate(raw)
+            result = self.server.service.evaluate(raw, export=self.path == "/export")
             body = json.dumps(result, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")
-            if len(body) > MAX_RESPONSE_BYTES:
+            if len(body) > MAX_RESPONSE_BYTES + (1_400_000 if self.path == "/export" else 0):
                 self._respond(502, {"error": "CALCULATION_FAILED"})
                 return
             self.send_response(200)
