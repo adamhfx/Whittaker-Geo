@@ -140,3 +140,44 @@
     transition: none;
   }
 }
+
+
+/* Topic guides stay compact; detailed notes open only when needed. */
+.help-dialog--guide { width:min(800px,calc(100vw - 24px)); }
+.help-guide__hint { font-size:12px; margin:0 0 14px !important; color:var(--muted); }
+.help-guide__topics { display:grid; gap:10px; }
+.help-guide__topic { border:1px solid var(--line); border-radius:12px; overflow:clip; }
+.help-guide__topic > summary {
+  align-items:center; background:var(--brand-paper,#f7f8f5); cursor:pointer;
+  display:flex; gap:14px; justify-content:space-between; list-style:none; padding:15px 17px;
+}
+.help-guide__topic > summary::-webkit-details-marker { display:none; }
+.help-guide__topic > summary:hover { background:var(--brand-wash,#f1f3eb); }
+.help-guide__topic > summary:focus-visible { outline:2px solid var(--primary); outline-offset:-3px; }
+.help-guide__topic > summary h3 { display:flex; align-items:baseline; gap:11px; font-size:16px; line-height:1.4; margin:0; color:var(--ink); }
+.help-guide__number { font-size:11px; color:var(--muted); font-weight:500; flex-shrink:0; }
+.help-guide__topic > summary > svg { flex-shrink:0; color:var(--primary); transition:transform 150ms ease; }
+.help-guide__topic[open] > summary { border-bottom:1px solid var(--line); }
+.help-guide__topic[open] > summary > svg { transform:rotate(180deg); }
+.help-guide__content { display:grid; gap:17px; font-size:14px; line-height:1.55; }
+.help-guide__topic .help-guide__content { padding:18px; }
+.help-dialog__body .help-guide__content p { margin:0; }
+.help-guide__content h4 { color:var(--primary); font-size:12px; font-weight:700; margin:0 0 7px; }
+.help-guide__entry { background:var(--brand-paper,#f7f8f5); border-radius:8px; padding:13px 15px; }
+.help-guide__entry ul { margin:0; padding-left:18px; columns:2; column-gap:28px; }
+.help-guide__entry li { break-inside:avoid; padding-left:2px; margin:0 0 5px; }
+.help-guide__model { padding-inline:2px; }
+.help-guide__review { display:flex; gap:10px; align-items:flex-start; background:var(--brand-wash,#f1f3eb); border-left:3px solid var(--brand-olive,#5f6b44); border-radius:0 8px 8px 0; padding:12px 14px; }
+.help-guide__review > svg { color:var(--brand-olive,#5f6b44); flex-shrink:0; margin-top:1px; }
+.help-guide__review h4 { margin-bottom:3px; }
+@media(max-width:520px) {
+  .help-guide__topic > summary { padding:13px; gap:10px; }
+  .help-guide__topic > summary h3 { font-size:15px; gap:8px; }
+  .help-guide__topic .help-guide__content { padding:14px; }
+  .help-guide__entry ul { columns:1; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .help-guide__topic > summary > svg { transition:none; }
+}
+
+.help-guide__single-title { color:var(--ink); font-size:16px; margin:0 0 14px; }

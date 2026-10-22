@@ -75,3 +75,7 @@ The saved-run implementation uses the existing queue and retains each project's 
 ## User Guide presentation
 
 `lib/model-guide.json` contains display-only notes derived from the source workbook's User Guide. Production public metadata and the generated preview use the same version-scoped mapping. Broad reservoir topics belong to the section guide: they are not copied onto 23 unrelated field buttons. The other 172 input notes identify their specific field, year or capacity tier and retain the applicable entry, model-use and review guidance. Fields without a dedicated note omit the info button. The approved numerical manifest, model checksum, input defaults and calculation rules are unchanged.
+
+Section guides render as native expandable topics, with one topic open at a time, labelled entry guidance, model-use explanations and a highlighted review note. Long semicolon-separated entry requirements become readable lists. Short field notes retain the same labelled structure without an accordion. The content is unchanged; the existing return, Escape, outside-click, focus-restoration and reduced-motion behavior remains in place.
+
+The annual-results table is an inner horizontal scrolling view. Its vertical overscroll behavior must remain `auto` so wheel movement can reach the containing results pane (or the document on saved-result pages). Containing both axes blocks the wheel over a table that has no vertical scroll range. The outer desktop panes continue containing vertical movement at their own boundaries to preserve independent scrolling.

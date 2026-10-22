@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, Info } from "lucide-react";
 import "./help-dialog.css";
+import { organizeHelp } from "@/lib/help-content";
+import { HelpContent } from "./HelpContent";
 
 type HelpDialogProps = {
   title: string;
@@ -10,12 +12,6 @@ type HelpDialogProps = {
   triggerLabel?: string;
 };
 
-function splitParagraphs(body: string): string[] {
-  return body
-    .split(/\r?\n[ \t]*\r?\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-}
 
 export function HelpDialog({
   title,
@@ -28,7 +24,7 @@ export function HelpDialog({
   const id = useId();
   const titleId = `${id}-title`;
   const bodyId = `${id}-body`;
-  const paragraphs = splitParagraphs(body);
+  const topics = organizeHelp(body);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,9 +84,8 @@ export function HelpDialog({
       <dialog
         ref={dialogRef}
         id={`${id}-dialog`}
-        className="help-dialog"
+        className={`help-dialog${topics.length > 1 ? " help-dialog--guide" : ""}`}
         aria-labelledby={titleId}
-        aria-describedby={bodyId}
         data-state="closed"
         onCancel={(event) => {
           event.preventDefault();
@@ -119,13 +114,7 @@ export function HelpDialog({
             </button>
           </header>
           <div id={bodyId} className="help-dialog__body">
-            {paragraphs.length > 0 ? (
-              paragraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))
-            ) : (
-              <p>{body}</p>
-            )}
+            {isOpen && <HelpContent topics={topics} accordionName={`${id}-topics`} />}
           </div>
         </section>
       </dialog>

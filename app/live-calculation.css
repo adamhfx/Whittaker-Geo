@@ -163,7 +163,10 @@
   border-radius: 10px;
   max-width: 100%;
   overflow: auto;
-  overscroll-behavior: contain;
+  /* This view scrolls sideways. Vertical wheel gestures must reach the
+     containing results pane instead of stopping at this inner boundary. */
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
 }
 .live-calculation__table {
   min-width: 100%;
