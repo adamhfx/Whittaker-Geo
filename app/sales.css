@@ -715,7 +715,7 @@
 .sales-faq-question svg {
   color: var(--brand-olive);
   flex: none;
-  transition: transform 60ms ease-out;
+  transition: transform 40ms ease-out;
 }
 .sales-faq-question[aria-expanded="true"] svg {
   transform: rotate(180deg);
@@ -723,7 +723,7 @@
 .sales-faq-answer {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 60ms ease-out;
+  transition: grid-template-rows 40ms ease-out;
 }
 .sales-faq-item.is-open .sales-faq-answer {
   grid-template-rows: 1fr;
