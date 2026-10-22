@@ -1323,7 +1323,7 @@ function Auth({
           <Brand />
         </div>
         <div className="eyebrow">Project economics, made accessible</div>
-        <h1 className="title">Welcome to your lab.</h1>
+        <h1 className="title">Welcome to Whittaker Geo</h1>
         <p className="subtitle">
           Create scenarios, compare outcomes, and keep your work in one private
           workspace.
@@ -1377,9 +1377,6 @@ function Auth({
             Email me a sign-in link
           </button>
         </form>
-        <a className="preview-link" href="/preview">
-          Explore the interface preview <ArrowRight size={14} />
-        </a>
       </section>
     </main>
   );
