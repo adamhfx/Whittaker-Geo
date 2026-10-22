@@ -32,6 +32,25 @@ def manifest():
     }
 
 
+def presentation_manifest():
+    model = manifest()
+    model["presentation"] = {
+        "summary": [{
+            "section": "Investor", "label": "NPV", "labelCell": "A1",
+            "valueCell": "B1", "sheet": SHEET, "unit": "MM USD",
+        }],
+        "charts": [{
+            "title": "Production", "sheet": SHEET, "anchor": "D1:H8",
+            "type": ["lineChart"],
+            "chartGroups": [{"type": "lineChart", "barDirection": None, "grouping": "standard"}],
+            "categoryRange": None,
+            "categoryMode": "implicit point index; workbook has no category reference",
+            "series": [{"name": "Gas production", "sheet": "MODEL Dashboard", "range": "A1:A2"}],
+        }],
+    }
+    return model
+
+
 def fake_loader(calculator_id, version, template_path, **kwargs):
     assert calculator_id == CALCULATOR and version == VERSION
     assert kwargs["supabase_url"] == "https://supabase.test"
@@ -114,6 +133,54 @@ def test_service_rejects_unknown_output_mapping_and_bad_result_values():
         service(evaluator=wrong_sheet).evaluate(body())
     assert (caught.value.status, caught.value.code) == (502, "CALCULATION_FAILED")
 
+
+def test_service_allowlists_presentation_values_and_rejects_bad_chart_values():
+    def loader(calculator_id, version, template_path, **kwargs):
+        template_path.write_bytes(b"synthetic template")
+        return presentation_manifest()
+
+    def evaluator(*args, **kwargs):
+        return {
+            **fake_evaluator(*args, **kwargs),
+            "summary": [{
+                "section": "Investor", "label": "NPV", "value": 125.5,
+                "format": '$#,##0.0', "unit": "MM USD", "sheet": "Internal", "formula": "=secret()",
+            }],
+            "charts": [{
+                "title": "Production", "kind": "line", "categories": [1, 2],
+                "series": [{"name": "Gas production", "values": [10.0, 9.0], "sourceSheet": "MODEL Dashboard"}],
+            }],
+        }
+
+    result = service(model_loader=loader, evaluator=evaluator).evaluate(body())
+    assert result["summary"] == [{
+        "label": "NPV", "value": 125.5, "section": "Investor",
+        "format": '$#,##0.0', "unit": "MM USD",
+    }]
+    assert result["charts"] == [{
+        "title": "Production", "kind": "line", "categories": [1, 2],
+        "series": [{"name": "Gas production", "values": [10.0, 9.0]}],
+    }]
+    assert "Internal" not in json.dumps(result) and "secret()" not in json.dumps(result)
+
+    def bad_chart(*args, **kwargs):
+        result = evaluator(*args, **kwargs)
+        result["charts"][0]["series"][0]["values"] = [10.0, True]
+        return result
+
+    with pytest.raises(LiveError) as caught:
+        service(model_loader=loader, evaluator=bad_chart).evaluate(body())
+    assert (caught.value.status, caught.value.code) == (502, "CALCULATION_FAILED")
+
+    def oversized_summary(*args, **kwargs):
+        result = evaluator(*args, **kwargs)
+        result["summary"][0]["value"] = "x" * 501
+        return result
+
+    with pytest.raises(LiveError) as caught:
+        service(model_loader=loader, evaluator=oversized_summary).evaluate(body())
+    assert (caught.value.status, caught.value.code) == (502, "CALCULATION_FAILED")
+
     def nonfinite(*args, **kwargs):
         result = fake_evaluator(*args, **kwargs)
         result["outputSheets"][0]["rows"][0]["cells"][1]["value"] = float("nan")
@@ -131,6 +198,17 @@ def test_sliding_window_rate_limit_is_per_requester():
     assert not limiter.allow("first", now=102)
     assert limiter.allow("second", now=102)
     assert limiter.allow("first", now=111)
+
+
+def test_sliding_window_limiter_expires_requester_entries_and_caps_unique_users(monkeypatch):
+    monkeypatch.setattr("worker.live.MAX_TRACKED_USERS", 2)
+    limiter = SlidingWindowLimiter(limit=2, window=10)
+    assert limiter.allow("first", now=100)
+    assert limiter.allow("second", now=100)
+    assert not limiter.allow("third", now=101)
+    assert len(limiter._calls) == 2
+    assert limiter.allow("third", now=110)
+    assert set(limiter._calls) == {"third"}
 
 
 def test_http_entrypoint_requires_secret_and_marks_responses_private():
@@ -154,6 +232,11 @@ def test_http_entrypoint_requires_secret_and_marks_responses_private():
             assert response.headers["Cache-Control"] == "no-store, private"
             assert payload["calculatorVersion"] == VERSION
             assert payload["outputSheets"][0]["name"] == SHEET
+
+        health = urllib.request.Request(url.rsplit("/", 1)[0] + "/health", method="GET")
+        with urllib.request.urlopen(health, timeout=2) as response:
+            assert response.status == 200
+            assert json.loads(response.read()) == {"status": "ok"}
     finally:
         server.shutdown()
         server.server_close()

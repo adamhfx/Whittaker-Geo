@@ -9,10 +9,12 @@ import pytest
 from worker.engine import ModelError, validate_inputs
 from worker.model_preview import (
     PreviewError,
+    _presentation_specs,
     evaluate_template,
     inspect_preview_export,
     normalize_model_inputs,
     scan_formula_errors,
+    serialize_presentation,
     serialize_output_sheets,
     run_saved_model,
 )
@@ -51,6 +53,90 @@ def manifest():
             ]
         },
     }
+
+
+def presentation_manifest():
+    model = manifest()
+    model["outputs"]["views"] = [
+        {
+            "id": "dashboard", "label": "Dashboard", "sheet": "Executive OUTPUT",
+            "sourceRange": "A1:D3",
+        },
+        {
+            "id": "annual", "label": "Annual results", "sheet": "Annual OUTPUT",
+            "sourceRange": "A1:B2",
+        },
+    ]
+    implicit_categories = "implicit point index; workbook has no category reference"
+    model["presentation"] = {
+        "summary": [{
+            "section": "Investor", "label": "NPV", "labelCell": "A1",
+            "valueCell": "B1", "sheet": "Executive OUTPUT", "unit": "MM USD",
+        }],
+        "charts": [
+            {
+                "title": "Type Well Gas Production", "sheet": "Executive OUTPUT",
+                "anchor": "A4:C12", "type": ["lineChart"],
+                "chartGroups": [{"type": "lineChart", "barDirection": None, "grouping": "standard"}],
+                "categorySheet": None, "categoryRange": None, "categoryMode": implicit_categories,
+                "series": [{"name": "Gas Production (MM m3/year)", "sheet": "MODEL Dashboard", "range": "A1:A3"}],
+            },
+            {
+                "title": "Annual Field Production", "sheet": "Executive OUTPUT",
+                "anchor": "D4:F12", "type": ["barChart"],
+                "chartGroups": [{"type": "barChart", "barDirection": "col", "grouping": "clustered"}],
+                "categorySheet": None, "categoryRange": None, "categoryMode": implicit_categories,
+                "series": [
+                    {"name": "Oil / Liquids (MM boe/year)", "sheet": "Executive OUTPUT", "range": "D1:D3"},
+                    {"name": "Gas Equivalent (MM boe/year)", "sheet": "MODEL Dashboard", "range": "B1:B3"},
+                ],
+            },
+            {
+                "title": "Cash Flow and Capex Summary", "sheet": "Executive OUTPUT",
+                "anchor": "G4:I12", "type": ["barChart"],
+                "chartGroups": [{"type": "barChart", "barDirection": "col", "grouping": "clustered"}],
+                "categorySheet": None, "categoryRange": None, "categoryMode": implicit_categories,
+                "series": [
+                    {"name": "Investor CF (MM USD/year)", "sheet": "MODEL Dashboard", "range": "C1:C3"},
+                    {"name": "State CF (MM USD/year)", "sheet": "MODEL Dashboard", "range": "D1:D3"},
+                    {"name": "Project Capex (MM USD/year)", "sheet": "MODEL Dashboard", "range": "E1:E3"},
+                ],
+            },
+        ],
+    }
+    return model
+
+
+def test_presentation_mappings_enforce_client_summary_chart_limits():
+    model = presentation_manifest()
+    model["presentation"]["summary"] *= 31
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
+
+    model = presentation_manifest()
+    model["presentation"]["summary"][0]["label"] = "L" * 121
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
+
+    model = presentation_manifest()
+    model["presentation"]["charts"][0]["series"] *= 11
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
+
+    model = presentation_manifest()
+    model["presentation"]["charts"][0]["title"] = "T" * 121
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
+
+    model = presentation_manifest()
+    model["presentation"]["charts"][0]["series"][0]["name"] = "N" * 101
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
+
+    model = presentation_manifest()
+    model["presentation"]["charts"][0]["series"][0]["range"] = "A1:A101"
+    with pytest.raises(PreviewError, match="OUTPUT_MAPPING_INVALID"):
+        _presentation_specs(model)
 
 
 def test_preview_maps_input_ids_to_ui_cells_and_returns_only_visible_values(tmp_path, monkeypatch):
@@ -230,6 +316,69 @@ def test_saved_model_dispatch_exports_only_mapped_visible_values(tmp_path, monke
     assert exported["Executive OUTPUT"]["E1"].value is None
     assert not any(cell.data_type == "f" for row in exported["Executive OUTPUT"] for cell in row)
     exported.close()
+
+
+def test_saved_presentation_rebuilds_charts_and_exports_only_allowlisted_values(tmp_path, monkeypatch):
+    source = tmp_path / "presentation.xlsx"
+    book = openpyxl.Workbook()
+    ui = book.active
+    ui.title = "UI"
+    ui["B2"] = 10
+    ui["B3"] = "X"
+    dashboard = book.create_sheet("Executive OUTPUT")
+    dashboard["A1"] = "NPV"
+    dashboard["B1"] = 125.5
+    dashboard["B1"].number_format = '$#,##0.0'
+    dashboard["D1"], dashboard["D2"], dashboard["D3"] = 1, 2, 3
+    dashboard["E1"] = "Outside mapped range"
+    annual = book.create_sheet("Annual OUTPUT")
+    annual["A1"], annual["B1"] = "Year", 2026
+    annual["A2"], annual["B2"] = "Revenue", 5.5
+    internal = book.create_sheet("MODEL Dashboard")
+    internal.sheet_state = "hidden"
+    for column, values in enumerate(([10, 20, 30], [1, 2, 3], [4, 5, 6], [7, 8, 9], [11, 12, 13]), start=1):
+        for row, value in enumerate(values, start=1):
+            internal.cell(row=row, column=column, value=value)
+    internal["Z10"] = "Hidden private sentinel"
+    book.save(source)
+    model = presentation_manifest()
+    model["runtimeSha256"] = __import__("hashlib").sha256(source.read_bytes()).hexdigest()
+
+    def fake_recalculate(template, values, folder, timeout=90, input_sheet="Inputs"):
+        assert input_sheet == "UI"
+        return template, openpyxl.load_workbook(template, data_only=True)
+
+    monkeypatch.setattr("worker.model_preview.recalculate", fake_recalculate)
+    export = tmp_path / "presentation-results.xlsx"
+    result = run_saved_model(source, model, {"rate": 12, "facility": "X"}, export)
+
+    assert result["summary"] == [{
+        "label": "NPV", "value": 125.5, "section": "Investor",
+        "format": '$#,##0.0', "unit": "MM USD",
+    }]
+    assert [chart["kind"] for chart in result["charts"]] == ["line", "column", "column"]
+    assert [chart["categories"] for chart in result["charts"]] == [[1, 2, 3]] * 3
+    assert [len(chart["series"]) for chart in result["charts"]] == [1, 2, 3]
+    serialized = json.dumps({"summary": result["summary"], "charts": result["charts"]})
+    assert "MODEL Dashboard" not in serialized and "A1:A3" not in serialized
+
+    assert inspect_preview_export(export, ["Executive OUTPUT", "Annual OUTPUT"], expected_chart_count=3)
+    exported = openpyxl.load_workbook(export, data_only=False)
+    try:
+        assert exported.sheetnames == ["Executive OUTPUT", "Annual OUTPUT"]
+        assert len(exported["Executive OUTPUT"]._charts) == 3
+        assert exported["Executive OUTPUT"]["E1"].value is None
+        assert exported["Executive OUTPUT"]["F2"].value == 1
+        assert exported["Executive OUTPUT"]["G2"].value == 10
+        assert exported["Executive OUTPUT"].column_dimensions["F"].hidden
+        assert "MODEL Dashboard" not in exported.sheetnames
+        assert all(cell.data_type != "f" for sheet in exported for row in sheet.iter_rows() for cell in row)
+    finally:
+        exported.close()
+    with zipfile.ZipFile(export) as archive:
+        package_text = b"\n".join(archive.read(name) for name in archive.namelist())
+    assert b"Hidden private sentinel" not in package_text
+    assert b"MODEL Dashboard" not in package_text
 
 
 def test_field_validation_does_not_require_a_milestone_when_model_has_none():

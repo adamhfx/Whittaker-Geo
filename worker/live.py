@@ -21,6 +21,7 @@ from typing import Any, Callable
 from .model_preview import (
     MAX_OUTPUT_CELLS,
     PreviewError,
+    _presentation_specs,
     _views,
     evaluate_template,
     load_approved_model,
@@ -50,18 +51,21 @@ class SlidingWindowLimiter:
     def allow(self, requester_id: str, now: float | None = None) -> bool:
         now = time.monotonic() if now is None else now
         with self._lock:
-            calls = self._calls.setdefault(requester_id, deque())
-            while calls and now - calls[0] >= self.window:
-                calls.popleft()
+            # Prune expired users as well as expired calls. The latter alone
+            # leaves one empty deque per historical requester indefinitely.
+            for key, recent_calls in list(self._calls.items()):
+                while recent_calls and now - recent_calls[0] >= self.window:
+                    recent_calls.popleft()
+                if not recent_calls:
+                    del self._calls[key]
+            calls = self._calls.get(requester_id)
+            if calls is None:
+                if len(self._calls) >= MAX_TRACKED_USERS:
+                    return False
+                calls = self._calls[requester_id] = deque()
             if len(calls) >= self.limit:
                 return False
             calls.append(now)
-            if len(self._calls) > MAX_TRACKED_USERS:
-                for key in list(self._calls):
-                    if not self._calls[key]:
-                        del self._calls[key]
-                        if len(self._calls) <= MAX_TRACKED_USERS:
-                            break
             return True
 
 
@@ -131,6 +135,72 @@ def _validate_result(result: Any, calculator_id: str, version: str, manifest: di
                     raise LiveError(502, "CALCULATION_FAILED")
     if total_cells > MAX_OUTPUT_CELLS:
         raise LiveError(502, "CALCULATION_FAILED")
+    presentation_specs = _presentation_specs(manifest)
+    presentation_result: dict[str, Any] = {}
+    if presentation_specs is None:
+        if "summary" in result or "charts" in result:
+            raise LiveError(502, "CALCULATION_FAILED")
+    else:
+        summary = result.get("summary")
+        charts = result.get("charts")
+        if (
+            not isinstance(summary, list) or len(summary) != len(presentation_specs["summary"])
+            or not isinstance(charts, list) or len(charts) != len(presentation_specs["charts"])
+        ):
+            raise LiveError(502, "CALCULATION_FAILED")
+        clean_summary = []
+        for actual, expected in zip(summary, presentation_specs["summary"]):
+            if not isinstance(actual, dict):
+                raise LiveError(502, "CALCULATION_FAILED")
+            value = actual.get("value")
+            if not (
+                value is None
+                or isinstance(value, str) and len(value) <= 500
+                or isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+            ):
+                raise LiveError(502, "CALCULATION_FAILED")
+            item = {"label": expected["label"], "value": value}
+            if expected["section"] is not None:
+                item["section"] = expected["section"]
+            number_format = actual.get("format")
+            if number_format is not None:
+                if not isinstance(number_format, str) or len(number_format) > 200:
+                    raise LiveError(502, "CALCULATION_FAILED")
+                item["format"] = number_format
+            if expected["unit"] is not None:
+                item["unit"] = expected["unit"]
+            clean_summary.append(item)
+
+        clean_charts = []
+        for actual, expected in zip(charts, presentation_specs["charts"]):
+            categories = actual.get("categories") if isinstance(actual, dict) else None
+            series = actual.get("series") if isinstance(actual, dict) else None
+            expected_categories = list(range(1, expected["pointCount"] + 1))
+            if (
+                not isinstance(actual, dict) or actual.get("title") != expected["title"]
+                or actual.get("kind") != expected["kind"] or categories != expected_categories
+                or not isinstance(series, list) or len(series) != len(expected["series"])
+            ):
+                raise LiveError(502, "CALCULATION_FAILED")
+            clean_series = []
+            for actual_series, expected_series in zip(series, expected["series"]):
+                values = actual_series.get("values") if isinstance(actual_series, dict) else None
+                if (
+                    not isinstance(actual_series, dict) or actual_series.get("name") != expected_series["name"]
+                    or not isinstance(values, list) or len(values) != expected["pointCount"]
+                    or any(value is not None and not (
+                        isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+                    ) for value in values)
+                ):
+                    raise LiveError(502, "CALCULATION_FAILED")
+                clean_series.append({"name": expected_series["name"], "values": values})
+            clean_charts.append({
+                "title": expected["title"],
+                "kind": expected["kind"],
+                "categories": expected_categories,
+                "series": clean_series,
+            })
+        presentation_result = {"summary": clean_summary, "charts": clean_charts}
     # Emit exactly the public response contract; discard any accidental fields.
     return {
         "calculatorId": calculator_id,
@@ -142,6 +212,7 @@ def _validate_result(result: Any, calculator_id: str, version: str, manifest: di
             ]} for row in sheet["rows"]]}
             for sheet in sheets
         ],
+        **presentation_result,
         "durationSeconds": float(result["durationSeconds"]),
     }
 
@@ -252,6 +323,9 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
+        if self.path == "/health":
+            self._respond(200, {"status": "ok"})
+            return
         self._respond(404, {"error": "NOT_FOUND"})
 
     def do_POST(self) -> None:
@@ -305,7 +379,16 @@ def main() -> None:
         timeout = float(os.environ.get("LIVE_EVALUATION_TIMEOUT_SECONDS", "60"))
         concurrency = int(os.environ.get("LIVE_MAX_CONCURRENCY", "1"))
         port = int(os.environ.get("PORT", "8000"))
+        office = None
+        evaluator = evaluate_template
+        if os.environ.get("UNO_PYTHON_BIN"):
+            if concurrency != 1:
+                raise ValueError("The warm calculation service requires concurrency one.")
+            from .warm_office import WarmOffice
+            office = WarmOffice(os.environ["UNO_PYTHON_BIN"], os.environ.get("SOFFICE_BIN", "soffice"))
+            evaluator = office.evaluate
         service = PreviewService(
+            evaluator=evaluator,
             engine_secret=secret,
             supabase_url=url,
             service_key=service_key,
@@ -320,6 +403,8 @@ def main() -> None:
         server.serve_forever(poll_interval=0.5)
     finally:
         server.server_close()
+        if office:
+            office.close()
 
 
 if __name__ == "__main__":

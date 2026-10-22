@@ -23,6 +23,7 @@ import requests
 import xlsxwriter
 from openpyxl.utils.cell import range_boundaries
 from openpyxl.utils.cell import coordinate_to_tuple
+from xlsxwriter.utility import xl_range_abs, xl_rowcol_to_cell
 
 from .engine import ModelError, recalculate, validate_inputs
 
@@ -31,6 +32,11 @@ MAX_OUTPUT_CELLS = 15_000
 MAX_OUTPUT_STRING = 10_000
 MAX_OUTPUT_BYTES = 1_500_000
 MAX_SHEETS = 8
+MAX_PRESENTATION_SUMMARY = 30
+MAX_PRESENTATION_CHARTS = 8
+MAX_PRESENTATION_SERIES = 12
+MAX_PRESENTATION_SERIES_PER_CHART = 10
+MAX_CHART_POINTS = 100
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 _SHA256 = re.compile(r"^[a-fA-F0-9]{64}$")
 _CELL = re.compile(r"^[A-Z]{1,3}[1-9][0-9]{0,6}$")
@@ -343,6 +349,234 @@ def serialize_output_sheets(workbook: Any, manifest: dict[str, Any]) -> list[dic
     return result
 
 
+def _presentation_specs(manifest: dict[str, Any]) -> dict[str, Any] | None:
+    """Validate private summary/chart mappings and return safe cell geometry.
+
+    Presentation metadata is an explicit allowlist. The returned public payload
+    never contains workbook formulas, sheet names for chart sources, or source
+    ranges; hidden calculation sheets are read only for the mapped chart values.
+    """
+    raw = manifest.get("presentation")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise PreviewError("OUTPUT_MAPPING_INVALID")
+    views = _views(manifest)
+    by_sheet = {view["sheet"]: view for view in views}
+    summary_specs = raw.get("summary", [])
+    chart_specs = raw.get("charts", [])
+    if (
+        not isinstance(summary_specs, list) or len(summary_specs) > MAX_PRESENTATION_SUMMARY
+        or not isinstance(chart_specs, list) or len(chart_specs) > MAX_PRESENTATION_CHARTS
+        or (not summary_specs and not chart_specs)
+    ):
+        raise PreviewError("OUTPUT_MAPPING_INVALID")
+
+    def cell_in_view(address: Any, view: dict[str, Any]) -> tuple[int, int]:
+        if not isinstance(address, str) or not _CELL.fullmatch(address):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        try:
+            row, column = coordinate_to_tuple(address)
+        except ValueError:
+            raise PreviewError("OUTPUT_MAPPING_INVALID") from None
+        left, top, right, bottom = view["bounds"]
+        if not (left <= column <= right and top <= row <= bottom):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        return row, column
+
+    normalized_summary = []
+    seen_summary_cells: set[tuple[str, str]] = set()
+    for item in summary_specs:
+        if not isinstance(item, dict):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        section, label, sheet_name, label_cell, value_cell, unit = (
+            item.get("section"), item.get("label"), item.get("sheet"),
+            item.get("labelCell"), item.get("valueCell"), item.get("unit"),
+        )
+        if (
+            (section is not None and (not isinstance(section, str) or not section or len(section) > 100))
+            or not isinstance(label, str) or not label or len(label) > 120
+            or sheet_name not in by_sheet
+            or (unit is not None and (not isinstance(unit, str) or len(unit) > 100))
+        ):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        view = by_sheet[sheet_name]
+        if label_cell is not None:
+            cell_in_view(label_cell, view)
+        cell_in_view(value_cell, view)
+        key = (sheet_name, value_cell)
+        if key in seen_summary_cells:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        seen_summary_cells.add(key)
+        normalized_summary.append({
+            "section": section,
+            "label": label,
+            "sheet": sheet_name,
+            "labelCell": label_cell,
+            "valueCell": value_cell,
+            "unit": unit,
+        })
+
+    normalized_charts = []
+    total_series = 0
+    for chart in chart_specs:
+        if not isinstance(chart, dict):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        title, sheet_name, anchor = chart.get("title"), chart.get("sheet"), chart.get("anchor")
+        if sheet_name is None:
+            dashboard_sheets = [name for name in by_sheet if "dashboard" in name.casefold()]
+            if len(dashboard_sheets) == 1:
+                sheet_name = dashboard_sheets[0]
+        chart_types, groups = chart.get("type"), chart.get("chartGroups")
+        if (
+            not isinstance(title, str) or not title or len(title) > 120
+            or sheet_name not in by_sheet
+            or chart.get("categoryRange") is not None
+            or chart.get("categoryMode") not in (None, "implicit point index; workbook has no category reference")
+        ):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        if anchor is None:
+            anchor_bounds = None
+        elif isinstance(anchor, str) and len(anchor) <= 100:
+            try:
+                anchor_bounds = range_boundaries(anchor)
+            except (ValueError, TypeError):
+                raise PreviewError("OUTPUT_MAPPING_INVALID") from None
+            if not all(isinstance(value, int) and 1 <= value <= 16_384 for value in anchor_bounds):
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+        else:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        if chart.get("kind") in {"line", "column"}:
+            kind = chart["kind"]
+        elif isinstance(groups, list) and len(groups) == 1 and isinstance(groups[0], dict):
+            if chart_types == ["lineChart"] and groups[0].get("type") == "lineChart":
+                kind = "line"
+            elif (
+                chart_types == ["barChart"] and groups[0].get("type") == "barChart"
+                and groups[0].get("barDirection") == "col"
+            ):
+                kind = "column"
+            else:
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+        else:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        series_specs = chart.get("series")
+        if not isinstance(series_specs, list) or not 1 <= len(series_specs) <= MAX_PRESENTATION_SERIES_PER_CHART:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        total_series += len(series_specs)
+        if total_series > MAX_PRESENTATION_SERIES:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        normalized_series = []
+        lengths = set()
+        names = set()
+        for series in series_specs:
+            if not isinstance(series, dict):
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+            name, source_sheet, source_range = (
+                series.get("name"), series.get("sheet"), series.get("range")
+            )
+            if (
+                not isinstance(name, str) or not name or len(name) > 100 or name in names
+                or not isinstance(source_sheet, str)
+                or not (source_sheet in by_sheet or source_sheet.startswith("MODEL "))
+                or source_sheet.casefold() in {"ui", "inputs"}
+                or not isinstance(source_range, str) or len(source_range) > 100
+            ):
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+            try:
+                bounds = range_boundaries(source_range)
+            except (ValueError, TypeError):
+                raise PreviewError("OUTPUT_MAPPING_INVALID") from None
+            if not all(isinstance(value, int) for value in bounds):
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+            left, top, right, bottom = bounds
+            length = bottom - top + 1 if left == right else right - left + 1 if top == bottom else 0
+            if not 1 <= length <= MAX_CHART_POINTS:
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+            normalized_series.append({
+                "name": name,
+                "sheet": source_sheet,
+                "bounds": bounds,
+                "length": length,
+            })
+            lengths.add(length)
+            names.add(name)
+        if len(lengths) != 1:
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        normalized_charts.append({
+            "title": title,
+            "kind": kind,
+            "sheet": sheet_name,
+            "anchor": anchor,
+            "anchorBounds": anchor_bounds,
+            "pointCount": next(iter(lengths)),
+            "series": normalized_series,
+        })
+    return {"summary": normalized_summary, "charts": normalized_charts}
+
+
+def serialize_presentation(workbook: Any, manifest: dict[str, Any]) -> dict[str, Any]:
+    """Read only mapped dashboard cells and chart series as fresh values."""
+    specs = _presentation_specs(manifest)
+    if specs is None:
+        return {}
+    summary = []
+    for item in specs["summary"]:
+        sheet = workbook[item["sheet"]]
+        if sheet.sheet_state != "visible":
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        row, column = coordinate_to_tuple(item["valueCell"])
+        if sheet.row_dimensions[row].hidden or column in _hidden_columns(sheet):
+            raise PreviewError("OUTPUT_MAPPING_INVALID")
+        cell = sheet[item["valueCell"]]
+        if cell.data_type == "e":
+            raise PreviewError("RESULT_INVALID")
+        value = _json_value(cell.value)
+        if isinstance(value, str) and len(value) > 500:
+            raise PreviewError("RESULT_INVALID")
+        result_item = {"label": item["label"], "value": value}
+        if item["section"] is not None:
+            result_item["section"] = item["section"]
+        if isinstance(cell.number_format, str) and len(cell.number_format) <= 200:
+            result_item["format"] = cell.number_format
+        if item["unit"] is not None:
+            result_item["unit"] = item["unit"]
+        summary.append(result_item)
+
+    charts = []
+    for chart in specs["charts"]:
+        chart_series = []
+        for item in chart["series"]:
+            if item["sheet"] not in workbook.sheetnames:
+                raise PreviewError("OUTPUT_MAPPING_INVALID")
+            source = workbook[item["sheet"]]
+            left, top, right, bottom = item["bounds"]
+            raw_values = source.iter_rows(
+                min_row=top, max_row=bottom, min_col=left, max_col=right
+            )
+            values = []
+            for row in raw_values:
+                for cell in row:
+                    if cell.data_type == "e":
+                        raise PreviewError("RESULT_INVALID")
+                    value = _json_value(cell.value)
+                    if value is not None and (
+                        isinstance(value, bool) or not isinstance(value, (int, float))
+                    ):
+                        raise PreviewError("RESULT_INVALID")
+                    values.append(value)
+            if len(values) != item["length"]:
+                raise PreviewError("RESULT_INVALID")
+            chart_series.append({"name": item["name"], "values": values})
+        charts.append({
+            "title": chart["title"],
+            "kind": chart["kind"],
+            "categories": list(range(1, chart["pointCount"] + 1)),
+            "series": chart_series,
+        })
+    return {"summary": summary, "charts": charts}
+
+
 def scan_formula_errors(path: str | Path, value_workbook: Any) -> None:
     """Fail if recalculation left an error in any formula, including hidden sheets.
 
@@ -405,6 +639,7 @@ def evaluate_template(
             try:
                 scan_formula_errors(calculated_path, workbook)
                 output_sheets = serialize_output_sheets(workbook, manifest)
+                presentation = serialize_presentation(workbook, manifest)
             finally:
                 workbook.close()
         duration = round(time.monotonic() - started, 3)
@@ -412,6 +647,7 @@ def evaluate_template(
             "calculatorId": manifest["id"],
             "calculatorVersion": manifest["version"],
             "outputSheets": output_sheets,
+            **presentation,
             "durationSeconds": duration,
         }
     except PreviewError:
@@ -420,9 +656,18 @@ def evaluate_template(
         raise PreviewError("INVALID_REQUEST") from None
 
 
-def export_preview_results(workbook: Any, manifest: dict[str, Any], target: str | Path) -> bool:
+def export_preview_results(
+    workbook: Any,
+    manifest: dict[str, Any],
+    target: str | Path,
+    *,
+    presentation: dict[str, Any] | None = None,
+) -> bool:
     """Write a fresh values-only XLSX containing only mapped visible ranges."""
     views = _views(manifest)
+    if presentation is None:
+        presentation = serialize_presentation(workbook, manifest)
+    presentation_specs = _presentation_specs(manifest)
     target = Path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
     book = xlsxwriter.Workbook(str(target), {
@@ -431,6 +676,8 @@ def export_preview_results(workbook: Any, manifest: dict[str, Any], target: str 
         "nan_inf_to_errors": False,
     })
     format_cache: dict[str, Any] = {}
+    allowed_cells: dict[str, set[str]] = {view["sheet"]: set() for view in views}
+    chart_formula_refs: list[str] = []
     try:
         book.set_properties({
             "title": "GeoFlow calculation results",
@@ -464,6 +711,9 @@ def export_preview_results(workbook: Any, manifest: dict[str, Any], target: str 
                 for column_index in range(min_col, max_col + 1):
                     if column_index in hidden_columns:
                         continue
+                    allowed_cells[view["sheet"]].add(
+                        f"{openpyxl.utils.get_column_letter(column_index)}{row_index}"
+                    )
                     cell = source.cell(row=row_index, column=column_index)
                     if cell.data_type == "e":
                         raise PreviewError("RESULT_INVALID")
@@ -487,6 +737,85 @@ def export_preview_results(workbook: Any, manifest: dict[str, Any], target: str 
                         destination.write_number(row_index - 1, column_index - 1, value, cell_format)
                     else:
                         raise PreviewError("RESULT_INVALID")
+
+        if presentation_specs is not None:
+            next_helper_column: dict[str, int] = {}
+            next_chart_row: dict[str, int] = {}
+            for view in views:
+                left, _, right, bottom = view["bounds"]
+                next_helper_column[view["sheet"]] = right + 1  # leave one blank column
+                next_chart_row[view["sheet"]] = bottom + 2
+            for spec, chart_result in zip(presentation_specs["charts"], presentation["charts"]):
+                destination = book.get_worksheet_by_name(spec["sheet"])
+                if destination is None:
+                    raise PreviewError("OUTPUT_MAPPING_INVALID")
+                categories = chart_result["categories"]
+                start_column = next_helper_column[spec["sheet"]]
+                start_row = 0
+                category_column = start_column
+                destination.write_string(start_row, category_column, "Point")
+                for point, category in enumerate(categories, start=1):
+                    destination.write_number(start_row + point, category_column, category)
+                allowed_cells[spec["sheet"]].add(
+                    f"{xl_rowcol_to_cell(start_row, category_column)}"
+                )
+                for point in range(1, len(categories) + 1):
+                    allowed_cells[spec["sheet"]].add(
+                        f"{xl_rowcol_to_cell(start_row + point, category_column)}"
+                    )
+
+                chart = book.add_chart({"type": chart_result["kind"]})
+                chart.set_title({"name": chart_result["title"]})
+                chart.set_style(10)
+                chart.show_hidden_data()
+                if len(chart_result["series"]) > 1:
+                    chart.set_legend({"position": "bottom"})
+                for series_index, series in enumerate(chart_result["series"], start=1):
+                    column = start_column + series_index
+                    destination.write_string(start_row, column, series["name"])
+                    for point, value in enumerate(series["values"], start=1):
+                        if value is None:
+                            destination.write_blank(start_row + point, column, None)
+                        elif isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+                            destination.write_number(start_row + point, column, value)
+                        else:
+                            raise PreviewError("RESULT_INVALID")
+                    allowed_cells[spec["sheet"]].add(xl_rowcol_to_cell(start_row, column))
+                    for point in range(1, len(categories) + 1):
+                        allowed_cells[spec["sheet"]].add(
+                            xl_rowcol_to_cell(start_row + point, column)
+                        )
+                    category_ref = (
+                        f"'{spec['sheet']}'!{xl_range_abs(start_row + 1, category_column, start_row + len(categories), category_column)}"
+                    )
+                    value_ref = (
+                        f"'{spec['sheet']}'!{xl_range_abs(start_row + 1, column, start_row + len(categories), column)}"
+                    )
+                    chart_formula_refs.extend((category_ref, value_ref))
+                    chart.add_series({
+                        "name": series["name"],
+                        "categories": [spec["sheet"], start_row + 1, category_column,
+                                       start_row + len(categories), category_column],
+                        "values": [spec["sheet"], start_row + 1, column,
+                                   start_row + len(categories), column],
+                    })
+
+                if spec["anchorBounds"] is not None:
+                    left, top, right, bottom = spec["anchorBounds"]
+                    width = max(420, (right - left + 1) * 64)
+                    height = max(260, (bottom - top + 1) * 20)
+                    chart.set_size({"width": width, "height": height})
+                    anchor_cell = xl_rowcol_to_cell(top - 1, left - 1)
+                else:
+                    output_view = next(view for view in views if view["sheet"] == spec["sheet"])
+                    chart_left = output_view["bounds"][0] - 1
+                    anchor_cell = xl_rowcol_to_cell(next_chart_row[spec["sheet"]], chart_left)
+                    chart.set_size({"width": 900, "height": 320})
+                    next_chart_row[spec["sheet"]] += 17
+                destination.insert_chart(anchor_cell, chart)
+                final_column = start_column + len(chart_result["series"])
+                destination.set_column(start_column, final_column, 14, None, {"hidden": True})
+                next_helper_column[spec["sheet"]] = final_column + 2
         book.close()
     except Exception:
         try:
@@ -495,15 +824,31 @@ def export_preview_results(workbook: Any, manifest: dict[str, Any], target: str 
             pass
         target.unlink(missing_ok=True)
         raise
-    return inspect_preview_export(target, [view["sheet"] for view in views])
+    return inspect_preview_export(
+        target,
+        [view["sheet"] for view in views],
+        expected_chart_count=len(presentation.get("charts", [])),
+        allowed_cells=allowed_cells,
+        expected_chart_refs=chart_formula_refs,
+    )
 
 
-def inspect_preview_export(path: str | Path, expected_sheets: list[str]) -> bool:
+def inspect_preview_export(
+    path: str | Path,
+    expected_sheets: list[str],
+    *,
+    expected_chart_count: int = 0,
+    allowed_cells: dict[str, set[str]] | None = None,
+    expected_chart_refs: list[str] | None = None,
+) -> bool:
     """Verify a saved preview export has only visible allowlisted values."""
     import zipfile
     import xml.etree.ElementTree as ET
 
-    ns = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    ns = {
+        "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+        "c": "http://schemas.openxmlformats.org/drawingml/2006/chart",
+    }
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         book = ET.fromstring(archive.read("xl/workbook.xml"))
@@ -514,11 +859,40 @@ def inspect_preview_export(path: str | Path, expected_sheets: list[str]) -> bool
             raise PreviewError("EXPORT_INVALID")
         if any(any(token in name for token in ("externalLinks", "embeddings", "vbaProject", "comments", "connections")) for name in names):
             raise PreviewError("EXPORT_INVALID")
+        chart_files = sorted(
+            name for name in names
+            if name.startswith("xl/charts/chart") and name.endswith(".xml")
+        )
+        if len(chart_files) != expected_chart_count:
+            raise PreviewError("EXPORT_INVALID")
+        actual_chart_refs = []
+        for chart_file in chart_files:
+            chart_root = ET.fromstring(archive.read(chart_file))
+            for formula in chart_root.findall(".//c:f", ns):
+                if not formula.text or "[" in formula.text:
+                    raise PreviewError("EXPORT_INVALID")
+                actual_chart_refs.append(formula.text)
+        if expected_chart_refs is not None and sorted(actual_chart_refs) != sorted(expected_chart_refs):
+            raise PreviewError("EXPORT_INVALID")
         for name in names:
             if name.startswith("xl/worksheets/sheet") and name.endswith(".xml"):
                 root = ET.fromstring(archive.read(name))
                 if root.findall(".//s:f", ns):
                     raise PreviewError("EXPORT_INVALID")
+        if allowed_cells is not None:
+            output = openpyxl.load_workbook(path, data_only=False, read_only=True)
+            try:
+                if output.sheetnames != expected_sheets:
+                    raise PreviewError("EXPORT_INVALID")
+                for sheet_name in expected_sheets:
+                    sheet = output[sheet_name]
+                    allowed = allowed_cells.get(sheet_name, set())
+                    for row in sheet.iter_rows():
+                        for cell in row:
+                            if cell.value is not None and cell.coordinate not in allowed:
+                                raise PreviewError("EXPORT_INVALID")
+            finally:
+                output.close()
     return True
 
 
@@ -551,13 +925,15 @@ def run_saved_model(
             try:
                 scan_formula_errors(calculated_path, workbook)
                 output_sheets = serialize_output_sheets(workbook, manifest)
-                export_preview_results(workbook, manifest, output)
+                presentation = serialize_presentation(workbook, manifest)
+                export_preview_results(workbook, manifest, output, presentation=presentation)
             finally:
                 workbook.close()
         return {
             "calculatorId": manifest["id"],
             "calculatorVersion": manifest["version"],
             "outputSheets": output_sheets,
+            **presentation,
             "durationSeconds": round(time.monotonic() - started, 3),
         }
     except PreviewError:
