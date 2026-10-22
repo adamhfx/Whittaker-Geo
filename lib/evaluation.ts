@@ -1,6 +1,25 @@
 import { z } from "zod";
 import type { InputValues, LiveResult, Manifest } from "./types";
 
+export type EngineEvaluationFailureCode =
+  | "connection_failed"
+  | "http_401"
+  | "http_404"
+  | "http_422"
+  | "http_other"
+  | "invalid_json"
+  | "invalid_result";
+
+export class EngineEvaluationError extends Error {
+  readonly code: EngineEvaluationFailureCode;
+
+  constructor(code: EngineEvaluationFailureCode) {
+    super("ENGINE_FAILED");
+    this.name = "EngineEvaluationError";
+    this.code = code;
+  }
+}
+
 const summaryItemSchema = z.object({
   section: z.string().max(100).optional(),
   label: z.string().min(1).max(120),
@@ -76,17 +95,45 @@ export async function evaluateDraft(options: {
   manifest: Manifest; inputs: InputValues; requesterId: string; signal: AbortSignal;
   endpoint: string; secret: string; fetcher?: typeof fetch;
 }): Promise<LiveResult> {
-  const response = await (options.fetcher ?? fetch)(options.endpoint, {
-    method: "POST", cache: "no-store", redirect: "error", signal: options.signal,
-    headers: { "Content-Type": "application/json", "X-GeoFlow-Engine-Secret": options.secret },
-    body: JSON.stringify({ calculatorId: options.manifest.id, version: options.manifest.version,
-      inputs: options.inputs, requesterId: options.requesterId }),
-  });
+  let response: Response;
+  try {
+    response = await (options.fetcher ?? fetch)(options.endpoint, {
+      method: "POST", cache: "no-store", redirect: "error", signal: options.signal,
+      headers: { "Content-Type": "application/json", "X-GeoFlow-Engine-Secret": options.secret },
+      body: JSON.stringify({ calculatorId: options.manifest.id, version: options.manifest.version,
+        inputs: options.inputs, requesterId: options.requesterId }),
+    });
+  } catch (error) {
+    // Keep request cancellation and the route's own timeout signal intact so
+    // their existing handling can distinguish an abort from a transport fault.
+    if (options.signal.aborted) throw error;
+    throw new EngineEvaluationError("connection_failed");
+  }
   if (!response.ok) {
     if (response.status === 429 || response.status === 503) throw new Error("ENGINE_BUSY");
-    throw new Error("ENGINE_FAILED");
+    const code: EngineEvaluationFailureCode = response.status === 401 ? "http_401"
+      : response.status === 404 ? "http_404"
+      : response.status === 422 ? "http_422"
+      : "http_other";
+    throw new EngineEvaluationError(code);
   }
-  const result = await response.text();
-  if (result.length > 2_000_000) throw new Error("ENGINE_FAILED");
-  return parseLiveResult(JSON.parse(result), options.manifest);
+  let text: string;
+  try {
+    text = await response.text();
+  } catch (error) {
+    if (options.signal.aborted) throw error;
+    throw new EngineEvaluationError("connection_failed");
+  }
+  if (text.length > 2_000_000) throw new EngineEvaluationError("invalid_result");
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    throw new EngineEvaluationError("invalid_json");
+  }
+  try {
+    return parseLiveResult(value, options.manifest);
+  } catch {
+    throw new EngineEvaluationError("invalid_result");
+  }
 }

@@ -56,8 +56,8 @@ function commandError(operation, result, env) {
   const detail = [result.stderr, result.stdout]
     .filter(Boolean)
     .join("\n")
-    .slice(-2_000)
     .replaceAll(token, "[REDACTED]")
+    .slice(-2_000)
     .trim();
   return new Error(
     `${operation} failed with exit code ${result.code ?? "unknown"}${detail ? `: ${detail}` : "."}`,

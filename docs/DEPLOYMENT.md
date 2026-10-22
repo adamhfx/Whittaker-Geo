@@ -109,7 +109,7 @@ Render documents that services connected through a public Git repository URL req
 - `RENDER_LIVE_DEPLOY_HOOK`
 - `RENDER_SAVED_DEPLOY_HOOK`
 
-As of 2026-10-22, these secrets are not configured, so CI validates and builds but does not contact Render. Missing hooks are reported as skipped. When configured, the workflow accepts only `https://api.render.com/deploy/srv-...` hook URLs with a single `key` parameter, posts the tested commit through Render's `ref` parameter, and fails if Render does not return HTTP 200 or 202. It does not print hook URLs or response bodies. Keep the hooks only in GitHub Secrets and regenerate a hook if its URL is exposed.
+As of 2026-10-22, `RENDER_LIVE_DEPLOY_HOOK` is configured for the Free live engine with explicit user approval. `RENDER_SAVED_DEPLOY_HOOK` remains unset because the saved-run worker is deferred. Missing hooks are reported as skipped. When configured, the workflow accepts only `https://api.render.com/deploy/srv-...` hook URLs with a single `key` parameter, posts the tested commit through Render's `ref` parameter, and fails if Render does not return HTTP 200 or 202. It does not print hook URLs or response bodies. Keep the hooks only in GitHub Secrets and regenerate a hook if its URL is exposed.
 
 Render's documentation states that deploying a specific commit through a deploy hook disables that service's automatic deploys. Leave deployment to this tested workflow after the hooks are configured; a later change to the service's deploy behavior should be deliberate. See [Render deploy behavior](https://render.com/docs/deploys) and [Render deploy hooks](https://render.com/docs/deploy-hooks).
 

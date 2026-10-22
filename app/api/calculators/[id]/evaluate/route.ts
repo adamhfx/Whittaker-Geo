@@ -1,6 +1,6 @@
 import { actor, body, failure, manifestFor, ok, ApiError } from "../../../_route";
 import { paidAccess, validateInputs } from "@/lib/validation";
-import { engineEndpoint, evaluateDraft } from "@/lib/evaluation";
+import { engineEndpoint, evaluateDraft, EngineEvaluationError } from "@/lib/evaluation";
 
 function retryableCalculationResponse(message: string) {
   return Response.json(
@@ -54,6 +54,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return retryableCalculationResponse(
           "The calculation service is busy. Your inputs are preserved; please retry.",
         );
+      console.error(JSON.stringify({
+        event: "live_calculation_failed",
+        code: error instanceof EngineEvaluationError ? error.code
+          : request.signal.aborted ? "request_aborted" : "unexpected",
+      }));
       throw new ApiError(503, "Live results could not be calculated. Your inputs are preserved; please retry.");
     }
   } catch (error) { return failure(error); }

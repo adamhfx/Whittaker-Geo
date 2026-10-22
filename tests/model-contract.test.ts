@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { publicManifest } from "../lib/public-manifest";
-import { engineEndpoint, evaluateDraft, parseLiveResult } from "../lib/evaluation";
+import { EngineEvaluationError, engineEndpoint, evaluateDraft, parseLiveResult } from "../lib/evaluation";
 import { validateInputs } from "../lib/validation";
 import type { Manifest } from "../lib/types";
 
@@ -58,4 +58,67 @@ test("live evaluation forwards only draft inputs and server-side identity, witho
   }) as typeof fetch;
   assert.equal((await evaluateDraft({ manifest, inputs: { A1: 4 }, requesterId: "owner", signal: new AbortController().signal, endpoint: "https://engine.example/evaluate", secret: "fixture-only", fetcher })).outputSheets.length, 1);
   assert.equal(requestCount, 1);
+});
+
+function evaluateWith(fetcher: typeof fetch, signal = new AbortController().signal) {
+  return evaluateDraft({ manifest, inputs: { A1: 4 }, requesterId: "owner", signal,
+    endpoint: "https://engine.example/evaluate", secret: "fixture-only", fetcher });
+}
+
+test("engine failures expose only an allowlisted diagnostic code", async () => {
+  const expected = new Map([[401, "http_401"], [404, "http_404"], [422, "http_422"], [500, "http_other"]] as const);
+  for (const [status, code] of expected) {
+    const fetcher = (async () => new Response("private formula and secret response", { status })) as typeof fetch;
+    await assert.rejects(evaluateWith(fetcher), (error: unknown) => {
+      assert.ok(error instanceof EngineEvaluationError);
+      assert.equal(error.code, code);
+      assert.equal(error.message, "ENGINE_FAILED");
+      assert.equal(error.message.includes("private formula"), false);
+      return true;
+    });
+  }
+
+  for (const status of [429, 503]) {
+    const fetcher = (async () => new Response("provider detail must stay private", { status })) as typeof fetch;
+    await assert.rejects(evaluateWith(fetcher), (error: unknown) => {
+      assert.equal((error as Error).message, "ENGINE_BUSY");
+      assert.equal((error as Error).message.includes("provider detail"), false);
+      return true;
+    });
+  }
+});
+
+test("transport and response parsing failures do not expose engine or provider details", async () => {
+  const networkFailure = (async () => { throw new Error("https://private-host token=secret"); }) as typeof fetch;
+  await assert.rejects(evaluateWith(networkFailure), (error: unknown) => {
+    assert.ok(error instanceof EngineEvaluationError);
+    assert.equal(error.code, "connection_failed");
+    assert.equal(error.message, "ENGINE_FAILED");
+    assert.equal(error.message.includes("private-host"), false);
+    return true;
+  });
+
+  const invalidJson = (async () => new Response("formula=secret", { status: 200 })) as typeof fetch;
+  await assert.rejects(evaluateWith(invalidJson), (error: unknown) => {
+    assert.ok(error instanceof EngineEvaluationError);
+    assert.equal(error.code, "invalid_json");
+    assert.equal(error.message, "ENGINE_FAILED");
+    return true;
+  });
+
+  const invalidResult = (async () => new Response(JSON.stringify({ ...result, calculatorVersion: "wrong" }), { status: 200 })) as typeof fetch;
+  await assert.rejects(evaluateWith(invalidResult), (error: unknown) => {
+    assert.ok(error instanceof EngineEvaluationError);
+    assert.equal(error.code, "invalid_result");
+    assert.equal(error.message, "ENGINE_FAILED");
+    return true;
+  });
+});
+
+test("engine request aborts preserve the original abort reason", async () => {
+  const controller = new AbortController();
+  const abortReason = new DOMException("route deadline elapsed", "AbortError");
+  controller.abort(abortReason);
+  const fetcher = (async () => { throw abortReason; }) as typeof fetch;
+  await assert.rejects(evaluateWith(fetcher, controller.signal), (error: unknown) => error === abortReason);
 });
