@@ -1,4 +1,4 @@
-# Cloudflare preview and development across computers
+# Cloudflare deployment and development across computers
 
 GitHub is the shared source of truth. Commit and push changes from either
 computer, then pull before continuing on the other computer. Files that are
@@ -11,22 +11,33 @@ Pushes to `main` deploy the web application after the Next.js build, application
 tests, Cloudflare build, and Cloudflare configuration checks pass.
 
 The target is the `geoflow-preview` Worker in Cloudflare account
-`032b3907437b929309a3bb9c45964a13`. Its expected address after the first
-successful deployment is:
+`032b3907437b929309a3bb9c45964a13`. The production domain is:
 
-`https://geoflow-preview.roger-d-whittaker.workers.dev/preview`
+`https://whittakergeo.com`
 
-This deployment includes the interface preview and the configured Supabase
-account connection described below. Billing is explicitly disabled. The
-Python/LibreOffice calculation worker is not deployed by this workflow; the candidate model's live calculations remain
-available only in the development-only local review until its private engine is
-hosted and the model owner approves the exact version. The existing Render
-configuration and ordinary `pnpm dev`, `pnpm build`, and `pnpm start` commands remain available.
+This deployment includes the interface and the configured Supabase connection
+described below. Billing is explicitly disabled. Pushes to `main` deploy
+application code after the GitHub checks pass. They do not upload private model
+files, register or approve a model version, or activate it. The legacy Node
+Render web service remains in the repository blueprint for reference; Cloudflare
+serves the production frontend. Ordinary `pnpm dev`, `pnpm build`, and `pnpm start`
+commands remain available for local development and the legacy service.
+
+The Cloudflare Worker is configured to send live evaluations to
+`https://whittaker-geo-live-calculations.onrender.com`, using a server-only
+shared secret. This is a public HTTPS connection authenticated by the secret,
+not private networking between Cloudflare and Render. The Render service exists
+on its Free plan as a staging service, but its Docker/runtime behavior and the
+full request path have not been validated for production. Its requested $7 plan
+upgrade is pending; the saved-run worker upgrade is pending as well. The v2
+model candidate is registered with `approved=false`, while the active catalog
+pointer remains v1. The production interface can show the v2 preview, but that
+does not mean hosted live calculations for v2 are enabled or approved.
 
 Cloudflare's current Next.js integration uses vinext and the Cloudflare Vite
-plugin. These provide a separate build path; their beta status makes this a
-preview deployment, not evidence that authenticated production workflows or
-calculation parity have been accepted.
+plugin. These provide a separate build path. Their beta status means this setup
+is not evidence that authenticated production workflows or calculation parity
+have been accepted.
 
 ## One-time authorization
 
@@ -62,7 +73,7 @@ do not change the browser's TypeScript definitions.
 
 ## whittakergeo.com
 
-The domain now serves the current application. `APP_URL` is
+The domain serves the current application. `APP_URL` is
 `https://whittakergeo.com`; production sign-in and workspace pages opened through
 the older Workers hostname redirect to this origin before starting authentication.
 Preview routes remain available on the Workers hostname. Local development keeps
@@ -101,7 +112,7 @@ Supabase Auth must allow these exact callback URLs:
 - `http://127.0.0.1:3000/auth/callback`
 - `http://localhost:3000/auth/callback`
 
-Preserve existing Render callback URLs while that deployment remains in use. Add
-future custom-domain callbacks only after confirming their ownership and route. API keys do
-not apply SQL migrations, approve the private numerical model, start the separate
-calculation worker, or enable billing.
+Preserve existing Render callback URLs while the legacy service remains in use.
+Add future custom-domain callbacks only after confirming their ownership and
+route. API keys do not apply SQL migrations, approve the private numerical
+model, start the separate calculation worker, or enable billing.

@@ -1,6 +1,6 @@
 # Whittaker Geo deployment
 
-This application is a Next.js web service backed by Supabase and a separate Python calculation worker. The Render blueprint defines a Node web service, a Docker background worker, and a separate private HTTP calculation service for live edits. The Cloudflare frontend is configured separately; see [Cloudflare setup](CLOUDFLARE.md). The worker is responsible for processing queued immutable runs; the web service owns authentication, API requests, and signed download URLs.
+The production frontend is the Cloudflare Worker serving `https://whittakergeo.com`. Render hosts the Python worker for saved runs and a separate HTTPS calculation engine for transient live edits. The legacy Node Render web service remains in the blueprint as a reference; it is not the production frontend. Git deployment and private model release are separate processes: pushing code does not upload a workbook, approve a model, or activate a version. See [Cloudflare setup](CLOUDFLARE.md) for the current hosting state.
 
 ## Temporary sign-in entry
 
@@ -12,7 +12,7 @@ sign-in. The homepage source remains available for the later launch.
 
 ## Local setup
 
-Requirements are Node 22 or newer and pnpm 11.19.0. The checked-in Render web service uses Node 22; local development may use the installed Node 24.19.0. The worker image requires Python dependencies from `worker/requirements.txt` and LibreOffice in the worker image.
+Requirements are Node 22 or newer and pnpm 11.19.0. Local development may use the installed Node 24.19.0. The worker image installs Python dependencies from `worker/requirements.txt` and bundles LibreOffice 26.8.1 with its matching TDF Python 3.13.15 and UNO bridge; the image build runs a synthetic runtime smoke check.
 
 ```text
 corepack enable
@@ -32,16 +32,16 @@ The browser can receive only variables prefixed with `NEXT_PUBLIC_`. These are i
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser       | Supabase publishable/anon key.                                                            |
 | `APP_URL`                       | Server        | Canonical public origin used for auth redirects, checkout return URLs, and origin checks. |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Server only   | Service-role database/storage operations. Never expose to the browser.                    |
-| `SUPABASE_URL`                  | Server/worker | Supabase URL for trusted server and worker calls.                                         |
-| `DATABASE_URL`                  | Worker/server | Postgres connection used by the worker.                                                   |
+| `SUPABASE_URL`                  | Server/worker | Supabase URL for trusted server and worker calls, including candidate registration.        |
+| `DATABASE_URL`                  | Worker/migrations | Direct Postgres connection used by saved-run processing and migration scripts. Candidate registration uses Supabase REST and does not require this value. |
 | `STRIPE_SECRET_KEY`             | Server only   | Stripe API access.                                                                        |
 | `STRIPE_WEBHOOK_SECRET`         | Server only   | Signature verification for `/api/billing/webhook`.                                        |
 | `STRIPE_MONTHLY_PRICE_ID`       | Server        | Stripe price for the monthly CAD plan.                                                    |
 | `STRIPE_ANNUAL_PRICE_ID`        | Server        | Stripe price for the annual CAD plan.                                                     |
 | `BILLING_ENABLED`               | Server        | Keep `false` until live prices, webhook handling, and launch approval are complete.       |
-| `CALC_ENGINE_URL`              | Server        | HTTPS origin of the private live engine; never a browser endpoint.                         |
+| `CALC_ENGINE_URL`              | Server        | HTTPS origin of the live engine; requests use the server-only shared secret and never come directly from the browser. |
 | `CALC_ENGINE_SECRET`           | Server/engine | Shared engine authentication secret, at least 32 bytes; server-only.                      |
-| `UNO_PYTHON_BIN`               | Worker        | Python with UNO bridge for a warm live process.                                          |
+| `UNO_PYTHON_BIN`               | Worker image  | Matching TDF Python 3.13.15 runtime bundled at `/opt/libreoffice26.8/program/python`.      |
 | `SOFFICE_BIN`                   | Worker        | LibreOffice executable; default `soffice`.                                                |
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, Stripe secrets, or worker credentials in any `NEXT_PUBLIC_` variable.
@@ -69,7 +69,7 @@ The migrations create immutable calculator versions, user-owned calculations/run
 
 Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The new candidate is `state-rent@2.0.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
 
-The registration script verifies the runtime SHA-256, uploads the private template, and inserts an immutable candidate with `approved=false`:
+The current catalog pointer remains `1.0.0-candidate.1`; `2.0.0-candidate.1` is registered with `approved=false`. The registration script verifies the runtime SHA-256, uploads the private template, and inserts an immutable candidate without changing that pointer:
 
 ```text
 python scripts/register_model.py \
@@ -77,7 +77,7 @@ python scripts/register_model.py \
   --template private/models/state-rent/2.0.0-candidate.1.xlsx
 ```
 
-It requires `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. Registration does not grant numerical approval. The database, frontend API, and worker reject customer execution of an unapproved version.
+It requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, but not `DATABASE_URL`. It confirms the calculator already exists, then verifies the entire manifest, template path, checksum, and stored object on an idempotent rerun. Registration never approves or activates a version. The database, frontend API, and worker reject customer execution of an unapproved version.
 
 Generate the allowlisted public preview separately:
 
@@ -89,13 +89,13 @@ The new artifact contains 195 operational input definitions, guide notes, displa
 
 ## Render
 
-The checked-in `render.yaml` provisions:
+The checked-in `render.yaml` describes:
 
-- `geoflow-lab-web`: Node 22, `pnpm build`, `pnpm start`, health check `/api/health`.
-- `geoflow-lab-calculations`: the Docker worker from `worker/Dockerfile` for saved immutable runs.
-- `whittaker-geo-live-calculations`: the private HTTP engine from the same image, `python -m worker.live`, health check `/health`, warm concurrency one. Configure its shared secret and Supabase access, then set `CALC_ENGINE_URL` and the same `CALC_ENGINE_SECRET` on the frontend. This service has not been provisioned by the local implementation.
+- `geoflow-lab-web`: the legacy Node 22 Render web service (`pnpm build`, `pnpm start`, `/api/health`). The production frontend is Cloudflare.
+- `whittaker-geo-saved-calculations`: the Docker background worker from `worker/Dockerfile`, running `python -m worker.jobs` for saved immutable runs. It requires `DATABASE_URL` and Supabase access.
+- `whittaker-geo-live-calculations`: the Docker HTTP engine from the same image, running `python -m worker.live`, health check `/health`, concurrency one. Cloudflare's server-side `CALC_ENGINE_URL` points to `https://whittaker-geo-live-calculations.onrender.com`; the Cloudflare secret and Render `CALC_ENGINE_SECRET` must match. The service uses public HTTPS plus shared-secret authentication; it is not a private Render network connection.
 
-Create the Render services from the blueprint, set all `sync: false` values in the Render dashboard, and set `APP_URL` to the final HTTPS origin. Keep `BILLING_ENABLED=false` until the launch gates below are complete. Confirm the web service binds through the provided start command and that the worker can reach the same Supabase/Postgres project.
+As of 2026-10-22, the live calculation service exists on Render's Free plan as a staging service, but its Docker/runtime behavior has not been validated for production. The saved-run worker is prepared; its requested $7 plan upgrade and the live-engine upgrade are pending. Do not treat the `/health` response alone as model or runtime acceptance. Keep `BILLING_ENABLED=false` until the launch gates below are complete. When the paid services are approved, verify the saved worker's Postgres access and test the live engine through the Cloudflare-to-Render HTTPS path.
 
 ## Stripe
 
@@ -121,7 +121,7 @@ Deployment is not a model approval. Before setting a version `approved=true` or 
 - [ ] Stripe test checkout and signed webhook delivery have been verified before live prices are used.
 - [ ] `BILLING_ENABLED` is changed to `true` only after the above checks and live Price IDs are configured.
 
-The Docker worker and full Render deployment are not tested by the local Next.js typecheck/build alone. Validate them in a staging environment before production rollout. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
+The Dockerfile's synthetic smoke test and a local Next.js typecheck/build do not validate the deployed Render services. The live engine remains a Free-plan staging service pending Docker/runtime and request-path validation. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
 
 ## Official references
 

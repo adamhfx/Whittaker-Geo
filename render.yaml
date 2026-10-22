@@ -1,4 +1,5 @@
 services:
+  # Legacy Render web app retained for reference; Cloudflare serves the frontend.
   - type: web
     name: geoflow-lab-web
     runtime: node
@@ -31,9 +32,10 @@ services:
       - key: BILLING_ENABLED
         value: "false"
   - type: worker
-    name: geoflow-lab-calculations
+    name: whittaker-geo-saved-calculations
     runtime: docker
     dockerfilePath: ./worker/Dockerfile
+    dockerCommand: python -m worker.jobs
     envVars:
       - key: DATABASE_URL
         sync: false

@@ -1,4 +1,4 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 export default defineConfig({
   accountId: "032b3907437b929309a3bb9c45964a13",
@@ -8,6 +8,10 @@ export default defineConfig({
     compatibilityDate: "2026-10-22",
     compatibilityFlags: ["nodejs_compat"],
     workersDev: true,
+    triggers: [
+      triggers.fetch({ pattern: "www.whittakergeo.com/*", zone: "whittakergeo.com" }),
+      triggers.fetch({ pattern: "whittakergeo.com/*", zone: "whittakergeo.com" }),
+    ],
     observability: {
       enabled: true,
       headSamplingRate: 1,

@@ -4,6 +4,8 @@ The 2.0.0-candidate.1 Resource-to-Value model has 195 operational inputs across 
 
 The public interface contains only input definitions, examples, guide text, validation, and output view names. Source workbooks, runtime templates, cell mappings, presentation source ranges, preparation tools, checksums, and numerical review records remain in ignored owner-only folders. They must be supplied separately on another computer. Git does not synchronize them or `.env.local`.
 
+Current release state (2026-10-22): version `2.0.0-candidate.1` is registered in Supabase but remains unapproved, and the active catalog pointer is still `1.0.0-candidate.1`. The Cloudflare interface can preview the v2 form, but hosted customer evaluation of v2 remains blocked until the exact candidate is reviewed and approved. GitHub deployment of application code does not change these model-release records.
+
 ## Calculator workspace
 
 Choosing **New calculation** in **Calculators** opens a dedicated full-width workspace. The library sidebar gives way to a compact toolbar with save actions, horizontal input sections, and a wider form beside live results. **Run history** is a collapsed disclosure below the editor. The back button returns to the calculator library (or Saved Calculations for an existing saved project); browser Back, direct links, and session drafts retain the existing route and recovery behavior. Smaller screens stack inputs and results.
@@ -19,7 +21,7 @@ models/state-rent/2.0.0-candidate.1.json
 private/models/state-rent/2.0.0-candidate.1.xlsx
 ```
 
-Install `worker/requirements.txt` into `.venv`. Use LibreOffice 26.8.1 and a Python runtime with its UNO bridge. The prepared Windows installation on this PC is under `private/tooling/LibreOffice/program/`. Configure these ignored `.env.local` entries:
+Install `worker/requirements.txt` into `.venv`. Use LibreOffice 26.8.1 and a Python runtime with its matching UNO bridge. The prepared Windows installation on this PC is under `private/tooling/LibreOffice/program/`. Configure these ignored `.env.local` entries:
 
 ```text
 CALC_ENGINE_URL=http://127.0.0.1:8765
@@ -60,10 +62,12 @@ The UI preserves the source's government NPV10 label. The source's IRR ratio val
 
 ## Production connection
 
-The frontend's `POST /api/calculators/[id]/evaluate` requires a signed-in user, matching origin, an approved immutable model version, a paid entitlement, and valid inputs. It forwards only validated input values and server-derived identity. The separate private service rechecks approval, downloads the template from private Supabase storage, verifies its checksum, and enforces a per-user rate limit and bounded concurrency. Responses contain only allowed output values, summary values, and chart series. No live edit inserts a calculation, run, or export.
+The frontend's `POST /api/calculators/[id]/evaluate` requires a signed-in user, matching origin, an approved immutable model version, a paid entitlement, and valid inputs. It forwards only validated input values and server-derived identity. The calculation engine rechecks approval, downloads the template from private Supabase storage, verifies its checksum, and enforces a per-user rate limit and bounded concurrency. Responses contain only allowed output values, summary values, and chart series. No live edit inserts a calculation, run, or export.
 
-The blueprint includes an optional `whittaker-geo-live-calculations` HTTP service, separate from the existing immutable-run worker. Set its server-only `CALC_ENGINE_SECRET`, Supabase URL and service key; use concurrency one for the warm process. Configure the frontend's `CALC_ENGINE_URL` with that service's HTTPS origin and the same secret. A `/health` response verifies that the service is running; it does not prove a model is approved or warmed. The pinned Docker image and Linux UNO bridge still require staging build and runtime verification.
+Cloudflare's server-side `CALC_ENGINE_URL` is configured as `https://whittaker-geo-live-calculations.onrender.com`; `CALC_ENGINE_SECRET` is stored as a Cloudflare secret and must match the Render engine's value. The engine uses a public HTTPS endpoint authenticated by that shared secret; it is not on a private Render network. The Render service exists on the Free plan as a staging service, but its Docker build/runtime and live Cloudflare-to-Render path have not been accepted for production. The saved-run worker is `whittaker-geo-saved-calculations`; its requested $7 plan upgrade and the engine's $7 upgrade are pending. A `/health` response confirms process health only, not model approval, workbook parity, or full runtime acceptance.
 
-Before customer release: validate the Docker service in staging, register the exact private candidate with `approved=false`, obtain the owner's numerical approval, approve that immutable version through the existing release process, and configure the frontend connection. Keep both local-review flags false in hosted environments. This task does not provision hosting or publish the candidate.
+The Docker image pins TDF LibreOffice 26.8.1 and uses its bundled Python 3.13.15 at `/opt/libreoffice26.8/program/python` for the matching UNO bridge. The image build runs a synthetic import, recalculation, reset, and output smoke test. Passing that build-time test is not a substitute for validating the deployed Render image and request path.
+
+Before customer release, validate the deployed image and request path, compare representative changed-input outputs, and obtain the model owner's numerical approval for the exact v2 candidate. Then record the separate approval action for the immutable version before hosted evaluation can use it. Keep both local-review flags false in hosted environments. The candidate remains unapproved and the active pointer remains v1 until that release process completes. No newly recalculated Excel parity claim is established by the saved-cache comparisons documented above.
 
 Saved runs continue through the existing queue and retain their original version. Candidate exports are newly constructed values-only workbooks with exactly the two allowed visible output sheets and three charts backed by numeric values on a visible sheet. They contain no source formulas, hidden model sheets, or external workbook links.
