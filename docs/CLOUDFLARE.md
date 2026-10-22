@@ -16,10 +16,12 @@ successful deployment is:
 
 `https://geoflow-preview.roger-d-whittaker.workers.dev/preview`
 
-This is the interface preview. No Supabase or Stripe credentials are configured,
-and billing is explicitly disabled. The Python/LibreOffice calculation worker
-is not deployed by this workflow. The existing Render configuration and ordinary
-`pnpm dev`, `pnpm build`, and `pnpm start` commands remain available.
+This deployment includes the interface preview and the configured Supabase
+account connection described below. Billing is explicitly disabled. The
+Python/LibreOffice calculation worker is not deployed by this workflow; the candidate model's live calculations remain
+available only in the development-only local review until its private engine is
+hosted and the model owner approves the exact version. The existing Render
+configuration and ordinary `pnpm dev`, `pnpm build`, and `pnpm start` commands remain available.
 
 Cloudflare's current Next.js integration uses vinext and the Cloudflare Vite
 plugin. These provide a separate build path; their beta status makes this a

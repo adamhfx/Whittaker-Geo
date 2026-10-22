@@ -19,6 +19,7 @@ import {
   History,
   LogOut,
   Plus,
+  Pencil,
   Save,
   ShieldCheck,
   Settings,
@@ -550,6 +551,31 @@ export default function App({ preview = false }: { preview?: boolean }) {
         onSignOut={signOut}
       />
     ) : null;
+  const workspaceMessages = (
+    <>
+      {error && (
+        <div role="alert" className="notice">
+          {error}
+        </div>
+      )}
+      {notice && (
+        <div role="status" className="notice success">
+          {notice}
+        </div>
+      )}
+      {!editable && (
+        <div className="notice">
+          <ShieldCheck size={18} />
+          <span>
+            Your saved inputs and results remain available. Subscribe to
+            create, edit, duplicate, or run calculations.
+          </span>
+        </div>
+      )}
+    </>
+  );
+  const calculationSaveStatus = preview ? "Browser draft" : dirty
+    ? (calculation ? "Unsaved changes" : "Not saved yet") : "Saved";
   const isCalculatorWorkspace = currentRoute?.view === "editor" || currentRoute?.view === "results";
   const returnToSaved = !!currentRoute?.calculationId;
   const editorActions = (
@@ -738,27 +764,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
           </div>
         </header>
         )}
-        <div className="content">
+        <div className={`content${currentRoute?.view === "editor" ? " content--calculator-editor" : ""}`}>
           {routeLoading ? <LoadingSpinner /> : <>
-          {error && (
-            <div role="alert" className="notice">
-              {error}
-            </div>
-          )}
-          {notice && (
-            <div role="status" className="notice success">
-              {notice}
-            </div>
-          )}
-          {!editable && (
-            <div className="notice">
-              <ShieldCheck size={18} />
-              <span>
-                Your saved inputs and results remain available. Subscribe to
-                create, edit, duplicate, or run calculations.
-              </span>
-            </div>
-          )}
+          {view !== "editor" && workspaceMessages}
           {(view === "overview" || view === "saved") && (
             <>
               <div className="eyebrow">{view === "saved" ? "Your project library" : "Economics, with clarity"}</div>
@@ -887,23 +895,32 @@ export default function App({ preview = false }: { preview?: boolean }) {
             <>
               <div className="calculator-context">
                 <div className="calculator-context__name">
-                  <label className="form-label" htmlFor="calculation-name">
-                    Calculation name{dirty ? " · Unsaved changes" : ""}
-                  </label>
-                  <input
-                    id="calculation-name"
-                    className="text-input project-title"
-                    maxLength={120}
-                    disabled={!editable}
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      setDirty(true);
-                    }}
-                  />
+                  <div className="calculator-context__name-heading">
+                    <label className="form-label" htmlFor="calculation-name">Calculation name</label>
+                    <span className="calculator-save-status" role="status" aria-label={`Save status: ${calculationSaveStatus}`}>{calculationSaveStatus}</span>
+                  </div>
+                  <div className="calculator-name-control">
+                    <input
+                      id="calculation-name"
+                      className="text-input project-title"
+                      aria-describedby="calculation-name-help"
+                      maxLength={120}
+                      disabled={!editable}
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setDirty(true);
+                      }}
+                    />
+                    {editable && <Pencil className="calculator-name-control__icon" size={17} aria-hidden="true" />}
+                  </div>
+                  <p className="calculator-name-help" id="calculation-name-help">
+                    {editable ? "Click the name to rename this calculation." : "The name of this saved calculation."}
+                  </p>
                 </div>
                 <p className="calculator-context__description">{manifest.description}</p>
               </div>
+              {workspaceMessages}
               {!approved && !isLocalModelReview && (
                 <div className="notice">
                   This model is under numerical review. Live calculations will
