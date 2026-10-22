@@ -6,7 +6,7 @@ FROM python:3.12-slim-bookworm
 ARG LO_URL=https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/x86_64/LibreOffice_26.8.1_Linux_x86-64_deb.tar.gz
 ARG LO_SHA256=30903df3b9f61360d9660cd707de48cd2831469114492a5008ed58a0ac77d044
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar python3-uno libcups2 libx11-xcb1 libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa \
+ && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar libcups2 libx11-xcb1 libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa \
  && curl --fail --silent --show-error --location "$LO_URL" --output /tmp/libreoffice.tar.gz \
  && echo "$LO_SHA256  /tmp/libreoffice.tar.gz" | sha256sum --check --status \
  && mkdir -p /tmp/libreoffice \
@@ -25,7 +25,7 @@ RUN apt-get update \
     done \
  && rm -f /tmp/soffice-ldd.txt \
  && /opt/libreoffice26.8/program/soffice --headless --version \
- && /usr/bin/python3 -c "import uno" \
+ && /opt/libreoffice26.8/program/python -c "import uno, pyuno; print('LibreOffice UNO Python:', __import__('sys').version.split()[0])" \
  && rm -rf /tmp/libreoffice /tmp/libreoffice.tar.gz /var/lib/apt/lists/*
 WORKDIR /app
 COPY worker/requirements.txt /app/requirements.txt
@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY worker /app/worker
 RUN useradd --create-home runner && chown -R runner:runner /app
 USER runner
-ENV PYTHONUNBUFFERED=1 UNO_PYTHON_BIN=/usr/bin/python3 SOFFICE_BIN=/opt/libreoffice26.8/program/soffice
+ENV PYTHONUNBUFFERED=1 UNO_PYTHON_BIN=/opt/libreoffice26.8/program/python SOFFICE_BIN=/opt/libreoffice26.8/program/soffice
 # Smoke the exact office/UNO pair with the final nonroot runtime account.
 RUN python -m worker.runtime_smoke
 CMD ["python", "-m", "worker.jobs"]

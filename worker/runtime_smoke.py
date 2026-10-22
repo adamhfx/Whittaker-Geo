@@ -143,7 +143,9 @@ def _probe_synthetic_cli_load(soffice_bin: str, workbook_path: Path, workdir: Pa
 def run() -> dict[str, Any]:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise RuntimeError("The calculation-engine runtime smoke must run as nonroot.")
-    python_bin = os.environ.get("UNO_PYTHON_BIN", "/usr/bin/python3")
+    python_bin = os.environ.get(
+        "UNO_PYTHON_BIN", "/opt/libreoffice26.8/program/python"
+    )
     soffice_bin = os.environ.get("SOFFICE_BIN", "soffice")
     with tempfile.TemporaryDirectory(prefix="geoflow-runtime-smoke-") as temp:
         workbook_path = Path(temp) / "synthetic-model.xlsx"
