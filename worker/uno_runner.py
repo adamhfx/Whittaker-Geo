@@ -8,6 +8,7 @@ import json
 import math
 import sys
 import time
+import traceback
 
 import uno
 from com.sun.star.beans import PropertyValue
@@ -94,6 +95,9 @@ def connect(pipe):
 
 
 def main():
+    # This helper switch is set only by WarmOffice's explicit build-smoke
+    # option. It is never derived from HTTP/request data.
+    diagnostic_synthetic = len(sys.argv) > 2 and sys.argv[2] == '--diagnostic-synthetic'
     desktop = connect(sys.argv[1])
     document = None
     loaded_hash = None
@@ -175,6 +179,8 @@ def main():
             except ArithmeticError:
                 response = {'ok': False, 'code': 'RESULT_INVALID'}
             except Exception:
+                if diagnostic_synthetic:
+                    traceback.print_exc(file=sys.stderr)
                 if document:
                     try:
                         document.close(True)

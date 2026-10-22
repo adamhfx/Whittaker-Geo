@@ -97,7 +97,7 @@ def run() -> dict[str, Any]:
         workbook_path = Path(temp) / "synthetic-model.xlsx"
         _make_workbook(workbook_path)
         manifest = _manifest(workbook_path)
-        office = WarmOffice(python_bin, soffice_bin)
+        office = WarmOffice(python_bin, soffice_bin, diagnostic_synthetic=True)
         try:
             cases = [
                 ({"unitPrice": 2, "adjustment": 1}, 21),

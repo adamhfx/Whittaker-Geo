@@ -19,9 +19,12 @@ from .model_preview import (PreviewError, _hidden_columns, _input_cells,
 
 
 class WarmOffice:
-    def __init__(self, python_bin: str, soffice_bin: str):
+    def __init__(self, python_bin: str, soffice_bin: str, *, diagnostic_synthetic=False):
         self.python_bin = python_bin
         self.soffice_bin = soffice_bin
+        # Opt-in diagnostics are reserved for the build-time synthetic runtime
+        # fixture. Production callers leave this false; request data cannot set it.
+        self.diagnostic_synthetic = diagnostic_synthetic
         self._lock = threading.RLock()
         self._office = self._helper = None
         self._folder = None
@@ -82,9 +85,14 @@ class WarmOffice:
             '-env:UserInstallation=' + Path(self._folder.name).as_uri(),
             '--accept=pipe,name=' + pipe + ';urp;StarOffice.ServiceManager',
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **process_options)
-        self._helper = subprocess.Popen([
+        helper_command = [
             self.python_bin, str(Path(__file__).with_name('uno_runner.py')), pipe,
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        ]
+        if self.diagnostic_synthetic:
+            helper_command.append('--diagnostic-synthetic')
+        self._helper = subprocess.Popen(
+            helper_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=None if self.diagnostic_synthetic else subprocess.DEVNULL,
            text=True, encoding='utf-8', bufsize=1, **process_options)
         messages = self._messages = queue.Queue(maxsize=2)
         stream = self._helper.stdout
