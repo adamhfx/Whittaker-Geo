@@ -6,6 +6,7 @@ export type EngineEvaluationFailureCode =
   | "http_401"
   | "http_404"
   | "http_422"
+  | "http_redirect"
   | "http_other"
   | "invalid_json"
   | "invalid_result";
@@ -98,7 +99,7 @@ export async function evaluateDraft(options: {
   let response: Response;
   try {
     response = await (options.fetcher ?? fetch)(options.endpoint, {
-      method: "POST", cache: "no-store", redirect: "error", signal: options.signal,
+      method: "POST", cache: "no-store", redirect: "manual", signal: options.signal,
       headers: { "Content-Type": "application/json", "X-GeoFlow-Engine-Secret": options.secret },
       body: JSON.stringify({ calculatorId: options.manifest.id, version: options.manifest.version,
         inputs: options.inputs, requesterId: options.requesterId }),
@@ -111,7 +112,8 @@ export async function evaluateDraft(options: {
   }
   if (!response.ok) {
     if (response.status === 429 || response.status === 503) throw new Error("ENGINE_BUSY");
-    const code: EngineEvaluationFailureCode = response.status === 401 ? "http_401"
+    const code: EngineEvaluationFailureCode = response.status >= 300 && response.status < 400 ? "http_redirect"
+      : response.status === 401 ? "http_401"
       : response.status === 404 ? "http_404"
       : response.status === 422 ? "http_422"
       : "http_other";

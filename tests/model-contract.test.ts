@@ -50,7 +50,7 @@ test("live evaluation forwards only draft inputs and server-side identity, witho
   const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
     requestCount++;
     assert.equal(String(url), "https://engine.example/evaluate");
-    assert.equal(init?.redirect, "error");
+    assert.equal(init?.redirect, "manual");
     assert.equal(init?.cache, "no-store");
     assert.deepEqual(JSON.parse(String(init?.body)), { calculatorId: "test", version: manifest.version, inputs: { A1: 4 }, requesterId: "owner" });
     assert.equal((init?.headers as Record<string,string>)["X-GeoFlow-Engine-Secret"], "fixture-only");
@@ -85,6 +85,29 @@ test("engine failures expose only an allowlisted diagnostic code", async () => {
       assert.equal((error as Error).message.includes("provider detail"), false);
       return true;
     });
+  }
+});
+
+test("3xx engine responses are rejected without following or exposing redirect details", async () => {
+  for (const status of [302, 307]) {
+    let requestCount = 0;
+    const fetcher = (async (_url: string | URL | Request, init?: RequestInit) => {
+      requestCount++;
+      assert.equal(init?.redirect, "manual");
+      return new Response("private redirect body", {
+        status,
+        headers: { Location: "https://private-redirect.example/path?secret=value" },
+      });
+    }) as typeof fetch;
+    await assert.rejects(evaluateWith(fetcher), (error: unknown) => {
+      assert.ok(error instanceof EngineEvaluationError);
+      assert.equal(error.code, "http_redirect");
+      assert.equal(error.message, "ENGINE_FAILED");
+      assert.equal(error.message.includes("private-redirect"), false);
+      assert.equal(error.message.includes("secret=value"), false);
+      return true;
+    });
+    assert.equal(requestCount, 1);
   }
 });
 
