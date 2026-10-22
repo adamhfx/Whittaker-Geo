@@ -26,23 +26,23 @@ Copy `.env.example` to `.env.local` and fill in the values described below. Neve
 
 The browser can receive only variables prefixed with `NEXT_PUBLIC_`. These are identifiers, not credentials:
 
-| Variable                        | Owner         | Purpose                                                                                   |
-| ------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Browser       | Supabase project URL.                                                                     |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser       | Supabase publishable/anon key.                                                            |
-| `APP_URL`                       | Server        | Canonical public origin used for auth redirects, checkout return URLs, and origin checks. |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Server only   | Service-role database/storage operations. Never expose to the browser.                    |
-| `SUPABASE_URL`                  | Server/worker | Supabase URL for trusted server and worker calls, including candidate registration.        |
+| Variable                        | Owner             | Purpose                                                                                                                                                   |
+| ------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Browser           | Supabase project URL.                                                                                                                                     |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser           | Supabase publishable/anon key.                                                                                                                            |
+| `APP_URL`                       | Server            | Canonical public origin used for auth redirects, checkout return URLs, and origin checks.                                                                 |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server only       | Service-role database/storage operations. Never expose to the browser.                                                                                    |
+| `SUPABASE_URL`                  | Server/worker     | Supabase URL for trusted server and worker calls, including candidate registration.                                                                       |
 | `DATABASE_URL`                  | Worker/migrations | Direct Postgres connection used by saved-run processing and migration scripts. Candidate registration uses Supabase REST and does not require this value. |
-| `STRIPE_SECRET_KEY`             | Server only   | Stripe API access.                                                                        |
-| `STRIPE_WEBHOOK_SECRET`         | Server only   | Signature verification for `/api/billing/webhook`.                                        |
-| `STRIPE_MONTHLY_PRICE_ID`       | Server        | Stripe price for the monthly CAD plan.                                                    |
-| `STRIPE_ANNUAL_PRICE_ID`        | Server        | Stripe price for the annual CAD plan.                                                     |
-| `BILLING_ENABLED`               | Server        | Keep `false` until live prices, webhook handling, and launch approval are complete.       |
-| `CALC_ENGINE_URL`              | Server        | HTTPS origin of the live engine; requests use the server-only shared secret and never come directly from the browser. |
-| `CALC_ENGINE_SECRET`           | Server/engine | Shared engine authentication secret, at least 32 bytes; server-only.                      |
-| `UNO_PYTHON_BIN`               | Worker image  | Matching TDF Python 3.13.15 runtime bundled at `/opt/libreoffice26.8/program/python`.      |
-| `SOFFICE_BIN`                   | Worker        | LibreOffice executable; default `soffice`.                                                |
+| `STRIPE_SECRET_KEY`             | Server only       | Stripe API access.                                                                                                                                        |
+| `STRIPE_WEBHOOK_SECRET`         | Server only       | Signature verification for `/api/billing/webhook`.                                                                                                        |
+| `STRIPE_MONTHLY_PRICE_ID`       | Server            | Stripe price for the monthly CAD plan.                                                                                                                    |
+| `STRIPE_ANNUAL_PRICE_ID`        | Server            | Stripe price for the annual CAD plan.                                                                                                                     |
+| `BILLING_ENABLED`               | Server            | Keep `false` until live prices, webhook handling, and launch approval are complete.                                                                       |
+| `CALC_ENGINE_URL`               | Server            | HTTPS origin of the live engine; requests use the server-only shared secret and never come directly from the browser.                                     |
+| `CALC_ENGINE_SECRET`            | Server/engine     | Shared engine authentication secret, at least 32 bytes; server-only.                                                                                      |
+| `UNO_PYTHON_BIN`                | Worker image      | Matching TDF Python 3.13.15 runtime bundled at `/opt/libreoffice26.8/program/python`.                                                                     |
+| `SOFFICE_BIN`                   | Worker            | LibreOffice executable; default `soffice`.                                                                                                                |
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, Stripe secrets, or worker credentials in any `NEXT_PUBLIC_` variable.
 
