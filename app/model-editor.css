@@ -244,7 +244,7 @@
 .calculator-name-control { position:relative; }
 .calculator-name-control .project-title { padding-right:44px; }
 .calculator-name-control__icon { position:absolute; top:50%; right:15px; transform:translateY(-50%); color:#c7d7df; pointer-events:none; }
-.calculator-name-help { color:#c7d7df; font-size:11px; margin:8px 0 0; line-height:1.4; }
+.calculator-name-help { color:#c7d7df; font-size:11px; margin:8px 0 0; }
 
 /* A compact context band keeps the editable title clear without dominating the workspace. */
 .calculator-context { padding-block:12px; margin-bottom:12px; gap:24px; }
