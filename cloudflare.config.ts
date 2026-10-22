@@ -24,6 +24,11 @@ export default defineConfig({
         type: "text",
         value: "https://geoflow-preview.roger-d-whittaker.workers.dev",
       },
+      NEXT_PUBLIC_SUPABASE_URL: bindings.text("https://mkjlxkctrtqcvxucuzcs.supabase.co"),
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text("sb_publishable_tMTYs8cmQMMWO5L3WsGGeg_NkJy-2b1"),
+      SUPABASE_URL: bindings.text("https://mkjlxkctrtqcvxucuzcs.supabase.co"),
+      // Set the value in Cloudflare Secrets; never put it in source or build env.
+      SUPABASE_SERVICE_ROLE_KEY: bindings.secret(),
       BILLING_ENABLED: { type: "text", value: "false" },
     },
   }),

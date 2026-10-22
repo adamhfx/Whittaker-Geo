@@ -76,3 +76,29 @@ does not change DNS or replace the existing domain's website.
 Transfer `.env.local`, private model workbooks/manifests, and owner-only release
 tools separately when full service development is needed. Keep them out of
 the public repository. Local Codex chats also do not transfer through Git.
+
+## Supabase connection
+
+The public browser build and Worker runtime both target the existing Calculations
+App Supabase project (`mkjlxkctrtqcvxucuzcs`). The workflow includes only its public
+URL and publishable key. Those identifiers are intentionally safe to ship to the
+browser; database Row Level Security remains responsible for user data access.
+
+Set `SUPABASE_SERVICE_ROLE_KEY` as an encrypted secret on `geoflow-preview` in
+Cloudflare. Despite the legacy environment-variable name, the JavaScript SDK and
+Python storage helper accept a modern `sb_secret_` key. Never place this value in
+Git, a `NEXT_PUBLIC_` variable, or build environment variables.
+
+For local Next.js development, use the same public URL/publishable key and a server
+secret in ignored `.env.local`, then restart the development server. Set local
+`APP_URL` to `http://127.0.0.1:3000` for the configured development hostname.
+
+Supabase Auth must allow these exact callback URLs:
+- `https://geoflow-preview.roger-d-whittaker.workers.dev/auth/callback`
+- `http://127.0.0.1:3000/auth/callback`
+- `http://localhost:3000/auth/callback`
+
+Preserve existing Render callback URLs while that deployment remains in use. Add
+the custom-domain callback only when the domain connection is ready. API keys do
+not apply SQL migrations, approve the private numerical model, start the separate
+calculation worker, or enable billing.

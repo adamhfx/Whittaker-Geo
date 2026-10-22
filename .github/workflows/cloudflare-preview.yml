@@ -18,6 +18,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Only public Supabase identifiers are embedded into browser builds.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: "https://mkjlxkctrtqcvxucuzcs.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_tMTYs8cmQMMWO5L3WsGGeg_NkJy-2b1"
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
