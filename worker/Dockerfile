@@ -6,7 +6,7 @@ FROM python:3.12-slim-bookworm
 ARG LO_URL=https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/x86_64/LibreOffice_26.8.1_Linux_x86-64_deb.tar.gz
 ARG LO_SHA256=30903df3b9f61360d9660cd707de48cd2831469114492a5008ed58a0ac77d044
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar libcups2 libx11-xcb1 libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa \
+ && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar libcups2 libx11-xcb1 libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa libglib2.0-0 \
  && curl --fail --silent --show-error --location "$LO_URL" --output /tmp/libreoffice.tar.gz \
  && echo "$LO_SHA256  /tmp/libreoffice.tar.gz" | sha256sum --check --status \
  && mkdir -p /tmp/libreoffice \
