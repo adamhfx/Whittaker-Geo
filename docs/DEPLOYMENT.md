@@ -98,7 +98,19 @@ The checked-in `render.yaml` describes:
 
 As of 2026-10-22, the user chose Render's Free live engine and deferred the saved-run worker. No paid plans were applied. The Linux image's synthetic import/calculation/reset smoke passed. Hosted v2 baseline, gas-price change, and reset returned two output views, eight summary values, and three charts; the baseline matched local results within the documented numerical tolerances. Initial startup took about 36 seconds; warm requests took about 5–6 seconds on the Free instance. Free idle shutdowns can add startup delay. The interface displays a calculating spinner and a longer-wait explanation, and the API supplies bounded retry guidance for timeout/busy responses.
 
-`SAVED_RUNS_ENABLED=false` is set on Cloudflare. Bootstrap exposes the capability, the interface disables **Save & run**, and the authenticated run API rejects new queue submissions while disabled. Input saves, live evaluations, existing run history, and earlier downloads remain available. Enable `SAVED_RUNS_ENABLED=true` only after a worker is provisioned and queued-run/export acceptance passes. Keep `BILLING_ENABLED=false`; hosting is separate from customer subscription billing.
+The later free saved-run implementation uses the existing HTTP engine instead of provisioning the separate background worker. `SAVED_RUNS_ENABLED=true` enables **Save & run** after migration 004 and the engine export endpoint are deployed. Keep `BILLING_ENABLED=false`; hosting is separate from customer subscription billing.
+
+### Saved runs and Excel exports on Free
+
+The existing `submit_run` transaction records an immutable input revision and idempotent job. While its results page is open, the browser posts to `/api/runs/[id]/process`. Cloudflare checks ownership and the request origin, claims only that run through a server-only function, and calls the authenticated `/export` endpoint on the same Render service. Live edits and exports share the engine's single calculation slot. Busy/startup responses requeue the existing job with backoff instead of creating another run.
+
+The engine rechecks model approval and checksum, recalculates the saved inputs, and constructs a new XLSX from the validated output values and source geometry. It returns the same dashboard values plus the values-only file; Cloudflare stores the file in private Supabase storage and publishes the result under a fenced lease. Downloads still use an ownership-checked, short-lived signed URL. No database credential or additional service is added to Render.
+
+Migration `004_requested_runs.sql` grants its claim/publication functions only to `service_role`. Claims expire after 180 seconds, reject duplicate active requests, and allow at most two interrupted execution attempts. A stale token cannot publish over a recovered run. Confirmed busy responses do not spend a crash retry. A lost publication reply is resolved by reading the stored run; the route never deletes a file that a committed result might reference.
+
+Keep the results page open until completion. Closing the page can interrupt request-driven execution; reopening the saved run resumes it after any active lease expires. This is not an always-on background queue, and Free idle startup and usage limits still apply. The separate worker remains optional for future unattended processing.
+
+The local export comparison checked all 2,399 nonblank baseline values, two visible output sheets and three charts. The deployed Free `/export` endpoint returned the same shape and a checked XLSX in 11.3 seconds, including 3.73 seconds of engine evaluation. ZIP inspection rejects cell formulas, hidden/private model sheets, external links, macros and embedded objects. Fresh Excel recalculation parity remains unverified as recorded in the v2 approval.
 
 ### Production browser acceptance, 2026-10-22
 
@@ -147,7 +159,7 @@ Deployment is not a model approval. Before setting a version `approved=true` or 
 - [ ] Stripe test checkout and signed webhook delivery have been verified before live prices are used.
 - [ ] `BILLING_ENABLED` is changed to `true` only after the above checks and live Price IDs are configured.
 
-The deployed live engine has passed real v2 baseline, changed-input, and reset checks in addition to the synthetic Linux image smoke. The saved-run worker and queue/export flow remain deferred and unverified in hosted production. Fresh Excel recalculation remains unverified; the user accepted release with that limitation. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
+The deployed live engine has passed real v2 baseline, changed-input, and reset checks in addition to the synthetic Linux image smoke. The separate background worker remains deferred; saved runs and exports use the request-driven Free path described above. Fresh Excel recalculation remains unverified; the user accepted release with that limitation. The original source workbook remains preserved at its owner workstation path; release preparation reads that source and writes the separate private runtime candidate.
 
 ## Official references
 

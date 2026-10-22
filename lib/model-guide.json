@@ -1,0 +1,743 @@
+{
+  "calculatorId": "state-rent",
+  "version": "2.0.0-candidate.1",
+  "groups": {
+    "reservoir": {
+      "title": "Reservoir & Production Design — User Guide",
+      "body": "Primary Fluid & Reservoir Parameters\nDefines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region.\n\nWhat to enter: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region.\n\nUsed in the model: Normalizes the resource volume, establishes the principal production stream, selects the applicable context, and sets the initial production rate.\n\nReview: Fluid and units must be internally consistent.\n\nProduction Forecast Parameters\nDefines the decline curve and development geometry used to construct the type-well and field forecast.\n\nWhat to enter: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width.\n\nUsed in the model: Builds the type-well production profile, estimates EUR, calculates drainage area and target wells, and scales production to the field.\n\nReview: Enter ratios as decimals and dimensions in the displayed units.\n\nAssociated Fluids\nDefines co-produced oil, gas, and water alongside the primary production stream.\n\nWhat to enter: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor.\n\nUsed in the model: Generates secondary production streams used in revenue and variable opex calculations.\n\nReview: Use zero only when a stream is genuinely absent.\n\nWellbore and Completion Design\nDefines the physical well design that drives drilling and completion capital.\n\nWhat to enter: True vertical depth, lateral design/length, testing intervals, and testing/fracturing intervals.\n\nUsed in the model: Selects the applicable drilling-cost rates and applies completion costs per interval to each scheduled well.\n\nReview: Interval counts are whole numbers and design should match the play."
+    },
+    "schedule": {
+      "title": "Development Schedule — User Guide",
+      "body": "Year\nTwenty-year project timing sequence for exploration, appraisal, facilities, development drilling, production, and cash flow.\n\nWhat to enter: Use the fixed project-year sequence.\n\nUsed in the model: Provides the timing axis for capital spending, well additions, start-up, and production.\n\nReview: Enter each activity in the intended project year.\n\nSeismic Acquisition USD MM\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD.\n\nSeismic Reprocessing USD MM\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable.\n\nExploration Wells\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells.\n\nAppraisal Wells\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells.\n\nFacilities Enter X\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production.\n\nFFDP Producer Wells\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "costs": {
+      "title": "Drilling & Completion Costs — User Guide",
+      "body": "Vertical drilling unit cost by depth\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates.\n\nLateral drilling unit cost by length\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1.\n\nPerforating and testing cost\nCost for a non-fractured test or completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies the number of testing intervals by the unit cost.\n\nReview: Enter a current unit cost.\n\nPerforating, testing and fracturing cost\nCost for a fractured completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies fractured intervals by the unit cost.\n\nReview: Avoid double-counting intervals.\n\nLearning factor after 5 / 10 wells\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
+    },
+    "facilities": {
+      "title": "Facilities Capex — User Guide",
+      "body": "4A | Gas Facilities\nCapacity and capex benchmark tiers for gas developments.\n\nWhat to enter: Annual design capacity in m³/year and capex in USD MM by component.\n\nUsed in the model: Selects or interpolates facilities requirements based on peak modeled gas production.\n\nReview: Capacity tiers should cover the expected production range.\n\n4B | Oil Facilities\nCapacity and capex benchmark tiers for oil developments.\n\nWhat to enter: Annual design capacity in bbl/year and capex in USD MM by component.\n\nUsed in the model: Selects or interpolates facilities requirements based on peak modeled oil production.\n\nReview: Capacity tiers should increase consistently.\n\nDesign Capacity\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity.\n\nPrimary Facility\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope.\n\nAssociated Facilities\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers.\n\nFlow Lines\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count.\n\nExport / Tie-in Pipeline\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "opex": {
+      "title": "Opex & Commodity Pricing — User Guide",
+      "body": "Variable opex escalation\nAnnual multiplier on unit operating costs.\n\nWhat to enter: Annual factor; 1.01 represents 1% annual escalation.\n\nUsed in the model: Escalates water, gas, and oil variable cost rates over time.\n\nReview: Enter a factor, not a percentage display value.\n\nFixed opex escalation\nAnnual multiplier on fixed annual operating cost.\n\nWhat to enter: Annual factor.\n\nUsed in the model: Escalates recurring fixed opex through project life.\n\nReview: Use a consistent inflation basis.\n\nWater / Gas / Oil variable opex\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs.\n\nFixed opex\nBase recurring annual field operating cost.\n\nWhat to enter: USD/year.\n\nUsed in the model: Adds annual cost independent of production volume.\n\nReview: Confirm the input is USD, not USD MM.\n\nGas / Oil sales price\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis.\n\nGas / Oil price escalation\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
+    },
+    "fiscal": {
+      "title": "Economics & Fiscal Controls — User Guide",
+      "body": "Scenario Multipliers\nTop-level controls for flexing capex, opex, production, and commodity prices.\n\nWhat to enter: 1.00 = base case; 1.10 = 10% increase; 0.90 = 10% decrease.\n\nUsed in the model: Applies scenario adjustments without rebuilding the underlying detailed assumptions.\n\nReview: Change one driver at a time for clear sensitivities.\n\nTotal capex / Total opex multiplier\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes.\n\nOil / Gas / Water production multiplier\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case.\n\nOil / Condensate and Gas price multiplier\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases.\n\nFiscal Model Terms\nControls government/investor revenue allocation and the valuation basis.\n\nWhat to enter: World region, PSA or CTR selector, and discount rate.\n\nUsed in the model: Applies the selected fiscal logic and discounts investor cash flows.\n\nReview: Confirm the regime before interpreting results.\n\nFiscal model selector\nSelects Production Sharing Agreement or Contract Tax/Royalty treatment.\n\nWhat to enter: Text selection: PSA or CTR.\n\nUsed in the model: Determines how project revenue is divided between investor and government.\n\nReview: Use the fiscal regime that matches the project.\n\nDiscount rate\nRequired return used for NPV.\n\nWhat to enter: Decimal percentage; 0.15 represents 15%.\n\nUsed in the model: Discounts annual investor cash flows to the valuation date.\n\nReview: Use a rate consistent with the case basis and risk."
+    }
+  },
+  "fields": {
+    "state-rent@2.0.0-candidate.1:ui!k8": {
+      "title": "Seismic acquisition spending — Year 1",
+      "body": "This input: Seismic acquisition spending — Year 1. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
+    },
+    "state-rent@2.0.0-candidate.1:ui!l8": {
+      "title": "Seismic reprocessing spending — Year 1",
+      "body": "This input: Seismic reprocessing spending — Year 1. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m8": {
+      "title": "Exploration wells drilled — Year 1",
+      "body": "This input: Exploration wells drilled — Year 1. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n8": {
+      "title": "Appraisal wells drilled — Year 1",
+      "body": "This input: Appraisal wells drilled — Year 1. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o8": {
+      "title": "Facilities installation marker — Year 1",
+      "body": "This input: Facilities installation marker — Year 1. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p8": {
+      "title": "Producer wells drilled — Year 1",
+      "body": "This input: Producer wells drilled — Year 1. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x8": {
+      "title": "Vertical drilling unit cost at 1,500 m TVD",
+      "body": "This input: Vertical drilling unit cost at 1,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h9": null,
+    "state-rent@2.0.0-candidate.1:ui!k9": {
+      "title": "Seismic acquisition spending — Year 2",
+      "body": "This input: Seismic acquisition spending — Year 2. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
+    },
+    "state-rent@2.0.0-candidate.1:ui!l9": {
+      "title": "Seismic reprocessing spending — Year 2",
+      "body": "This input: Seismic reprocessing spending — Year 2. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m9": {
+      "title": "Exploration wells drilled — Year 2",
+      "body": "This input: Exploration wells drilled — Year 2. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n9": {
+      "title": "Appraisal wells drilled — Year 2",
+      "body": "This input: Appraisal wells drilled — Year 2. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o9": {
+      "title": "Facilities installation marker — Year 2",
+      "body": "This input: Facilities installation marker — Year 2. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p9": {
+      "title": "Producer wells drilled — Year 2",
+      "body": "This input: Producer wells drilled — Year 2. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x9": {
+      "title": "Vertical drilling unit cost at 2,000 m TVD",
+      "body": "This input: Vertical drilling unit cost at 2,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac9": {
+      "title": "Gas facilities tier 1 — Design capacity",
+      "body": "This input: Gas facilities tier 1 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag9": {
+      "title": "Gas facilities tier 1 — Primary facility capex",
+      "body": "This input: Gas facilities tier 1 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai9": {
+      "title": "Gas facilities tier 1 — Associated facilities capex",
+      "body": "This input: Gas facilities tier 1 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak9": {
+      "title": "Gas facilities tier 1 — Flow lines capex",
+      "body": "This input: Gas facilities tier 1 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am9": {
+      "title": "Gas facilities tier 1 — Export / tie-in pipeline capex",
+      "body": "This input: Gas facilities tier 1 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax9": {
+      "title": "Variable opex escalation",
+      "body": "This input: Variable opex escalation. Displayed unit: annual factor.\n\nAnnual multiplier on unit operating costs.\n\nWhat to enter: Annual factor; 1.01 represents 1% annual escalation.\n\nUsed in the model: Escalates water, gas, and oil variable cost rates over time.\n\nReview: Enter a factor, not a percentage display value."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg9": {
+      "title": "Total capex multiplier",
+      "body": "This input: Total capex multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h10": null,
+    "state-rent@2.0.0-candidate.1:ui!k10": {
+      "title": "Seismic acquisition spending — Year 3",
+      "body": "This input: Seismic acquisition spending — Year 3. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
+    },
+    "state-rent@2.0.0-candidate.1:ui!l10": {
+      "title": "Seismic reprocessing spending — Year 3",
+      "body": "This input: Seismic reprocessing spending — Year 3. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m10": {
+      "title": "Exploration wells drilled — Year 3",
+      "body": "This input: Exploration wells drilled — Year 3. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n10": {
+      "title": "Appraisal wells drilled — Year 3",
+      "body": "This input: Appraisal wells drilled — Year 3. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o10": {
+      "title": "Facilities installation marker — Year 3",
+      "body": "This input: Facilities installation marker — Year 3. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p10": {
+      "title": "Producer wells drilled — Year 3",
+      "body": "This input: Producer wells drilled — Year 3. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x10": {
+      "title": "Vertical drilling unit cost at 2,500 m TVD",
+      "body": "This input: Vertical drilling unit cost at 2,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac10": {
+      "title": "Gas facilities tier 2 — Design capacity",
+      "body": "This input: Gas facilities tier 2 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag10": {
+      "title": "Gas facilities tier 2 — Primary facility capex",
+      "body": "This input: Gas facilities tier 2 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai10": {
+      "title": "Gas facilities tier 2 — Associated facilities capex",
+      "body": "This input: Gas facilities tier 2 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak10": {
+      "title": "Gas facilities tier 2 — Flow lines capex",
+      "body": "This input: Gas facilities tier 2 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am10": {
+      "title": "Gas facilities tier 2 — Export / tie-in pipeline capex",
+      "body": "This input: Gas facilities tier 2 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax10": {
+      "title": "Fixed opex escalation",
+      "body": "This input: Fixed opex escalation. Displayed unit: annual factor.\n\nAnnual multiplier on fixed annual operating cost.\n\nWhat to enter: Annual factor.\n\nUsed in the model: Escalates recurring fixed opex through project life.\n\nReview: Use a consistent inflation basis."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg10": {
+      "title": "Total opex multiplier",
+      "body": "This input: Total opex multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h11": null,
+    "state-rent@2.0.0-candidate.1:ui!m11": {
+      "title": "Exploration wells drilled — Year 4",
+      "body": "This input: Exploration wells drilled — Year 4. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n11": {
+      "title": "Appraisal wells drilled — Year 4",
+      "body": "This input: Appraisal wells drilled — Year 4. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o11": {
+      "title": "Facilities installation marker — Year 4",
+      "body": "This input: Facilities installation marker — Year 4. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p11": {
+      "title": "Producer wells drilled — Year 4",
+      "body": "This input: Producer wells drilled — Year 4. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x11": {
+      "title": "Vertical drilling unit cost at 3,000 m TVD",
+      "body": "This input: Vertical drilling unit cost at 3,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac11": {
+      "title": "Gas facilities tier 3 — Design capacity",
+      "body": "This input: Gas facilities tier 3 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag11": {
+      "title": "Gas facilities tier 3 — Primary facility capex",
+      "body": "This input: Gas facilities tier 3 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai11": {
+      "title": "Gas facilities tier 3 — Associated facilities capex",
+      "body": "This input: Gas facilities tier 3 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak11": {
+      "title": "Gas facilities tier 3 — Flow lines capex",
+      "body": "This input: Gas facilities tier 3 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am11": {
+      "title": "Gas facilities tier 3 — Export / tie-in pipeline capex",
+      "body": "This input: Gas facilities tier 3 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax11": {
+      "title": "Water variable opex",
+      "body": "This input: Water variable opex. Displayed unit: USD/bbl water.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg11": {
+      "title": "Oil production multiplier",
+      "body": "This input: Oil production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h12": null,
+    "state-rent@2.0.0-candidate.1:ui!m12": {
+      "title": "Exploration wells drilled — Year 5",
+      "body": "This input: Exploration wells drilled — Year 5. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n12": {
+      "title": "Appraisal wells drilled — Year 5",
+      "body": "This input: Appraisal wells drilled — Year 5. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o12": {
+      "title": "Facilities installation marker — Year 5",
+      "body": "This input: Facilities installation marker — Year 5. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p12": {
+      "title": "Producer wells drilled — Year 5",
+      "body": "This input: Producer wells drilled — Year 5. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x12": {
+      "title": "Vertical drilling unit cost at 3,500 m TVD",
+      "body": "This input: Vertical drilling unit cost at 3,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac12": {
+      "title": "Gas facilities tier 4 — Design capacity",
+      "body": "This input: Gas facilities tier 4 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag12": {
+      "title": "Gas facilities tier 4 — Primary facility capex",
+      "body": "This input: Gas facilities tier 4 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai12": {
+      "title": "Gas facilities tier 4 — Associated facilities capex",
+      "body": "This input: Gas facilities tier 4 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak12": {
+      "title": "Gas facilities tier 4 — Flow lines capex",
+      "body": "This input: Gas facilities tier 4 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am12": {
+      "title": "Gas facilities tier 4 — Export / tie-in pipeline capex",
+      "body": "This input: Gas facilities tier 4 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax12": {
+      "title": "Gas variable opex",
+      "body": "This input: Gas variable opex. Displayed unit: USD/m³ gas.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg12": {
+      "title": "Gas production multiplier",
+      "body": "This input: Gas production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h13": null,
+    "state-rent@2.0.0-candidate.1:ui!m13": {
+      "title": "Exploration wells drilled — Year 6",
+      "body": "This input: Exploration wells drilled — Year 6. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n13": {
+      "title": "Appraisal wells drilled — Year 6",
+      "body": "This input: Appraisal wells drilled — Year 6. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o13": {
+      "title": "Facilities installation marker — Year 6",
+      "body": "This input: Facilities installation marker — Year 6. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p13": {
+      "title": "Producer wells drilled — Year 6",
+      "body": "This input: Producer wells drilled — Year 6. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x13": {
+      "title": "Vertical drilling unit cost at 4,000 m TVD",
+      "body": "This input: Vertical drilling unit cost at 4,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac13": {
+      "title": "Gas facilities tier 5 — Design capacity",
+      "body": "This input: Gas facilities tier 5 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag13": {
+      "title": "Gas facilities tier 5 — Primary facility capex",
+      "body": "This input: Gas facilities tier 5 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai13": {
+      "title": "Gas facilities tier 5 — Associated facilities capex",
+      "body": "This input: Gas facilities tier 5 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak13": {
+      "title": "Gas facilities tier 5 — Flow lines capex",
+      "body": "This input: Gas facilities tier 5 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am13": {
+      "title": "Gas facilities tier 5 — Export / tie-in pipeline capex",
+      "body": "This input: Gas facilities tier 5 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax13": {
+      "title": "Oil variable opex",
+      "body": "This input: Oil variable opex. Displayed unit: USD/bbl oil.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg13": {
+      "title": "Water production multiplier",
+      "body": "This input: Water production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h14": null,
+    "state-rent@2.0.0-candidate.1:ui!m14": {
+      "title": "Exploration wells drilled — Year 7",
+      "body": "This input: Exploration wells drilled — Year 7. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n14": {
+      "title": "Appraisal wells drilled — Year 7",
+      "body": "This input: Appraisal wells drilled — Year 7. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o14": {
+      "title": "Facilities installation marker — Year 7",
+      "body": "This input: Facilities installation marker — Year 7. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p14": {
+      "title": "Producer wells drilled — Year 7",
+      "body": "This input: Producer wells drilled — Year 7. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x14": {
+      "title": "Vertical drilling unit cost at 4,500 m TVD",
+      "body": "This input: Vertical drilling unit cost at 4,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax14": {
+      "title": "Fixed opex",
+      "body": "This input: Fixed opex. Displayed unit: USD/year.\n\nBase recurring annual field operating cost.\n\nWhat to enter: USD/year.\n\nUsed in the model: Adds annual cost independent of production volume.\n\nReview: Confirm the input is USD, not USD MM."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg14": {
+      "title": "Oil / condensate price multiplier",
+      "body": "This input: Oil / condensate price multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h15": null,
+    "state-rent@2.0.0-candidate.1:ui!m15": {
+      "title": "Exploration wells drilled — Year 8",
+      "body": "This input: Exploration wells drilled — Year 8. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n15": {
+      "title": "Appraisal wells drilled — Year 8",
+      "body": "This input: Appraisal wells drilled — Year 8. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o15": {
+      "title": "Facilities installation marker — Year 8",
+      "body": "This input: Facilities installation marker — Year 8. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p15": {
+      "title": "Producer wells drilled — Year 8",
+      "body": "This input: Producer wells drilled — Year 8. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x15": {
+      "title": "Vertical drilling unit cost at 5,000 m TVD",
+      "body": "This input: Vertical drilling unit cost at 5,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg15": {
+      "title": "Gas price multiplier",
+      "body": "This input: Gas price multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m16": {
+      "title": "Exploration wells drilled — Year 9",
+      "body": "This input: Exploration wells drilled — Year 9. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n16": {
+      "title": "Appraisal wells drilled — Year 9",
+      "body": "This input: Appraisal wells drilled — Year 9. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o16": {
+      "title": "Facilities installation marker — Year 9",
+      "body": "This input: Facilities installation marker — Year 9. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p16": {
+      "title": "Producer wells drilled — Year 9",
+      "body": "This input: Producer wells drilled — Year 9. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x16": {
+      "title": "Lateral drilling unit cost at 1,000 m",
+      "body": "This input: Lateral drilling unit cost at 1,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax16": {
+      "title": "Gas sales price (field gate)",
+      "body": "This input: Gas sales price (field gate). Displayed unit: USD/m³ gas.\n\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h17": null,
+    "state-rent@2.0.0-candidate.1:ui!m17": {
+      "title": "Exploration wells drilled — Year 10",
+      "body": "This input: Exploration wells drilled — Year 10. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n17": {
+      "title": "Appraisal wells drilled — Year 10",
+      "body": "This input: Appraisal wells drilled — Year 10. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o17": {
+      "title": "Facilities installation marker — Year 10",
+      "body": "This input: Facilities installation marker — Year 10. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p17": {
+      "title": "Producer wells drilled — Year 10",
+      "body": "This input: Producer wells drilled — Year 10. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x17": {
+      "title": "Lateral drilling unit cost at 1,500 m",
+      "body": "This input: Lateral drilling unit cost at 1,500 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax17": {
+      "title": "Oil sales price (field gate)",
+      "body": "This input: Oil sales price (field gate). Displayed unit: USD/bbl oil.\n\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h18": null,
+    "state-rent@2.0.0-candidate.1:ui!m18": {
+      "title": "Exploration wells drilled — Year 11",
+      "body": "This input: Exploration wells drilled — Year 11. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n18": {
+      "title": "Appraisal wells drilled — Year 11",
+      "body": "This input: Appraisal wells drilled — Year 11. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o18": {
+      "title": "Facilities installation marker — Year 11",
+      "body": "This input: Facilities installation marker — Year 11. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p18": {
+      "title": "Producer wells drilled — Year 11",
+      "body": "This input: Producer wells drilled — Year 11. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x18": {
+      "title": "Lateral drilling unit cost at 2,000 m",
+      "body": "This input: Lateral drilling unit cost at 2,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac18": {
+      "title": "Oil facilities tier 1 — Design capacity",
+      "body": "This input: Oil facilities tier 1 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag18": {
+      "title": "Oil facilities tier 1 — Primary facility capex",
+      "body": "This input: Oil facilities tier 1 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai18": {
+      "title": "Oil facilities tier 1 — Associated facilities capex",
+      "body": "This input: Oil facilities tier 1 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak18": {
+      "title": "Oil facilities tier 1 — Flow lines capex",
+      "body": "This input: Oil facilities tier 1 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am18": {
+      "title": "Oil facilities tier 1 — Export / tie-in pipeline capex",
+      "body": "This input: Oil facilities tier 1 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax18": {
+      "title": "Gas price escalation",
+      "body": "This input: Gas price escalation. Displayed unit: annual factor.\n\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg18": {
+      "title": "Fiscal model selector",
+      "body": "This input: Fiscal model selector.\n\nSelects Production Sharing Agreement or Contract Tax/Royalty treatment.\n\nWhat to enter: Text selection: PSA or CTR.\n\nUsed in the model: Determines how project revenue is divided between investor and government.\n\nReview: Use the fiscal regime that matches the project."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h19": null,
+    "state-rent@2.0.0-candidate.1:ui!m19": {
+      "title": "Exploration wells drilled — Year 12",
+      "body": "This input: Exploration wells drilled — Year 12. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n19": {
+      "title": "Appraisal wells drilled — Year 12",
+      "body": "This input: Appraisal wells drilled — Year 12. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o19": {
+      "title": "Facilities installation marker — Year 12",
+      "body": "This input: Facilities installation marker — Year 12. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p19": {
+      "title": "Producer wells drilled — Year 12",
+      "body": "This input: Producer wells drilled — Year 12. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x19": {
+      "title": "Lateral drilling unit cost at 2,500 m",
+      "body": "This input: Lateral drilling unit cost at 2,500 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac19": {
+      "title": "Oil facilities tier 2 — Design capacity",
+      "body": "This input: Oil facilities tier 2 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag19": {
+      "title": "Oil facilities tier 2 — Primary facility capex",
+      "body": "This input: Oil facilities tier 2 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai19": {
+      "title": "Oil facilities tier 2 — Associated facilities capex",
+      "body": "This input: Oil facilities tier 2 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak19": {
+      "title": "Oil facilities tier 2 — Flow lines capex",
+      "body": "This input: Oil facilities tier 2 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am19": {
+      "title": "Oil facilities tier 2 — Export / tie-in pipeline capex",
+      "body": "This input: Oil facilities tier 2 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ax19": {
+      "title": "Oil price escalation",
+      "body": "This input: Oil price escalation. Displayed unit: annual factor.\n\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
+    },
+    "state-rent@2.0.0-candidate.1:ui!bg19": {
+      "title": "Discount rate",
+      "body": "This input: Discount rate. Displayed unit: % (enter as decimal).\n\nRequired return used for NPV.\n\nWhat to enter: Decimal percentage; 0.15 represents 15%.\n\nUsed in the model: Discounts annual investor cash flows to the valuation date.\n\nReview: Use a rate consistent with the case basis and risk."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h20": null,
+    "state-rent@2.0.0-candidate.1:ui!m20": {
+      "title": "Exploration wells drilled — Year 13",
+      "body": "This input: Exploration wells drilled — Year 13. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n20": {
+      "title": "Appraisal wells drilled — Year 13",
+      "body": "This input: Appraisal wells drilled — Year 13. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o20": {
+      "title": "Facilities installation marker — Year 13",
+      "body": "This input: Facilities installation marker — Year 13. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p20": {
+      "title": "Producer wells drilled — Year 13",
+      "body": "This input: Producer wells drilled — Year 13. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x20": {
+      "title": "Lateral drilling unit cost at 3,000 m",
+      "body": "This input: Lateral drilling unit cost at 3,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac20": {
+      "title": "Oil facilities tier 3 — Design capacity",
+      "body": "This input: Oil facilities tier 3 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag20": {
+      "title": "Oil facilities tier 3 — Primary facility capex",
+      "body": "This input: Oil facilities tier 3 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai20": {
+      "title": "Oil facilities tier 3 — Associated facilities capex",
+      "body": "This input: Oil facilities tier 3 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak20": {
+      "title": "Oil facilities tier 3 — Flow lines capex",
+      "body": "This input: Oil facilities tier 3 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am20": {
+      "title": "Oil facilities tier 3 — Export / tie-in pipeline capex",
+      "body": "This input: Oil facilities tier 3 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h21": null,
+    "state-rent@2.0.0-candidate.1:ui!m21": {
+      "title": "Exploration wells drilled — Year 14",
+      "body": "This input: Exploration wells drilled — Year 14. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n21": {
+      "title": "Appraisal wells drilled — Year 14",
+      "body": "This input: Appraisal wells drilled — Year 14. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o21": {
+      "title": "Facilities installation marker — Year 14",
+      "body": "This input: Facilities installation marker — Year 14. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p21": {
+      "title": "Producer wells drilled — Year 14",
+      "body": "This input: Producer wells drilled — Year 14. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x21": {
+      "title": "Perforating and testing cost",
+      "body": "This input: Perforating and testing cost. Displayed unit: USD/interval.\n\nCost for a non-fractured test or completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies the number of testing intervals by the unit cost.\n\nReview: Enter a current unit cost."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac21": {
+      "title": "Oil facilities tier 4 — Design capacity",
+      "body": "This input: Oil facilities tier 4 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag21": {
+      "title": "Oil facilities tier 4 — Primary facility capex",
+      "body": "This input: Oil facilities tier 4 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai21": {
+      "title": "Oil facilities tier 4 — Associated facilities capex",
+      "body": "This input: Oil facilities tier 4 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak21": {
+      "title": "Oil facilities tier 4 — Flow lines capex",
+      "body": "This input: Oil facilities tier 4 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am21": {
+      "title": "Oil facilities tier 4 — Export / tie-in pipeline capex",
+      "body": "This input: Oil facilities tier 4 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h22": null,
+    "state-rent@2.0.0-candidate.1:ui!m22": {
+      "title": "Exploration wells drilled — Year 15",
+      "body": "This input: Exploration wells drilled — Year 15. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n22": {
+      "title": "Appraisal wells drilled — Year 15",
+      "body": "This input: Appraisal wells drilled — Year 15. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o22": {
+      "title": "Facilities installation marker — Year 15",
+      "body": "This input: Facilities installation marker — Year 15. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p22": {
+      "title": "Producer wells drilled — Year 15",
+      "body": "This input: Producer wells drilled — Year 15. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x22": {
+      "title": "Stimulation (HF) cost",
+      "body": "This input: Stimulation (HF) cost. Displayed unit: USD/interval.\n\nCost for a fractured completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies fractured intervals by the unit cost.\n\nReview: Avoid double-counting intervals."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ac22": {
+      "title": "Oil facilities tier 5 — Design capacity",
+      "body": "This input: Oil facilities tier 5 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ag22": {
+      "title": "Oil facilities tier 5 — Primary facility capex",
+      "body": "This input: Oil facilities tier 5 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ai22": {
+      "title": "Oil facilities tier 5 — Associated facilities capex",
+      "body": "This input: Oil facilities tier 5 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
+    },
+    "state-rent@2.0.0-candidate.1:ui!ak22": {
+      "title": "Oil facilities tier 5 — Flow lines capex",
+      "body": "This input: Oil facilities tier 5 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!am22": {
+      "title": "Oil facilities tier 5 — Export / tie-in pipeline capex",
+      "body": "This input: Oil facilities tier 5 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h23": null,
+    "state-rent@2.0.0-candidate.1:ui!m23": {
+      "title": "Exploration wells drilled — Year 16",
+      "body": "This input: Exploration wells drilled — Year 16. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n23": {
+      "title": "Appraisal wells drilled — Year 16",
+      "body": "This input: Appraisal wells drilled — Year 16. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o23": {
+      "title": "Facilities installation marker — Year 16",
+      "body": "This input: Facilities installation marker — Year 16. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p23": {
+      "title": "Producer wells drilled — Year 16",
+      "body": "This input: Producer wells drilled — Year 16. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x23": {
+      "title": "Learning factor after 5 wells",
+      "body": "This input: Learning factor after 5 wells. Displayed unit: factor.\n\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h24": null,
+    "state-rent@2.0.0-candidate.1:ui!m24": {
+      "title": "Exploration wells drilled — Year 17",
+      "body": "This input: Exploration wells drilled — Year 17. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n24": {
+      "title": "Appraisal wells drilled — Year 17",
+      "body": "This input: Appraisal wells drilled — Year 17. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o24": {
+      "title": "Facilities installation marker — Year 17",
+      "body": "This input: Facilities installation marker — Year 17. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p24": {
+      "title": "Producer wells drilled — Year 17",
+      "body": "This input: Producer wells drilled — Year 17. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!x24": {
+      "title": "Learning factor after 10 wells",
+      "body": "This input: Learning factor after 10 wells. Displayed unit: factor.\n\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h25": null,
+    "state-rent@2.0.0-candidate.1:ui!m25": {
+      "title": "Exploration wells drilled — Year 18",
+      "body": "This input: Exploration wells drilled — Year 18. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n25": {
+      "title": "Appraisal wells drilled — Year 18",
+      "body": "This input: Appraisal wells drilled — Year 18. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o25": {
+      "title": "Facilities installation marker — Year 18",
+      "body": "This input: Facilities installation marker — Year 18. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p25": {
+      "title": "Producer wells drilled — Year 18",
+      "body": "This input: Producer wells drilled — Year 18. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m26": {
+      "title": "Exploration wells drilled — Year 19",
+      "body": "This input: Exploration wells drilled — Year 19. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n26": {
+      "title": "Appraisal wells drilled — Year 19",
+      "body": "This input: Appraisal wells drilled — Year 19. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o26": {
+      "title": "Facilities installation marker — Year 19",
+      "body": "This input: Facilities installation marker — Year 19. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p26": {
+      "title": "Producer wells drilled — Year 19",
+      "body": "This input: Producer wells drilled — Year 19. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!m27": {
+      "title": "Exploration wells drilled — Year 20",
+      "body": "This input: Exploration wells drilled — Year 20. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!n27": {
+      "title": "Appraisal wells drilled — Year 20",
+      "body": "This input: Appraisal wells drilled — Year 20. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
+    },
+    "state-rent@2.0.0-candidate.1:ui!o27": {
+      "title": "Facilities installation marker — Year 20",
+      "body": "This input: Facilities installation marker — Year 20. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
+    },
+    "state-rent@2.0.0-candidate.1:ui!p27": {
+      "title": "Producer wells drilled — Year 20",
+      "body": "This input: Producer wells drilled — Year 20. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
+    },
+    "state-rent@2.0.0-candidate.1:ui!h35": null,
+    "state-rent@2.0.0-candidate.1:ui!h36": null,
+    "state-rent@2.0.0-candidate.1:ui!h37": null,
+    "state-rent@2.0.0-candidate.1:ui!h38": null,
+    "state-rent@2.0.0-candidate.1:ui!h40": null,
+    "state-rent@2.0.0-candidate.1:ui!h42": null,
+    "state-rent@2.0.0-candidate.1:ui!h43": null
+  }
+}

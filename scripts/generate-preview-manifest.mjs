@@ -34,14 +34,22 @@ const fieldKeys = [
   "optionLabels",
   "radioGroup",
 ];
+const guide = JSON.parse(fs.readFileSync(path.join(root, "lib", "model-guide.json"), "utf8"));
+function note(kind, key, fallback) {
+  if (source.id === guide.calculatorId && source.version === guide.version && Object.hasOwn(guide[kind], key))
+    return guide[kind][key];
+  return fallback;
+}
 const fields = source.fields.map((field) => ({
   ...Object.fromEntries(
     fieldKeys
       .filter((key) => Object.hasOwn(field, key))
       .map((key) => [key, field[key]]),
   ),
-  ...(field.help && typeof field.help.title === "string" && typeof field.help.body === "string"
-    ? { help: { title: field.help.title, body: field.help.body } } : {}),
+  ...(note("fields", field.id, field.help) ? { help: {
+    title: note("fields", field.id, field.help).title,
+    body: note("fields", field.id, field.help).body,
+  } } : {}),
 }));
 const manifest = {
   id: source.id,
@@ -50,7 +58,7 @@ const manifest = {
   description: source.description,
   releaseStatus: source.releaseStatus,
   groups: source.groups.map(({ id, name, help }) => ({ id, name,
-    ...(help ? { help: { title: help.title, body: help.body } } : {}) })),
+    ...(note("groups", id, help) ? { help: note("groups", id, help) } : {}) })),
   ...(source.inputRules?.ascending ? { inputRules: { ascending: source.inputRules.ascending.map(({label, fields}) => ({label, fields})) } } : {}),
   ...(!Array.isArray(source.outputs) && source.outputs?.views ? { outputViews:
     source.outputs.views.map(({id,label,sheet}) => ({id,name:label,sheet})) } : {}),

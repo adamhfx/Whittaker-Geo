@@ -10,48 +10,48 @@ export const previewManifest = {
       "id": "reservoir",
       "name": "Reservoir & Production Design",
       "help": {
-        "title": "Reservoir and production design",
-        "body": "Defines the primary fluid and resource basis, type-well decline and geometry, associated fluids, and well design. These assumptions establish the technical production profile and field development scale."
+        "title": "Reservoir & Production Design — User Guide",
+        "body": "Primary Fluid & Reservoir Parameters\nDefines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region.\n\nWhat to enter: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region.\n\nUsed in the model: Normalizes the resource volume, establishes the principal production stream, selects the applicable context, and sets the initial production rate.\n\nReview: Fluid and units must be internally consistent.\n\nProduction Forecast Parameters\nDefines the decline curve and development geometry used to construct the type-well and field forecast.\n\nWhat to enter: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width.\n\nUsed in the model: Builds the type-well production profile, estimates EUR, calculates drainage area and target wells, and scales production to the field.\n\nReview: Enter ratios as decimals and dimensions in the displayed units.\n\nAssociated Fluids\nDefines co-produced oil, gas, and water alongside the primary production stream.\n\nWhat to enter: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor.\n\nUsed in the model: Generates secondary production streams used in revenue and variable opex calculations.\n\nReview: Use zero only when a stream is genuinely absent.\n\nWellbore and Completion Design\nDefines the physical well design that drives drilling and completion capital.\n\nWhat to enter: True vertical depth, lateral design/length, testing intervals, and testing/fracturing intervals.\n\nUsed in the model: Selects the applicable drilling-cost rates and applies completion costs per interval to each scheduled well.\n\nReview: Interval counts are whole numbers and design should match the play."
       }
     },
     {
       "id": "schedule",
       "name": "Development Schedule",
       "help": {
-        "title": "Development schedule",
-        "body": "Enter seismic, exploration, appraisal, facilities, and producer-well activity in the intended project year. Seismic entries are in USD MM and intended for Years 1–3; well counts are whole numbers; the facilities year uses an X marker."
+        "title": "Development Schedule — User Guide",
+        "body": "Year\nTwenty-year project timing sequence for exploration, appraisal, facilities, development drilling, production, and cash flow.\n\nWhat to enter: Use the fixed project-year sequence.\n\nUsed in the model: Provides the timing axis for capital spending, well additions, start-up, and production.\n\nReview: Enter each activity in the intended project year.\n\nSeismic Acquisition USD MM\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD.\n\nSeismic Reprocessing USD MM\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable.\n\nExploration Wells\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells.\n\nAppraisal Wells\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells.\n\nFacilities Enter X\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production.\n\nFFDP Producer Wells\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
       "id": "costs",
       "name": "Drilling & Completion Costs",
       "help": {
-        "title": "Drilling and completion costs",
-        "body": "Enter region-appropriate vertical and lateral drilling cost curves, interval costs, and campaign learning factors in the displayed units."
+        "title": "Drilling & Completion Costs — User Guide",
+        "body": "Vertical drilling unit cost by depth\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates.\n\nLateral drilling unit cost by length\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1.\n\nPerforating and testing cost\nCost for a non-fractured test or completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies the number of testing intervals by the unit cost.\n\nReview: Enter a current unit cost.\n\nPerforating, testing and fracturing cost\nCost for a fractured completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies fractured intervals by the unit cost.\n\nReview: Avoid double-counting intervals.\n\nLearning factor after 5 / 10 wells\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
       }
     },
     {
       "id": "facilities",
       "name": "Facilities Capex",
       "help": {
-        "title": "Facilities capital by capacity tier",
-        "body": "Provide ordered annual design-capacity tiers and component capex for gas and oil facilities. Capacity is annual throughput; costs are USD MM."
+        "title": "Facilities Capex — User Guide",
+        "body": "4A | Gas Facilities\nCapacity and capex benchmark tiers for gas developments.\n\nWhat to enter: Annual design capacity in m³/year and capex in USD MM by component.\n\nUsed in the model: Selects or interpolates facilities requirements based on peak modeled gas production.\n\nReview: Capacity tiers should cover the expected production range.\n\n4B | Oil Facilities\nCapacity and capex benchmark tiers for oil developments.\n\nWhat to enter: Annual design capacity in bbl/year and capex in USD MM by component.\n\nUsed in the model: Selects or interpolates facilities requirements based on peak modeled oil production.\n\nReview: Capacity tiers should increase consistently.\n\nDesign Capacity\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity.\n\nPrimary Facility\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope.\n\nAssociated Facilities\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers.\n\nFlow Lines\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count.\n\nExport / Tie-in Pipeline\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
       "id": "opex",
       "name": "Opex & Commodity Pricing",
       "help": {
-        "title": "Operating costs and commodity prices",
-        "body": "Set variable and fixed operating costs, starting net sales prices, and annual escalation factors. Enter rates in the displayed units and escalation as factors (for example, 1.01 means 1% annual escalation)."
+        "title": "Opex & Commodity Pricing — User Guide",
+        "body": "Variable opex escalation\nAnnual multiplier on unit operating costs.\n\nWhat to enter: Annual factor; 1.01 represents 1% annual escalation.\n\nUsed in the model: Escalates water, gas, and oil variable cost rates over time.\n\nReview: Enter a factor, not a percentage display value.\n\nFixed opex escalation\nAnnual multiplier on fixed annual operating cost.\n\nWhat to enter: Annual factor.\n\nUsed in the model: Escalates recurring fixed opex through project life.\n\nReview: Use a consistent inflation basis.\n\nWater / Gas / Oil variable opex\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs.\n\nFixed opex\nBase recurring annual field operating cost.\n\nWhat to enter: USD/year.\n\nUsed in the model: Adds annual cost independent of production volume.\n\nReview: Confirm the input is USD, not USD MM.\n\nGas / Oil sales price\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis.\n\nGas / Oil price escalation\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
       }
     },
     {
       "id": "fiscal",
       "name": "Economics & Fiscal Controls",
       "help": {
-        "title": "Economics and fiscal controls",
-        "body": "Apply case multipliers, choose the PSA or CTR fiscal model, and set the discount rate. A multiplier of 1.00 is the base case; 1.10 is a 10% increase; 0.90 is a 10% decrease."
+        "title": "Economics & Fiscal Controls — User Guide",
+        "body": "Scenario Multipliers\nTop-level controls for flexing capex, opex, production, and commodity prices.\n\nWhat to enter: 1.00 = base case; 1.10 = 10% increase; 0.90 = 10% decrease.\n\nUsed in the model: Applies scenario adjustments without rebuilding the underlying detailed assumptions.\n\nReview: Change one driver at a time for clear sensitivities.\n\nTotal capex / Total opex multiplier\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes.\n\nOil / Gas / Water production multiplier\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case.\n\nOil / Condensate and Gas price multiplier\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases.\n\nFiscal Model Terms\nControls government/investor revenue allocation and the valuation basis.\n\nWhat to enter: World region, PSA or CTR selector, and discount rate.\n\nUsed in the model: Applies the selected fiscal logic and discounts investor cash flows.\n\nReview: Confirm the regime before interpreting results.\n\nFiscal model selector\nSelects Production Sharing Agreement or Contract Tax/Royalty treatment.\n\nWhat to enter: Text selection: PSA or CTR.\n\nUsed in the model: Determines how project revenue is divided between investor and government.\n\nReview: Use the fiscal regime that matches the project.\n\nDiscount rate\nRequired return used for NPV.\n\nWhat to enter: Decimal percentage; 0.15 represents 15%.\n\nUsed in the model: Discounts annual investor cash flows to the valuation date.\n\nReview: Use a rate consistent with the case basis and risk."
       }
     }
   ],
@@ -105,8 +105,8 @@ export const previewManifest = {
       "scheduleRow": 11,
       "min": 0,
       "help": {
-        "title": "Seismic Acquisition USD MM",
-        "body": "Annual new seismic acquisition spending. Data required: USD millions; intended only for Years 1–3. Review: Enter USD MM, not whole USD. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic acquisition spending — Year 1",
+        "body": "This input: Seismic acquisition spending — Year 1. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
       }
     },
     {
@@ -122,8 +122,8 @@ export const previewManifest = {
       "scheduleRow": 12,
       "min": 0,
       "help": {
-        "title": "Seismic Reprocessing USD MM",
-        "body": "Annual cost to reprocess existing seismic data. Data required: USD millions; intended only for Years 1–3. Review: Use zero or blank when not applicable. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic reprocessing spending — Year 1",
+        "body": "This input: Seismic reprocessing spending — Year 1. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
       }
     },
     {
@@ -140,8 +140,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 1",
+        "body": "This input: Exploration wells drilled — Year 1. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -158,8 +158,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 1",
+        "body": "This input: Appraisal wells drilled — Year 1. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -176,8 +176,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 1",
+        "body": "This input: Facilities installation marker — Year 1. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -194,8 +194,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 1",
+        "body": "This input: Producer wells drilled — Year 1. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -208,8 +208,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 1,500 m TVD",
+        "body": "This input: Vertical drilling unit cost at 1,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -229,10 +229,6 @@ export const previewManifest = {
       "optionLabels": {
         "Oil": "Oil",
         "NG": "Natural gas"
-      },
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
       }
     },
     {
@@ -248,8 +244,8 @@ export const previewManifest = {
       "scheduleRow": 11,
       "min": 0,
       "help": {
-        "title": "Seismic Acquisition USD MM",
-        "body": "Annual new seismic acquisition spending. Data required: USD millions; intended only for Years 1–3. Review: Enter USD MM, not whole USD. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic acquisition spending — Year 2",
+        "body": "This input: Seismic acquisition spending — Year 2. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
       }
     },
     {
@@ -265,8 +261,8 @@ export const previewManifest = {
       "scheduleRow": 12,
       "min": 0,
       "help": {
-        "title": "Seismic Reprocessing USD MM",
-        "body": "Annual cost to reprocess existing seismic data. Data required: USD millions; intended only for Years 1–3. Review: Use zero or blank when not applicable. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic reprocessing spending — Year 2",
+        "body": "This input: Seismic reprocessing spending — Year 2. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
       }
     },
     {
@@ -283,8 +279,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 2",
+        "body": "This input: Exploration wells drilled — Year 2. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -301,8 +297,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 2",
+        "body": "This input: Appraisal wells drilled — Year 2. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -319,8 +315,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 2",
+        "body": "This input: Facilities installation marker — Year 2. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -337,8 +333,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 2",
+        "body": "This input: Producer wells drilled — Year 2. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -351,8 +347,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 2,000 m TVD",
+        "body": "This input: Vertical drilling unit cost at 2,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -365,8 +361,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 1 — Design capacity",
+        "body": "This input: Gas facilities tier 1 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -379,8 +375,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 1 — Primary facility capex",
+        "body": "This input: Gas facilities tier 1 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -393,8 +389,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 1 — Associated facilities capex",
+        "body": "This input: Gas facilities tier 1 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -407,8 +403,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 1 — Flow lines capex",
+        "body": "This input: Gas facilities tier 1 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -421,8 +417,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 1 — Export / tie-in pipeline capex",
+        "body": "This input: Gas facilities tier 1 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -436,7 +432,7 @@ export const previewManifest = {
       "blankOnNew": false,
       "help": {
         "title": "Variable opex escalation",
-        "body": "Annual multiplier on unit operating costs. Data required: Annual factor; 1.01 represents 1% annual escalation. Review: Enter a factor, not a percentage display value."
+        "body": "This input: Variable opex escalation. Displayed unit: annual factor.\n\nAnnual multiplier on unit operating costs.\n\nWhat to enter: Annual factor; 1.01 represents 1% annual escalation.\n\nUsed in the model: Escalates water, gas, and oil variable cost rates over time.\n\nReview: Enter a factor, not a percentage display value."
       }
     },
     {
@@ -449,8 +445,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Total capex / Total opex multiplier",
-        "body": "Global adjustments to modeled capital or operating cost. Data required: Multiplier. Review: Avoid double-counting detailed cost changes."
+        "title": "Total capex multiplier",
+        "body": "This input: Total capex multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes."
       }
     },
     {
@@ -485,10 +481,6 @@ export const previewManifest = {
         "tonnes(oil)": "Tonnes (Oil)",
         "scf(gas)": "scf (Gas)",
         "m3(gas)": "m³ (Gas)"
-      },
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
       }
     },
     {
@@ -504,8 +496,8 @@ export const previewManifest = {
       "scheduleRow": 11,
       "min": 0,
       "help": {
-        "title": "Seismic Acquisition USD MM",
-        "body": "Annual new seismic acquisition spending. Data required: USD millions; intended only for Years 1–3. Review: Enter USD MM, not whole USD. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic acquisition spending — Year 3",
+        "body": "This input: Seismic acquisition spending — Year 3. Displayed unit: USD MM.\n\nAnnual new seismic acquisition spending.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Creates early exploration and intangible capital in the selected years.\n\nReview: Enter USD MM, not whole USD."
       }
     },
     {
@@ -521,8 +513,8 @@ export const previewManifest = {
       "scheduleRow": 12,
       "min": 0,
       "help": {
-        "title": "Seismic Reprocessing USD MM",
-        "body": "Annual cost to reprocess existing seismic data. Data required: USD millions; intended only for Years 1–3. Review: Use zero or blank when not applicable. This workbook provides editable seismic cells for Years 1–3 only."
+        "title": "Seismic reprocessing spending — Year 3",
+        "body": "This input: Seismic reprocessing spending — Year 3. Displayed unit: USD MM.\n\nAnnual cost to reprocess existing seismic data.\n\nWhat to enter: USD millions; intended only for Years 1–3.\n\nUsed in the model: Adds pre-development intangible capital.\n\nReview: Use zero or blank when not applicable."
       }
     },
     {
@@ -539,8 +531,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 3",
+        "body": "This input: Exploration wells drilled — Year 3. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -557,8 +549,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 3",
+        "body": "This input: Appraisal wells drilled — Year 3. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -575,8 +567,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 3",
+        "body": "This input: Facilities installation marker — Year 3. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -593,8 +585,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 3",
+        "body": "This input: Producer wells drilled — Year 3. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -607,8 +599,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 2,500 m TVD",
+        "body": "This input: Vertical drilling unit cost at 2,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -621,8 +613,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 2 — Design capacity",
+        "body": "This input: Gas facilities tier 2 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -635,8 +627,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 2 — Primary facility capex",
+        "body": "This input: Gas facilities tier 2 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -649,8 +641,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 2 — Associated facilities capex",
+        "body": "This input: Gas facilities tier 2 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -663,8 +655,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 2 — Flow lines capex",
+        "body": "This input: Gas facilities tier 2 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -677,8 +669,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 2 — Export / tie-in pipeline capex",
+        "body": "This input: Gas facilities tier 2 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -692,7 +684,7 @@ export const previewManifest = {
       "blankOnNew": false,
       "help": {
         "title": "Fixed opex escalation",
-        "body": "Annual multiplier on fixed annual operating cost. Data required: Annual factor. Review: Use a consistent inflation basis."
+        "body": "This input: Fixed opex escalation. Displayed unit: annual factor.\n\nAnnual multiplier on fixed annual operating cost.\n\nWhat to enter: Annual factor.\n\nUsed in the model: Escalates recurring fixed opex through project life.\n\nReview: Use a consistent inflation basis."
       }
     },
     {
@@ -705,8 +697,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Total capex / Total opex multiplier",
-        "body": "Global adjustments to modeled capital or operating cost. Data required: Multiplier. Review: Avoid double-counting detailed cost changes."
+        "title": "Total opex multiplier",
+        "body": "This input: Total opex multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustments to modeled capital or operating cost.\n\nWhat to enter: Multiplier.\n\nUsed in the model: Scales all applicable capex or opex after the base calculation.\n\nReview: Avoid double-counting detailed cost changes."
       }
     },
     {
@@ -718,11 +710,7 @@ export const previewManifest = {
       "default": 5000000000,
       "required": true,
       "blankOnNew": false,
-      "exclusiveMin": 0,
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
-      }
+      "exclusiveMin": 0
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m11",
@@ -738,8 +726,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 4",
+        "body": "This input: Exploration wells drilled — Year 4. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -756,8 +744,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 4",
+        "body": "This input: Appraisal wells drilled — Year 4. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -774,8 +762,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 4",
+        "body": "This input: Facilities installation marker — Year 4. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -792,8 +780,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 4",
+        "body": "This input: Producer wells drilled — Year 4. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -806,8 +794,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 3,000 m TVD",
+        "body": "This input: Vertical drilling unit cost at 3,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -820,8 +808,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 3 — Design capacity",
+        "body": "This input: Gas facilities tier 3 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -834,8 +822,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 3 — Primary facility capex",
+        "body": "This input: Gas facilities tier 3 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -848,8 +836,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 3 — Associated facilities capex",
+        "body": "This input: Gas facilities tier 3 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -862,8 +850,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 3 — Flow lines capex",
+        "body": "This input: Gas facilities tier 3 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -876,8 +864,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 3 — Export / tie-in pipeline capex",
+        "body": "This input: Gas facilities tier 3 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -890,8 +878,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Water / Gas / Oil variable opex",
-        "body": "Unit cost of handling or producing each stream. Data required: USD/bbl water, USD/m³ gas, and USD/bbl oil. Review: Use appropriate net operating costs."
+        "title": "Water variable opex",
+        "body": "This input: Water variable opex. Displayed unit: USD/bbl water.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
       }
     },
     {
@@ -904,8 +892,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Oil / Gas / Water production multiplier",
-        "body": "Global adjustment to each production stream. Data required: Multiplier by stream. Review: Use factors appropriate to the selected fluid case."
+        "title": "Oil production multiplier",
+        "body": "This input: Oil production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
       }
     },
     {
@@ -940,10 +928,6 @@ export const previewManifest = {
         "tonnes(oil)": "Tonnes (Oil)",
         "scf(gas)": "scf (Gas)",
         "m3(gas)": "m³ (Gas)"
-      },
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
       }
     },
     {
@@ -960,8 +944,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 5",
+        "body": "This input: Exploration wells drilled — Year 5. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -978,8 +962,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 5",
+        "body": "This input: Appraisal wells drilled — Year 5. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -996,8 +980,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 5",
+        "body": "This input: Facilities installation marker — Year 5. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1014,8 +998,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 5",
+        "body": "This input: Producer wells drilled — Year 5. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1028,8 +1012,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 3,500 m TVD",
+        "body": "This input: Vertical drilling unit cost at 3,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -1042,8 +1026,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 4 — Design capacity",
+        "body": "This input: Gas facilities tier 4 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -1056,8 +1040,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 4 — Primary facility capex",
+        "body": "This input: Gas facilities tier 4 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -1070,8 +1054,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 4 — Associated facilities capex",
+        "body": "This input: Gas facilities tier 4 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -1084,8 +1068,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 4 — Flow lines capex",
+        "body": "This input: Gas facilities tier 4 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -1098,8 +1082,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 4 — Export / tie-in pipeline capex",
+        "body": "This input: Gas facilities tier 4 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -1112,8 +1096,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Water / Gas / Oil variable opex",
-        "body": "Unit cost of handling or producing each stream. Data required: USD/bbl water, USD/m³ gas, and USD/bbl oil. Review: Use appropriate net operating costs."
+        "title": "Gas variable opex",
+        "body": "This input: Gas variable opex. Displayed unit: USD/m³ gas.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
       }
     },
     {
@@ -1126,8 +1110,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Oil / Gas / Water production multiplier",
-        "body": "Global adjustment to each production stream. Data required: Multiplier by stream. Review: Use factors appropriate to the selected fluid case."
+        "title": "Gas production multiplier",
+        "body": "This input: Gas production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
       }
     },
     {
@@ -1139,11 +1123,7 @@ export const previewManifest = {
       "default": 225000,
       "required": true,
       "blankOnNew": false,
-      "exclusiveMin": 0,
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
-      }
+      "exclusiveMin": 0
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m13",
@@ -1159,8 +1139,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 6",
+        "body": "This input: Exploration wells drilled — Year 6. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1177,8 +1157,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 6",
+        "body": "This input: Appraisal wells drilled — Year 6. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1195,8 +1175,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 6",
+        "body": "This input: Facilities installation marker — Year 6. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1213,8 +1193,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 6",
+        "body": "This input: Producer wells drilled — Year 6. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1227,8 +1207,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 4,000 m TVD",
+        "body": "This input: Vertical drilling unit cost at 4,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -1241,8 +1221,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 5 — Design capacity",
+        "body": "This input: Gas facilities tier 5 — Design capacity. Displayed unit: m³/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -1255,8 +1235,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 5 — Primary facility capex",
+        "body": "This input: Gas facilities tier 5 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -1269,8 +1249,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 5 — Associated facilities capex",
+        "body": "This input: Gas facilities tier 5 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -1283,8 +1263,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 5 — Flow lines capex",
+        "body": "This input: Gas facilities tier 5 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -1297,8 +1277,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Gas facilities tier 5 — Export / tie-in pipeline capex",
+        "body": "This input: Gas facilities tier 5 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -1311,8 +1291,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Water / Gas / Oil variable opex",
-        "body": "Unit cost of handling or producing each stream. Data required: USD/bbl water, USD/m³ gas, and USD/bbl oil. Review: Use appropriate net operating costs."
+        "title": "Oil variable opex",
+        "body": "This input: Oil variable opex. Displayed unit: USD/bbl oil.\n\nUnit cost of handling or producing each stream.\n\nWhat to enter: USD/bbl water, USD/m³ gas, and USD/bbl oil.\n\nUsed in the model: Multiplies each annual production stream by its applicable cost rate.\n\nReview: Use appropriate net operating costs."
       }
     },
     {
@@ -1325,8 +1305,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Oil / Gas / Water production multiplier",
-        "body": "Global adjustment to each production stream. Data required: Multiplier by stream. Review: Use factors appropriate to the selected fluid case."
+        "title": "Water production multiplier",
+        "body": "This input: Water production multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to each production stream.\n\nWhat to enter: Multiplier by stream.\n\nUsed in the model: Scales annual production volumes and related variable costs.\n\nReview: Use factors appropriate to the selected fluid case."
       }
     },
     {
@@ -1337,11 +1317,7 @@ export const previewManifest = {
       "type": "text",
       "default": "C3 (2 zones)",
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m14",
@@ -1357,8 +1333,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 7",
+        "body": "This input: Exploration wells drilled — Year 7. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1375,8 +1351,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 7",
+        "body": "This input: Appraisal wells drilled — Year 7. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1393,8 +1369,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 7",
+        "body": "This input: Facilities installation marker — Year 7. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1411,8 +1387,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 7",
+        "body": "This input: Producer wells drilled — Year 7. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1425,8 +1401,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 4,500 m TVD",
+        "body": "This input: Vertical drilling unit cost at 4,500 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -1440,7 +1416,7 @@ export const previewManifest = {
       "blankOnNew": false,
       "help": {
         "title": "Fixed opex",
-        "body": "Base recurring annual field operating cost. Data required: USD/year. Review: Confirm the input is USD, not USD MM."
+        "body": "This input: Fixed opex. Displayed unit: USD/year.\n\nBase recurring annual field operating cost.\n\nWhat to enter: USD/year.\n\nUsed in the model: Adds annual cost independent of production volume.\n\nReview: Confirm the input is USD, not USD MM."
       }
     },
     {
@@ -1453,8 +1429,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Oil / Condensate and Gas price multiplier",
-        "body": "Global adjustment to the commodity price deck. Data required: Multiplier by commodity. Review: Useful for downside and upside cases."
+        "title": "Oil / condensate price multiplier",
+        "body": "This input: Oil / condensate price multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases."
       }
     },
     {
@@ -1474,11 +1450,7 @@ export const previewManifest = {
         "Central Asia & Caucasus",
         "Global Balanced",
         "User Defined"
-      ],
-      "help": {
-        "title": "Primary Fluid & Reservoir Parameters",
-        "body": "Defines the hydrocarbon system and resource basis: primary fluid, in-place volume unit, PIIP, initial rate unit and value, play/zone, and world region. Data required: Oil or NG selection; valid unit selections; positive PIIP; positive per-well initial rate; play/zone; and region. Review: Fluid and units must be internally consistent."
-      }
+      ]
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m15",
@@ -1494,8 +1466,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 8",
+        "body": "This input: Exploration wells drilled — Year 8. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1512,8 +1484,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 8",
+        "body": "This input: Appraisal wells drilled — Year 8. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1530,8 +1502,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 8",
+        "body": "This input: Facilities installation marker — Year 8. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1548,8 +1520,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 8",
+        "body": "This input: Producer wells drilled — Year 8. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1562,8 +1534,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Vertical drilling unit cost by depth",
-        "body": "Cost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m. Data required: USD per metre at each depth point. Review: Use region-appropriate market estimates."
+        "title": "Vertical drilling unit cost at 5,000 m TVD",
+        "body": "This input: Vertical drilling unit cost at 5,000 m TVD. Displayed unit: USD/m.\n\nCost curve for vertical drilling at TVD reference points from 1,500 m to 5,000 m.\n\nWhat to enter: USD per metre at each depth point.\n\nUsed in the model: The engine selects or interpolates the appropriate vertical drilling rate for the entered TVD.\n\nReview: Use region-appropriate market estimates."
       }
     },
     {
@@ -1576,8 +1548,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Oil / Condensate and Gas price multiplier",
-        "body": "Global adjustment to the commodity price deck. Data required: Multiplier by commodity. Review: Useful for downside and upside cases."
+        "title": "Gas price multiplier",
+        "body": "This input: Gas price multiplier. Displayed unit: multiplier (factor).\n\nGlobal adjustment to the commodity price deck.\n\nWhat to enter: Multiplier by commodity.\n\nUsed in the model: Scales the escalated prices used in annual revenue.\n\nReview: Useful for downside and upside cases."
       }
     },
     {
@@ -1594,8 +1566,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 9",
+        "body": "This input: Exploration wells drilled — Year 9. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1612,8 +1584,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 9",
+        "body": "This input: Appraisal wells drilled — Year 9. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1630,8 +1602,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 9",
+        "body": "This input: Facilities installation marker — Year 9. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1648,8 +1620,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 9",
+        "body": "This input: Producer wells drilled — Year 9. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1662,8 +1634,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Lateral drilling unit cost by length",
-        "body": "Cost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m. Data required: USD per metre at each lateral point. Review: Confirm the lateral design in Step 1."
+        "title": "Lateral drilling unit cost at 1,000 m",
+        "body": "This input: Lateral drilling unit cost at 1,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
       }
     },
     {
@@ -1677,8 +1649,8 @@ export const previewManifest = {
       "blankOnNew": false,
       "exclusiveMin": 0,
       "help": {
-        "title": "Gas / Oil sales price",
-        "body": "Starting net realized commodity price. Data required: Positive numeric price in the displayed unit. Review: Use a common price-date basis."
+        "title": "Gas sales price (field gate)",
+        "body": "This input: Gas sales price (field gate). Displayed unit: USD/m³ gas.\n\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis."
       }
     },
     {
@@ -1698,11 +1670,7 @@ export const previewManifest = {
         "E",
         "F",
         "G"
-      ],
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      ]
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m17",
@@ -1718,8 +1686,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 10",
+        "body": "This input: Exploration wells drilled — Year 10. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1736,8 +1704,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 10",
+        "body": "This input: Appraisal wells drilled — Year 10. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1754,8 +1722,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 10",
+        "body": "This input: Facilities installation marker — Year 10. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1772,8 +1740,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 10",
+        "body": "This input: Producer wells drilled — Year 10. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1786,8 +1754,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Lateral drilling unit cost by length",
-        "body": "Cost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m. Data required: USD per metre at each lateral point. Review: Confirm the lateral design in Step 1."
+        "title": "Lateral drilling unit cost at 1,500 m",
+        "body": "This input: Lateral drilling unit cost at 1,500 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
       }
     },
     {
@@ -1801,8 +1769,8 @@ export const previewManifest = {
       "blankOnNew": false,
       "exclusiveMin": 0,
       "help": {
-        "title": "Gas / Oil sales price",
-        "body": "Starting net realized commodity price. Data required: Positive numeric price in the displayed unit. Review: Use a common price-date basis."
+        "title": "Oil sales price (field gate)",
+        "body": "This input: Oil sales price (field gate). Displayed unit: USD/bbl oil.\n\nStarting net realized commodity price.\n\nWhat to enter: Positive numeric price in the displayed unit.\n\nUsed in the model: Applied to annual production before escalation and scenario multipliers.\n\nReview: Use a common price-date basis."
       }
     },
     {
@@ -1813,11 +1781,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.5,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m18",
@@ -1833,8 +1797,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 11",
+        "body": "This input: Exploration wells drilled — Year 11. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1851,8 +1815,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 11",
+        "body": "This input: Appraisal wells drilled — Year 11. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -1869,8 +1833,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 11",
+        "body": "This input: Facilities installation marker — Year 11. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -1887,8 +1851,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 11",
+        "body": "This input: Producer wells drilled — Year 11. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -1901,8 +1865,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Lateral drilling unit cost by length",
-        "body": "Cost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m. Data required: USD per metre at each lateral point. Review: Confirm the lateral design in Step 1."
+        "title": "Lateral drilling unit cost at 2,000 m",
+        "body": "This input: Lateral drilling unit cost at 2,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
       }
     },
     {
@@ -1915,8 +1879,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 1 — Design capacity",
+        "body": "This input: Oil facilities tier 1 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -1929,8 +1893,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 1 — Primary facility capex",
+        "body": "This input: Oil facilities tier 1 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -1943,8 +1907,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 1 — Associated facilities capex",
+        "body": "This input: Oil facilities tier 1 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -1957,8 +1921,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 1 — Flow lines capex",
+        "body": "This input: Oil facilities tier 1 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -1971,8 +1935,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 1 — Export / tie-in pipeline capex",
+        "body": "This input: Oil facilities tier 1 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -1985,8 +1949,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Gas / Oil price escalation",
-        "body": "Annual multiplier for the commodity price deck. Data required: 1.02 represents 2% annual escalation; 1.00 represents a flat price. Review: Use a consistent nominal or real basis."
+        "title": "Gas price escalation",
+        "body": "This input: Gas price escalation. Displayed unit: annual factor.\n\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
       }
     },
     {
@@ -2004,7 +1968,7 @@ export const previewManifest = {
       ],
       "help": {
         "title": "Fiscal model selector",
-        "body": "Selects Production Sharing Agreement or Contract Tax/Royalty treatment. Data required: Text selection: PSA or CTR. Review: Use the fiscal regime that matches the project."
+        "body": "This input: Fiscal model selector.\n\nSelects Production Sharing Agreement or Contract Tax/Royalty treatment.\n\nWhat to enter: Text selection: PSA or CTR.\n\nUsed in the model: Determines how project revenue is divided between investor and government.\n\nReview: Use the fiscal regime that matches the project."
       }
     },
     {
@@ -2015,11 +1979,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.25,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m19",
@@ -2035,8 +1995,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 12",
+        "body": "This input: Exploration wells drilled — Year 12. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2053,8 +2013,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 12",
+        "body": "This input: Appraisal wells drilled — Year 12. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2071,8 +2031,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 12",
+        "body": "This input: Facilities installation marker — Year 12. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2089,8 +2049,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 12",
+        "body": "This input: Producer wells drilled — Year 12. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2103,8 +2063,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Lateral drilling unit cost by length",
-        "body": "Cost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m. Data required: USD per metre at each lateral point. Review: Confirm the lateral design in Step 1."
+        "title": "Lateral drilling unit cost at 2,500 m",
+        "body": "This input: Lateral drilling unit cost at 2,500 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
       }
     },
     {
@@ -2117,8 +2077,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 2 — Design capacity",
+        "body": "This input: Oil facilities tier 2 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -2131,8 +2091,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 2 — Primary facility capex",
+        "body": "This input: Oil facilities tier 2 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -2145,8 +2105,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 2 — Associated facilities capex",
+        "body": "This input: Oil facilities tier 2 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -2159,8 +2119,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 2 — Flow lines capex",
+        "body": "This input: Oil facilities tier 2 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -2173,8 +2133,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 2 — Export / tie-in pipeline capex",
+        "body": "This input: Oil facilities tier 2 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -2187,8 +2147,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Gas / Oil price escalation",
-        "body": "Annual multiplier for the commodity price deck. Data required: 1.02 represents 2% annual escalation; 1.00 represents a flat price. Review: Use a consistent nominal or real basis."
+        "title": "Oil price escalation",
+        "body": "This input: Oil price escalation. Displayed unit: annual factor.\n\nAnnual multiplier for the commodity price deck.\n\nWhat to enter: 1.02 represents 2% annual escalation; 1.00 represents a flat price.\n\nUsed in the model: Builds the annual price deck from the initial value.\n\nReview: Use a consistent nominal or real basis."
       }
     },
     {
@@ -2202,7 +2162,7 @@ export const previewManifest = {
       "blankOnNew": false,
       "help": {
         "title": "Discount rate",
-        "body": "Required return used for NPV. Data required: Decimal percentage; 0.15 represents 15%. Review: Use a rate consistent with the case basis and risk."
+        "body": "This input: Discount rate. Displayed unit: % (enter as decimal).\n\nRequired return used for NPV.\n\nWhat to enter: Decimal percentage; 0.15 represents 15%.\n\nUsed in the model: Discounts annual investor cash flows to the valuation date.\n\nReview: Use a rate consistent with the case basis and risk."
       }
     },
     {
@@ -2213,11 +2173,7 @@ export const previewManifest = {
       "type": "number",
       "default": 5,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m20",
@@ -2233,8 +2189,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 13",
+        "body": "This input: Exploration wells drilled — Year 13. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2251,8 +2207,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 13",
+        "body": "This input: Appraisal wells drilled — Year 13. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2269,8 +2225,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 13",
+        "body": "This input: Facilities installation marker — Year 13. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2287,8 +2243,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 13",
+        "body": "This input: Producer wells drilled — Year 13. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2301,8 +2257,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Lateral drilling unit cost by length",
-        "body": "Cost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m. Data required: USD per metre at each lateral point. Review: Confirm the lateral design in Step 1."
+        "title": "Lateral drilling unit cost at 3,000 m",
+        "body": "This input: Lateral drilling unit cost at 3,000 m. Displayed unit: USD/m.\n\nCost curve for lateral drilling at reference lengths from 1,000 m to 3,000 m.\n\nWhat to enter: USD per metre at each lateral point.\n\nUsed in the model: Applies incremental lateral drilling cost when a lateral design is used.\n\nReview: Confirm the lateral design in Step 1."
       }
     },
     {
@@ -2315,8 +2271,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 3 — Design capacity",
+        "body": "This input: Oil facilities tier 3 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -2329,8 +2285,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 3 — Primary facility capex",
+        "body": "This input: Oil facilities tier 3 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -2343,8 +2299,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 3 — Associated facilities capex",
+        "body": "This input: Oil facilities tier 3 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -2357,8 +2313,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 3 — Flow lines capex",
+        "body": "This input: Oil facilities tier 3 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -2371,8 +2327,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 3 — Export / tie-in pipeline capex",
+        "body": "This input: Oil facilities tier 3 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -2383,11 +2339,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.2,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m21",
@@ -2403,8 +2355,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 14",
+        "body": "This input: Exploration wells drilled — Year 14. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2421,8 +2373,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 14",
+        "body": "This input: Appraisal wells drilled — Year 14. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2439,8 +2391,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 14",
+        "body": "This input: Facilities installation marker — Year 14. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2457,8 +2409,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 14",
+        "body": "This input: Producer wells drilled — Year 14. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2472,7 +2424,7 @@ export const previewManifest = {
       "blankOnNew": false,
       "help": {
         "title": "Perforating and testing cost",
-        "body": "Cost for a non-fractured test or completion interval. Data required: USD per interval. Review: Enter a current unit cost."
+        "body": "This input: Perforating and testing cost. Displayed unit: USD/interval.\n\nCost for a non-fractured test or completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies the number of testing intervals by the unit cost.\n\nReview: Enter a current unit cost."
       }
     },
     {
@@ -2485,8 +2437,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 4 — Design capacity",
+        "body": "This input: Oil facilities tier 4 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -2499,8 +2451,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 4 — Primary facility capex",
+        "body": "This input: Oil facilities tier 4 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -2513,8 +2465,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 4 — Associated facilities capex",
+        "body": "This input: Oil facilities tier 4 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -2527,8 +2479,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 4 — Flow lines capex",
+        "body": "This input: Oil facilities tier 4 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -2541,8 +2493,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 4 — Export / tie-in pipeline capex",
+        "body": "This input: Oil facilities tier 4 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -2553,11 +2505,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.7,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m22",
@@ -2573,8 +2521,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 15",
+        "body": "This input: Exploration wells drilled — Year 15. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2591,8 +2539,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 15",
+        "body": "This input: Appraisal wells drilled — Year 15. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2609,8 +2557,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 15",
+        "body": "This input: Facilities installation marker — Year 15. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2627,8 +2575,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 15",
+        "body": "This input: Producer wells drilled — Year 15. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2641,8 +2589,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Perforating, testing and fracturing cost",
-        "body": "Cost for a fractured completion interval. Data required: USD per interval. Review: Avoid double-counting intervals."
+        "title": "Stimulation (HF) cost",
+        "body": "This input: Stimulation (HF) cost. Displayed unit: USD/interval.\n\nCost for a fractured completion interval.\n\nWhat to enter: USD per interval.\n\nUsed in the model: Multiplies fractured intervals by the unit cost.\n\nReview: Avoid double-counting intervals."
       }
     },
     {
@@ -2655,8 +2603,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Design Capacity",
-        "body": "Maximum annual throughput represented by each tier. Data required: m³/year for gas or bbl/year for oil. Review: Use annual capacity, not daily capacity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 5 — Design capacity",
+        "body": "This input: Oil facilities tier 5 — Design capacity. Displayed unit: bbl/year.\n\nMaximum annual throughput represented by each tier.\n\nWhat to enter: m³/year for gas or bbl/year for oil.\n\nUsed in the model: Matches the modeled production requirement to an appropriate facilities scale.\n\nReview: Use annual capacity, not daily capacity."
       }
     },
     {
@@ -2669,8 +2617,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Primary Facility",
-        "body": "Core processing or central production facility cost. Data required: USD MM by tier. Review: Include the intended processing scope. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 5 — Primary facility capex",
+        "body": "This input: Oil facilities tier 5 — Primary facility capex. Displayed unit: USD MM.\n\nCore processing or central production facility cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Forms the principal facilities capital component.\n\nReview: Include the intended processing scope."
       }
     },
     {
@@ -2683,8 +2631,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Associated Facilities",
-        "body": "Supporting utilities and ancillary facilities cost. Data required: USD MM by tier. Review: Use consistent scope across tiers. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 5 — Associated facilities capex",
+        "body": "This input: Oil facilities tier 5 — Associated facilities capex. Displayed unit: USD MM.\n\nSupporting utilities and ancillary facilities cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds supporting infrastructure to total facilities capital.\n\nReview: Use consistent scope across tiers."
       }
     },
     {
@@ -2697,8 +2645,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Flow Lines",
-        "body": "In-field gathering and flowline cost. Data required: USD MM by tier. Review: Align with field size and well count. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 5 — Flow lines capex",
+        "body": "This input: Oil facilities tier 5 — Flow lines capex. Displayed unit: USD MM.\n\nIn-field gathering and flowline cost.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds field collection infrastructure.\n\nReview: Align with field size and well count."
       }
     },
     {
@@ -2711,8 +2659,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Export / Tie-in Pipeline",
-        "body": "Cost to connect the field to export or existing infrastructure. Data required: USD MM by tier. Review: Reflect distance and connection complexity. Capacity tiers are entered separately for gas and oil facilities."
+        "title": "Oil facilities tier 5 — Export / tie-in pipeline capex",
+        "body": "This input: Oil facilities tier 5 — Export / tie-in pipeline capex. Displayed unit: USD MM.\n\nCost to connect the field to export or existing infrastructure.\n\nWhat to enter: USD MM by tier.\n\nUsed in the model: Adds export or tie-in infrastructure to total facilities capital.\n\nReview: Reflect distance and connection complexity."
       }
     },
     {
@@ -2723,11 +2671,7 @@ export const previewManifest = {
       "type": "number",
       "default": 30,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m23",
@@ -2743,8 +2687,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 16",
+        "body": "This input: Exploration wells drilled — Year 16. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2761,8 +2705,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 16",
+        "body": "This input: Appraisal wells drilled — Year 16. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2779,8 +2723,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 16",
+        "body": "This input: Facilities installation marker — Year 16. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2797,8 +2741,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 16",
+        "body": "This input: Producer wells drilled — Year 16. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2811,8 +2755,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Learning factor after 5 / 10 wells",
-        "body": "Efficiency factors applied as the drilling campaign matures. Data required: Decimal cost factors; values below 1.0 represent cost reduction. Review: Use factors consistent with the expected learning curve."
+        "title": "Learning factor after 5 wells",
+        "body": "This input: Learning factor after 5 wells. Displayed unit: factor.\n\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
       }
     },
     {
@@ -2823,11 +2767,7 @@ export const previewManifest = {
       "type": "number",
       "default": 2500,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m24",
@@ -2843,8 +2783,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 17",
+        "body": "This input: Exploration wells drilled — Year 17. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2861,8 +2801,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 17",
+        "body": "This input: Appraisal wells drilled — Year 17. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2879,8 +2819,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 17",
+        "body": "This input: Facilities installation marker — Year 17. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2897,8 +2837,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 17",
+        "body": "This input: Producer wells drilled — Year 17. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -2911,8 +2851,8 @@ export const previewManifest = {
       "required": true,
       "blankOnNew": false,
       "help": {
-        "title": "Learning factor after 5 / 10 wells",
-        "body": "Efficiency factors applied as the drilling campaign matures. Data required: Decimal cost factors; values below 1.0 represent cost reduction. Review: Use factors consistent with the expected learning curve."
+        "title": "Learning factor after 10 wells",
+        "body": "This input: Learning factor after 10 wells. Displayed unit: factor.\n\nEfficiency factors applied as the drilling campaign matures.\n\nWhat to enter: Decimal cost factors; values below 1.0 represent cost reduction.\n\nUsed in the model: Reduces later-well drilling and completion costs based on cumulative activity.\n\nReview: Use factors consistent with the expected learning curve."
       }
     },
     {
@@ -2923,11 +2863,7 @@ export const previewManifest = {
       "type": "number",
       "default": 400,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Production Forecast Parameters",
-        "body": "Defines the decline curve and development geometry used to construct the type-well and field forecast. Data required: Type-well play ID A–G; hyperbolic b-factor; annual decline; exponential crossover year; terminal decline; target recovery factor; pool area; drainage length and width. Review: Enter ratios as decimals and dimensions in the displayed units."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!m25",
@@ -2943,8 +2879,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 18",
+        "body": "This input: Exploration wells drilled — Year 18. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2961,8 +2897,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 18",
+        "body": "This input: Appraisal wells drilled — Year 18. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -2979,8 +2915,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 18",
+        "body": "This input: Facilities installation marker — Year 18. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -2997,8 +2933,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 18",
+        "body": "This input: Producer wells drilled — Year 18. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -3015,8 +2951,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 19",
+        "body": "This input: Exploration wells drilled — Year 19. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -3033,8 +2969,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 19",
+        "body": "This input: Appraisal wells drilled — Year 19. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -3051,8 +2987,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 19",
+        "body": "This input: Facilities installation marker — Year 19. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -3069,8 +3005,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 19",
+        "body": "This input: Producer wells drilled — Year 19. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -3087,8 +3023,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Exploration Wells",
-        "body": "Exploration wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Exploration wells drilled — Year 20",
+        "body": "This input: Exploration wells drilled — Year 20. Displayed unit: wells/year.\n\nExploration wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to exploration activity timing.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -3105,8 +3041,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "Appraisal Wells",
-        "body": "Appraisal wells drilled by year. Data required: Whole-number well count. Review: Do not enter fractional wells."
+        "title": "Appraisal wells drilled — Year 20",
+        "body": "This input: Appraisal wells drilled — Year 20. Displayed unit: wells/year.\n\nAppraisal wells drilled by year.\n\nWhat to enter: Whole-number well count.\n\nUsed in the model: Applies well design and cost assumptions to the appraisal program.\n\nReview: Do not enter fractional wells."
       }
     },
     {
@@ -3123,8 +3059,8 @@ export const previewManifest = {
       "role": "facilityYearChoice",
       "radioGroup": "facilities-installation-year",
       "help": {
-        "title": "Facilities Enter X",
-        "body": "Marker identifying the facilities installation or commissioning year. Data required: Enter X in the chosen facilities year; normally use one marker. Review: Align facilities timing with first production."
+        "title": "Facilities installation marker — Year 20",
+        "body": "This input: Facilities installation marker — Year 20. Displayed unit: marker.\n\nMarker identifying the facilities installation or commissioning year.\n\nWhat to enter: Enter X in the chosen facilities year; normally use one marker.\n\nUsed in the model: Times facilities capital and helps establish the development start-up sequence.\n\nReview: Align facilities timing with first production."
       }
     },
     {
@@ -3141,8 +3077,8 @@ export const previewManifest = {
       "min": 0,
       "integer": true,
       "help": {
-        "title": "FFDP Producer Wells",
-        "body": "Full-field development producer wells drilled by year. Data required: Whole-number producer-well count. Review: The schedule should reconcile to the target well count."
+        "title": "Producer wells drilled — Year 20",
+        "body": "This input: Producer wells drilled — Year 20. Displayed unit: wells/year.\n\nFull-field development producer wells drilled by year.\n\nWhat to enter: Whole-number producer-well count.\n\nUsed in the model: Builds the field production ramp and applies drilling/completion capital to each annual well tranche.\n\nReview: The schedule should reconcile to the target well count."
       }
     },
     {
@@ -3153,11 +3089,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.00004,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Associated Fluids",
-        "body": "Defines co-produced oil, gas, and water alongside the primary production stream. Data required: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor. Review: Use zero only when a stream is genuinely absent."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h36",
@@ -3167,11 +3099,7 @@ export const previewManifest = {
       "type": "number",
       "default": 50,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Associated Fluids",
-        "body": "Defines co-produced oil, gas, and water alongside the primary production stream. Data required: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor. Review: Use zero only when a stream is genuinely absent."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h37",
@@ -3181,11 +3109,7 @@ export const previewManifest = {
       "type": "number",
       "default": 5,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Associated Fluids",
-        "body": "Defines co-produced oil, gas, and water alongside the primary production stream. Data required: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor. Review: Use zero only when a stream is genuinely absent."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h38",
@@ -3195,11 +3119,7 @@ export const previewManifest = {
       "type": "number",
       "default": 0.15,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Associated Fluids",
-        "body": "Defines co-produced oil, gas, and water alongside the primary production stream. Data required: Associated oil ratio, associated gas ratio, initial water rate, and water growth factor. Review: Use zero only when a stream is genuinely absent."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h40",
@@ -3209,11 +3129,7 @@ export const previewManifest = {
       "type": "number",
       "default": 3500,
       "required": true,
-      "blankOnNew": false,
-      "help": {
-        "title": "Wellbore and Completion Design",
-        "body": "Defines the physical well design that drives drilling and completion capital. Data required: True vertical depth, lateral design/length, testing intervals, and testing/fracturing intervals. Review: Interval counts are whole numbers and design should match the play."
-      }
+      "blankOnNew": false
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h42",
@@ -3224,11 +3140,7 @@ export const previewManifest = {
       "default": 0,
       "required": true,
       "blankOnNew": false,
-      "integer": true,
-      "help": {
-        "title": "Wellbore and Completion Design",
-        "body": "Defines the physical well design that drives drilling and completion capital. Data required: True vertical depth, lateral design/length, testing intervals, and testing/fracturing intervals. Review: Interval counts are whole numbers and design should match the play."
-      }
+      "integer": true
     },
     {
       "id": "state-rent@2.0.0-candidate.1:ui!h43",
@@ -3239,11 +3151,7 @@ export const previewManifest = {
       "default": 33,
       "required": true,
       "blankOnNew": false,
-      "integer": true,
-      "help": {
-        "title": "Wellbore and Completion Design",
-        "body": "Defines the physical well design that drives drilling and completion capital. Data required: True vertical depth, lateral design/length, testing intervals, and testing/fracturing intervals. Review: Interval counts are whole numbers and design should match the play."
-      }
+      "integer": true
     }
   ]
 } as const;

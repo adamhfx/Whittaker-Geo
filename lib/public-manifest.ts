@@ -1,3 +1,4 @@
+import { modelGuide } from "./model-guide";
 import type { HelpNote, Manifest } from "./types";
 
 function help(note: HelpNote | undefined) {
@@ -10,7 +11,7 @@ export function publicManifest(manifest: Manifest) {
   const fields = manifest.fields.map((field) => {
     const { id, label, unit, group, type, default: defaultValue, required,
       blankOnNew, options, year, scheduleRow, min, max, exclusiveMin, exclusiveMax, integer, role, dependsOn, optionsByDependencyValue, optionLabels, radioGroup } = field;
-    const note = help(field.help);
+    const note = help(modelGuide(manifest.id, manifest.version, "fields", field.id, field.help));
     return { id, label, unit, group, type, default: defaultValue, required, blankOnNew,
       ...(options ? { options } : {}), ...(year !== undefined ? { year } : {}),
       ...(scheduleRow !== undefined ? { scheduleRow } : {}),
@@ -28,8 +29,10 @@ export function publicManifest(manifest: Manifest) {
     : manifest.outputViews?.map(({ id, name, sheet }) => ({ id, name, sheet }));
   return { id: manifest.id, version: manifest.version, name: manifest.name,
     description: manifest.description, releaseStatus: manifest.releaseStatus,
-    groups: manifest.groups.map(({ id, name, help: note }) => ({ id, name,
-      ...(help(note) ? { help: help(note) } : {}) })), fields,
+    groups: manifest.groups.map(({ id, name, help: note }) => {
+      const guide = help(modelGuide(manifest.id, manifest.version, "groups", id, note));
+      return { id, name, ...(guide ? { help: guide } : {}) };
+    }), fields,
     ...(outputViews ? { outputViews } : {}),
     ...(manifest.inputRules?.ascending ? { inputRules: { ascending: manifest.inputRules.ascending.map(({label, fields}) => ({label, fields})) } } : {}) };
 }
