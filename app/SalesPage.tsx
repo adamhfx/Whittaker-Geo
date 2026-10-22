@@ -12,7 +12,7 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 import "./sales.css";
 
@@ -63,6 +63,41 @@ const faqs = [
     "Yes. Even after your subscription expires, you can view saved calculations and download completed results. Renew when you want to create, edit, duplicate, or run another scenario.",
   ],
 ];
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+
+  return (
+    <div className={`sales-faq-item${open ? " is-open" : ""}`}>
+      <h3>
+        <button
+          type="button"
+          className="sales-faq-question"
+          id={`faq-question-${id}`}
+          aria-expanded={open}
+          aria-controls={`faq-answer-${id}`}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span>{question}</span>
+          <ChevronDown size={18} aria-hidden="true" />
+        </button>
+      </h3>
+      <div
+        className="sales-faq-answer"
+        id={`faq-answer-${id}`}
+        role="region"
+        aria-labelledby={`faq-question-${id}`}
+        aria-hidden={!open}
+        inert={!open}
+      >
+        <div className="sales-faq-answer-inner">
+          <p>{answer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SalesPage({
   signedIn,
@@ -381,21 +416,21 @@ export default function SalesPage({
         </div>
       </section>
 
-      <section className="sales-includes">
-        <p className="sales-eyebrow">Every plan includes</p>
-        <div className="sales-includes-grid">
+      <section className="sales-includes" aria-labelledby="sales-includes-title">
+        <h2 className="sales-includes-title" id="sales-includes-title">Every plan includes</h2>
+        <ul className="sales-includes-grid">
           {[
             "All current and future calculators",
             "Private saved scenarios",
             "Immutable run history",
             "Editable Excel values exports",
           ].map((item) => (
-            <span key={item}>
-              <Check size={16} aria-hidden="true" />
-              {item}
-            </span>
+            <li key={item}>
+              <Check size={24} aria-hidden="true" />
+              <span>{item}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       <section className="sales-faq" id="faq">
@@ -409,13 +444,7 @@ export default function SalesPage({
         </div>
         <div className="sales-faq-list">
           {faqs.map(([question, answer]) => (
-            <details key={question}>
-              <summary>
-                {question}
-                <ChevronDown size={18} aria-hidden="true" />
-              </summary>
-              <p>{answer}</p>
-            </details>
+            <FaqItem key={question} question={question} answer={answer} />
           ))}
         </div>
       </section>
