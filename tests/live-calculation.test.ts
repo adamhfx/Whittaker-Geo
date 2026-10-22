@@ -218,6 +218,38 @@ test("live evaluation retries busy responses with bounded backoff and Retry-Afte
   assert.equal(attempts, 4);
 });
 
+test("live evaluation survives five startup busy responses before succeeding", async () => {
+  const delays: number[] = [];
+  let attempts = 0;
+  const fetcher: typeof fetch = async () => {
+    attempts += 1;
+    if (attempts <= 5) {
+      return new Response(
+        JSON.stringify({ error: "The calculation service is busy." }),
+        { status: 503, headers: { "Retry-After": "5" } },
+      );
+    }
+    return new Response(JSON.stringify({ result: resultFixture() }), {
+      status: 200,
+    });
+  };
+
+  const result = await requestLiveCalculation(
+    "state-rent",
+    "1.0.0",
+    {},
+    new AbortController().signal,
+    fetcher,
+    async (delayMs) => {
+      delays.push(delayMs);
+    },
+  );
+
+  assert.equal(result.calculatorVersion, "1.0.0");
+  assert.equal(attempts, 6);
+  assert.deepEqual(delays, [5_000, 5_000, 5_000, 5_000, 8_000]);
+});
+
 test("aborting during busy backoff prevents another fetch", async () => {
   const controller = new AbortController();
   let attempts = 0;
@@ -283,7 +315,7 @@ test("non-busy service errors do not retry", async () => {
   assert.equal(attempts, 1);
 });
 
-test("busy retries stop after three attempts", async () => {
+test("busy retries stop after five retries", async () => {
   let attempts = 0;
   const fetcher: typeof fetch = async () => {
     attempts += 1;

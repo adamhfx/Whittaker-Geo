@@ -27,7 +27,7 @@ export type LiveCalculationResult = {
   charts?: LiveChart[];
 };
 
-export const LIVE_BUSY_RETRY_DELAYS_MS = [500, 1_000, 2_000] as const;
+export const LIVE_BUSY_RETRY_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000] as const;
 const MAX_RETRY_AFTER_MS = 30_000;
 type RetryWait = (delayMs: number, signal: AbortSignal) => Promise<void>;
 
