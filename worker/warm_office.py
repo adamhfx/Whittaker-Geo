@@ -84,7 +84,7 @@ class WarmOffice:
             self.soffice_bin, '--headless', '--nologo', '--nodefault', '--norestore',
             '-env:UserInstallation=' + Path(self._folder.name).as_uri(),
             '--accept=pipe,name=' + pipe + ';urp;StarOffice.ServiceManager',
-        ], stdout=subprocess.DEVNULL,
+        ], stdout=None if self.diagnostic_synthetic else subprocess.DEVNULL,
            stderr=None if self.diagnostic_synthetic else subprocess.DEVNULL,
            **process_options)
         helper_command = [

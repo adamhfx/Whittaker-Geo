@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 from typing import Any
 
@@ -88,6 +89,57 @@ def _read_total(result: dict[str, Any]) -> float:
     return float(value)
 
 
+def _probe_synthetic_cli_load(soffice_bin: str, workbook_path: Path, workdir: Path) -> None:
+    """Load and convert the synthetic XLSX without the external Python-UNO bridge."""
+    output_dir = workdir / "cli-output"
+    output_dir.mkdir()
+    profile_dir = workdir / "cli-profile"
+    expected_output = output_dir / f"{workbook_path.stem}.ods"
+    try:
+        completed = subprocess.run(
+            [
+                soffice_bin, "--headless", "--nologo", "--nodefault", "--norestore",
+                f"-env:UserInstallation={profile_dir.as_uri()}",
+                "--convert-to", "ods", "--outdir", str(output_dir), str(workbook_path),
+            ],
+            capture_output=True, text=True, timeout=45, check=False,
+        )
+        stdout = completed.stdout
+        stderr = completed.stderr
+        # The fixture and all paths are temporary. Redact their root and cap
+        # diagnostic output so only safe, bounded process evidence reaches CI.
+        for path in {str(workdir.resolve()), workdir.resolve().as_posix()}:
+            stdout = stdout.replace(path, "<synthetic-temp>")
+            stderr = stderr.replace(path, "<synthetic-temp>")
+        report = {
+            "event": "calculation_engine_cli_load_probe",
+            "exitCode": completed.returncode,
+            "outputCreated": expected_output.is_file(),
+            "stdout": stdout[-3000:],
+            "stderr": stderr[-3000:],
+        }
+        print(json.dumps(report, separators=(",", ":")), flush=True)
+        if completed.returncode != 0 or not expected_output.is_file():
+            raise RuntimeError("Synthetic XLSX CLI load probe failed.")
+    except subprocess.TimeoutExpired as error:
+        def safe_text(value: str | bytes | None) -> str:
+            if isinstance(value, bytes):
+                value = value.decode("utf-8", errors="replace")
+            if not isinstance(value, str):
+                return ""
+            value = value.replace(str(workdir.resolve()), "<synthetic-temp>")
+            value = value.replace(workdir.resolve().as_posix(), "<synthetic-temp>")
+            return value[-3000:]
+
+        print(json.dumps({
+            "event": "calculation_engine_cli_load_probe",
+            "timedOut": True,
+            "stdout": safe_text(error.stdout),
+            "stderr": safe_text(error.stderr),
+        }, separators=(",", ":")), flush=True)
+        raise RuntimeError("Synthetic XLSX CLI load probe timed out.") from None
+
+
 def run() -> dict[str, Any]:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise RuntimeError("The calculation-engine runtime smoke must run as nonroot.")
@@ -97,6 +149,7 @@ def run() -> dict[str, Any]:
         workbook_path = Path(temp) / "synthetic-model.xlsx"
         _make_workbook(workbook_path)
         manifest = _manifest(workbook_path)
+        _probe_synthetic_cli_load(soffice_bin, workbook_path, Path(temp))
         office = WarmOffice(python_bin, soffice_bin, diagnostic_synthetic=True)
         try:
             cases = [
