@@ -687,6 +687,7 @@
 }
 .sales-faq-list {
   border-top: 1px solid var(--line);
+  overflow-anchor: none;
 }
 .sales-faq-item {
   border-bottom: 1px solid var(--line);
@@ -714,7 +715,7 @@
 .sales-faq-question svg {
   color: var(--brand-olive);
   flex: none;
-  transition: transform 280ms ease;
+  transition: transform 160ms ease-out;
 }
 .sales-faq-question[aria-expanded="true"] svg {
   transform: rotate(180deg);
@@ -722,12 +723,10 @@
 .sales-faq-answer {
   display: grid;
   grid-template-rows: 0fr;
-  opacity: 0;
-  transition: grid-template-rows 280ms ease, opacity 200ms ease;
+  transition: grid-template-rows 160ms ease-out;
 }
 .sales-faq-item.is-open .sales-faq-answer {
   grid-template-rows: 1fr;
-  opacity: 1;
 }
 .sales-faq-answer-inner {
   min-height: 0;
