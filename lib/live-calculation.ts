@@ -19,6 +19,10 @@ export type LiveCalculationResult = {
   annual?: Annual[];
 };
 
+export const LIVE_BUSY_RETRY_DELAYS_MS = [500, 1_000, 2_000] as const;
+const MAX_RETRY_AFTER_MS = 30_000;
+type RetryWait = (delayMs: number, signal: AbortSignal) => Promise<void>;
+
 export function liveEvaluationKey(
   calculatorId: string,
   version: string,
@@ -78,6 +82,56 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function waitForRetryDelay(
+  delayMs: number,
+  signal: AbortSignal,
+): Promise<void> {
+  if (signal.aborted)
+    return Promise.reject(signal.reason ?? new Error("Evaluation aborted."));
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener("abort", onAbort);
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      clearTimeout(timer);
+      cleanup();
+      reject(signal.reason ?? new Error("Evaluation aborted."));
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+  });
+}
+
+function retryAfterMilliseconds(response: Response): number | null {
+  const value = response.headers.get("Retry-After")?.trim();
+  if (!value) return null;
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1_000;
+
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : null;
+}
+
+function isRetryableBusyResponse(
+  response: Response,
+  message: string,
+  hasRetryAfter: boolean,
+): boolean {
+  if (response.status === 429) return true;
+  if (response.status !== 503) return false;
+  return (
+    hasRetryAfter ||
+    /\b(?:engine_busy|busy|rate.?limit(?:ed)?|temporarily unavailable)\b/i.test(
+      message,
+    )
+  );
 }
 
 function isMetrics(value: unknown): value is Result["metrics"] {
@@ -161,48 +215,66 @@ export async function requestLiveCalculation(
   inputs: InputValues,
   signal: AbortSignal,
   fetcher: typeof fetch = fetch,
+  waitForRetry: RetryWait = waitForRetryDelay,
 ): Promise<LiveCalculationResult> {
-  const response = await fetcher(
-    `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`,
-    {
-      method: "POST",
-      credentials: "same-origin",
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ version, inputs }),
-      signal,
-    },
-  );
+  let retryIndex = 0;
 
-  let payload: unknown;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
-
-  if (!response.ok) {
-    const message =
-      isRecord(payload) && typeof payload.error === "string"
-        ? payload.error
-        : `The calculation request failed (${response.status}).`;
-    throw new Error(message);
-  }
-  const resultPayload =
-    isRecord(payload) && "result" in payload ? payload.result : payload;
-  if (!isLiveCalculationResult(resultPayload))
-    throw new Error(
-      "The calculation returned results in an unexpected format.",
-    );
-  if (
-    resultPayload.calculatorId !== calculatorId ||
-    resultPayload.calculatorVersion !== version
-  )
-    throw new Error(
-      "The results came from a different calculator version. Try again.",
+  while (true) {
+    const response = await fetcher(
+      `/api/calculators/${encodeURIComponent(calculatorId)}/evaluate`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version, inputs }),
+        signal,
+      },
     );
 
-  return resultPayload;
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      const message =
+        isRecord(payload) && typeof payload.error === "string"
+          ? payload.error
+          : `The calculation request failed (${response.status}).`;
+      const retryAfterMs = retryAfterMilliseconds(response);
+      const canRetry =
+        retryIndex < LIVE_BUSY_RETRY_DELAYS_MS.length &&
+        isRetryableBusyResponse(response, message, retryAfterMs !== null) &&
+        (retryAfterMs === null || retryAfterMs <= MAX_RETRY_AFTER_MS);
+
+      if (canRetry) {
+        const backoff = LIVE_BUSY_RETRY_DELAYS_MS[retryIndex];
+        await waitForRetry(Math.max(backoff, retryAfterMs ?? 0), signal);
+        retryIndex += 1;
+        continue;
+      }
+      throw new Error(message);
+    }
+
+    const resultPayload =
+      isRecord(payload) && "result" in payload ? payload.result : payload;
+    if (!isLiveCalculationResult(resultPayload))
+      throw new Error(
+        "The calculation returned results in an unexpected format.",
+      );
+    if (
+      resultPayload.calculatorId !== calculatorId ||
+      resultPayload.calculatorVersion !== version
+    )
+      throw new Error(
+        "The results came from a different calculator version. Try again.",
+      );
+
+    return resultPayload;
+  }
 }
 
 function numberFormatOptions(format: string) {
@@ -249,9 +321,9 @@ export function formatOutputValue(value: OutputCellValue, format = ""): string {
 
   const percent = cleanPattern.includes("%");
   const currencyCode =
-    /\[\$([A-Z]{3})(?:-[^\]]*)?\]/i.exec(format)?.[1]?.toUpperCase() ??
-    /\b(USD|CAD|EUR|GBP)\b/i.exec(format)?.[1]?.toUpperCase();
-  const currencySymbol = /[$€£¥]/.exec(format)?.[0];
+    /\[\$([A-Z]{3})(?:-[^\]]*)?\]/i.exec(pattern)?.[1]?.toUpperCase() ??
+    /\b(USD|CAD|EUR|GBP)\b/i.exec(pattern)?.[1]?.toUpperCase();
+  const currencySymbol = /[$€£¥]/.exec(pattern)?.[0];
   const absoluteValue = Math.abs(value) * (percent ? 100 : 1);
   const isGeneral = sections.isGeneral;
   const minFractionDigits = decimals?.match(/0/g)?.length ?? 0;

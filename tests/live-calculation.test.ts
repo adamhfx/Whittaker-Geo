@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   formatOutputValue,
   liveEvaluationKey,
+  LIVE_BUSY_RETRY_DELAYS_MS,
   LatestEvaluationGate,
   requestLiveCalculation,
   scheduleDebouncedEvaluation,
@@ -143,13 +144,159 @@ test("live evaluation rejects a response from a different workbook version", asy
   );
 });
 
+test("live evaluation retries busy responses with bounded backoff and Retry-After", async () => {
+  const delays: number[] = [];
+  let attempts = 0;
+  const fetcher: typeof fetch = async () => {
+    attempts += 1;
+    if (attempts === 1) {
+      return new Response(JSON.stringify({ error: "Rate limited." }), {
+        status: 429,
+        headers: { "Retry-After": "1" },
+      });
+    }
+    if (attempts === 2) {
+      return new Response(
+        JSON.stringify({ error: "The calculation service is busy." }),
+        { status: 503 },
+      );
+    }
+    if (attempts === 3) {
+      return new Response(JSON.stringify({ error: "Please retry shortly." }), {
+        status: 503,
+        headers: { "Retry-After": "0.5" },
+      });
+    }
+    return new Response(JSON.stringify({ result: resultFixture() }), {
+      status: 200,
+    });
+  };
+
+  const result = await requestLiveCalculation(
+    "state-rent",
+    "1.0.0",
+    {},
+    new AbortController().signal,
+    fetcher,
+    async (delayMs) => {
+      delays.push(delayMs);
+    },
+  );
+
+  assert.equal(result.calculatorVersion, "1.0.0");
+  assert.deepEqual(delays, [
+    1_000,
+    LIVE_BUSY_RETRY_DELAYS_MS[1],
+    LIVE_BUSY_RETRY_DELAYS_MS[2],
+  ]);
+  assert.equal(attempts, 4);
+});
+
+test("aborting during busy backoff prevents another fetch", async () => {
+  const controller = new AbortController();
+  let attempts = 0;
+  let enterBackoff!: () => void;
+  const backoffStarted = new Promise<void>((resolve) => {
+    enterBackoff = resolve;
+  });
+  const fetcher: typeof fetch = async () => {
+    attempts += 1;
+    return new Response(
+      JSON.stringify({ error: "The calculation service is busy." }),
+      { status: 503 },
+    );
+  };
+  const pending = requestLiveCalculation(
+    "state-rent",
+    "1.0.0",
+    {},
+    controller.signal,
+    fetcher,
+    (_delay, signal) =>
+      new Promise<void>((_resolve, reject) => {
+        signal.addEventListener(
+          "abort",
+          () => reject(signal.reason ?? new Error("aborted")),
+          { once: true },
+        );
+        enterBackoff();
+      }),
+  );
+
+  await backoffStarted;
+  controller.abort();
+  await assert.rejects(pending);
+  assert.equal(attempts, 1);
+});
+
+test("non-busy service errors do not retry", async () => {
+  let attempts = 0;
+  const fetcher: typeof fetch = async () => {
+    attempts += 1;
+    return new Response(
+      JSON.stringify({
+        error: "The live calculation service is not connected yet.",
+      }),
+      { status: 503 },
+    );
+  };
+
+  await assert.rejects(
+    requestLiveCalculation(
+      "state-rent",
+      "1.0.0",
+      {},
+      new AbortController().signal,
+      fetcher,
+      async () => {
+        assert.fail("A non-busy error should not enter backoff.");
+      },
+    ),
+    /not connected yet/i,
+  );
+  assert.equal(attempts, 1);
+});
+
+test("busy retries stop after three attempts", async () => {
+  let attempts = 0;
+  const fetcher: typeof fetch = async () => {
+    attempts += 1;
+    return new Response(JSON.stringify({ error: "RATE_LIMITED" }), {
+      status: 429,
+    });
+  };
+  const delays: number[] = [];
+
+  await assert.rejects(
+    requestLiveCalculation(
+      "state-rent",
+      "1.0.0",
+      {},
+      new AbortController().signal,
+      fetcher,
+      async (delayMs) => {
+        delays.push(delayMs);
+      },
+    ),
+    /RATE_LIMITED/,
+  );
+  assert.equal(attempts, LIVE_BUSY_RETRY_DELAYS_MS.length + 1);
+  assert.deepEqual(delays, LIVE_BUSY_RETRY_DELAYS_MS);
+});
+
 test("workbook formats render percentages, accounting negatives, zero dashes, and text literally", () => {
   assert.equal(formatOutputValue(0.125, "0.0%"), "12.5%");
   assert.equal(
     formatOutputValue(-1_234.5, "$#,##0.00;($#,##0.00)"),
     "($1,234.50)",
   );
+  assert.equal(
+    formatOutputValue(-1_234.5, "$#,##0.00;€#,##0.00"),
+    "-€1,234.50",
+  );
   assert.equal(formatOutputValue(0, '#,##0;(#,##0);"-"'), "-");
+  assert.equal(formatOutputValue(-0.125, "0.0%;(0.0%);-"), "(12.5%)");
+  assert.equal(formatOutputValue(-0.125, "0.0%;-0.0%;-"), "-12.5%");
   assert.equal(formatOutputValue("<b>value</b>"), "<b>value</b>");
 });
 
