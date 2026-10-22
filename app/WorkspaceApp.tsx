@@ -631,7 +631,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
         error={error}
         plan={selectedPlan}
         returnTo={pathname === "/signin" ? safeReturnPath(searchParams.get("next")) : pathname + (search ? "?" + search : "")}
-        onBack={() => router.push("/#plans")}
       />
     );
   if (!preview && (!workspace?.canWrite || showPlans) && entry !== "workspace")
@@ -695,8 +694,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
         </nav>
         <div className="side-foot">
           {preview ? (
-            <a className="sidebar-plans" href="/#plans" aria-label="View plans">
-              <span>View plans</span><ArrowRight size={18} aria-hidden="true" />
+            <a className="sidebar-plans" href="/signin" aria-label="Sign in">
+              <span>Sign in</span><ArrowRight size={18} aria-hidden="true" />
             </a>
           ) : (
             <button
@@ -1264,12 +1263,10 @@ function AccountControls({
 function Auth({
   error: outerError,
   plan,
-  onBack,
   returnTo,
 }: {
   error: string;
   plan: "month" | "year" | null;
-  onBack: () => void;
   returnTo: string;
 }) {
   useEffect(() => {
@@ -1324,9 +1321,6 @@ function Auth({
       <section className="auth-card card">
         <div className="auth-header">
           <Brand />
-          <button className="btn ghost" onClick={onBack}>
-            <ArrowLeft size={15} /> Back to plans
-          </button>
         </div>
         <div className="eyebrow">Project economics, made accessible</div>
         <h1 className="title">Welcome to your lab.</h1>

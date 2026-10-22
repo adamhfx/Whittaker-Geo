@@ -2,6 +2,14 @@
 
 This application is a Next.js web service backed by Supabase and a separate Python calculation worker. The Render blueprint defines a Node web service, a Docker background worker, and a separate private HTTP calculation service for live edits. The Cloudflare frontend is configured separately; see [Cloudflare setup](CLOUDFLARE.md). The worker is responsible for processing queued immutable runs; the web service owns authentication, API requests, and signed download URLs.
 
+## Temporary sign-in entry
+
+The root URL temporarily redirects to `/signin` while the homepage is unfinished.
+Existing auth-error and selected-plan query parameters are preserved. Signed-in
+users continue to their workspace through the existing sign-in flow. The sign-in
+screen no longer links back to the hidden homepage; preview navigation links to
+sign-in. The homepage source remains available for the later launch.
+
 ## Local setup
 
 Requirements are Node 22 or newer and pnpm 11.19.0. The checked-in Render web service uses Node 22; local development may use the installed Node 24.19.0. The worker image requires Python dependencies from `worker/requirements.txt` and LibreOffice in the worker image.
