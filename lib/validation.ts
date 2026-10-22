@@ -1,5 +1,6 @@
 import type { InputValues, Manifest } from "./types";
 import { inputOptions, isFluidUnit } from "./input-options";
+
 export function validateInputs(
   values: InputValues,
   manifest: Manifest,
@@ -40,11 +41,25 @@ export function validateInputs(
   }
   if (
     complete &&
+    manifest.fields.some((f) => f.type === "milestone") &&
     manifest.fields.filter(
       (f) => f.type === "milestone" && values[f.id] === "X",
     ).length !== 1
   )
     errors.push("Choose exactly one facilities completion year.");
+
+  if (complete) {
+    for (const rule of manifest.inputRules?.ascending ?? []) {
+      if (!rule.fields.length || rule.fields.some((id) => !keys.has(id))) continue;
+      const ruleValues = rule.fields.map((id) => values[id]);
+      // Partial optional input should remain usable; compare a tier only when every
+      // member is present and numeric. Per-field required/type checks report blanks.
+      if (ruleValues.some((value) => value === null || value === undefined || value === "")) continue;
+      if (ruleValues.some((value) => typeof value !== "number" || !Number.isFinite(value))) continue;
+      if (ruleValues.some((value, index) => index > 0 && Number(value) <= Number(ruleValues[index - 1])))
+        errors.push(`${rule.label} values must be strictly increasing.`);
+    }
+  }
   return errors;
 }
 export function initialInputs(
