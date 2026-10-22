@@ -24,6 +24,11 @@ python -m pytest worker/tests -q
 
 The worker requires the dependencies in `worker/requirements.txt`. Its Docker image pins LibreOffice 26.8.0. The Render blueprint defines the web and background-worker services; see [deployment instructions](docs/DEPLOYMENT.md).
 
+For the separately configured Cloudflare interface preview and GitHub deployment
+workflow, see [Cloudflare setup](docs/CLOUDFLARE.md). GitHub carries committed
+changes between computers; local environment settings and private models stay
+outside the repository.
+
 ## Private model boundary
 
 Source workbooks, runtime workbooks, private manifests, numerical review records, and model preparation scripts are kept outside this public repository. The worker downloads an approved version from private Supabase storage using server-only credentials. Public preview data contains input definitions and example values, never model formulas. Customer exports are newly constructed workbooks with two visible result sheets and numeric chart data.

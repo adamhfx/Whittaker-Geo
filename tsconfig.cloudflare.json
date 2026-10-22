@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "cloudflare.config.ts",
+    "vite.config.ts",
+    ".cloudflare/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
