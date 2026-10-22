@@ -1377,6 +1377,7 @@ function Auth({
             Email me a sign-in link
           </button>
         </form>
+        <p className="auth-privacy"><span>Whittaker Geoscience</span><a href="/privacy">Privacy policy</a></p>
       </section>
     </main>
   );

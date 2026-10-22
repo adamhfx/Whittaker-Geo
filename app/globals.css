@@ -1333,3 +1333,6 @@ body {
 
 
 .brand-link { max-width: 100%; }
+
+.auth-privacy { display:flex; justify-content:center; flex-wrap:wrap; gap:6px 12px; margin:22px 0 0; color:var(--muted); font-size:11px; }
+.auth-privacy a { color:var(--brand-navy); text-decoration:underline; text-underline-offset:3px; }
