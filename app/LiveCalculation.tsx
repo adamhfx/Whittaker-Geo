@@ -257,7 +257,9 @@ function OutputTable({ sheet, label }: { sheet: OutputSheet; label: string }) {
     new Set(rows.flatMap((row) => row.map((cell) => cell.column))),
   ).sort((a, b) => a - b);
   const position = new Map(columns.map((column, index) => [column, index + 1]));
-  const columnTemplate = `repeat(${Math.max(columns.length, 1)}, minmax(9rem, 15rem))`;
+  const isYearHeading = (value: unknown) => typeof value === "string" && /^year(?:\s*\((?:project|qi)\))?$/i.test(value.trim());
+  const yearColumns = new Set(rows.flatMap(row => row.filter(cell => isYearHeading(cell.value)).map(cell => cell.column)));
+  const columnTemplate = columns.map(column => yearColumns.has(column) ? "5rem" : "minmax(9rem, 15rem)").join(" ");
 
   if (rows.every((row) => row.length === 0)) {
     return (
@@ -294,16 +296,24 @@ function OutputTable({ sheet, label }: { sheet: OutputSheet; label: string }) {
                 role="row"
                 style={{ gridTemplateColumns: columnTemplate }}
               >
-                {row.map((cell) => (
-                  <div
-                    key={cell.column}
-                    className="live-calculation__cell"
-                    role="cell"
-                    style={{ gridColumn: position.get(cell.column) ?? 1 }}
-                  >
-                    {formatOutputValue(cell.value, cell.format)}
-                  </div>
-                ))}
+                {row.map((cell, cellIndex) => {
+                  const isYear = yearColumns.has(cell.column);
+                  const column = position.get(cell.column) ?? 1;
+                  // Workbook section labels above the year heading can use the empty
+                  // columns to their right instead of wrapping into an 80px strip.
+                  const isSectionLabel = isYear && typeof cell.value === "string" && !isYearHeading(cell.value);
+                  const end = row[cellIndex + 1] ? position.get(row[cellIndex + 1].column)! : columns.length + 1;
+                  return (
+                    <div
+                      key={cell.column}
+                      className={`live-calculation__cell${isYear && !isSectionLabel ? " live-calculation__cell--year" : ""}`}
+                      role="cell"
+                      style={{ gridColumn: isSectionLabel ? `${column} / ${end}` : column }}
+                    >
+                      {formatOutputValue(cell.value, cell.format)}
+                    </div>
+                  );
+                })}
               </div>
             ),
           )}

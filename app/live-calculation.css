@@ -200,3 +200,10 @@
     animation: none;
   }
 }
+
+.live-calculation__cell.live-calculation__cell--year {
+  min-width:0;
+  padding-inline:8px;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}

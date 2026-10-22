@@ -119,6 +119,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [routeError, setRouteError] = useState("");
   const [draftKey, setDraftKey] = useState("");
   const loadedEntity = useRef("");
+  const inputPanelRef = useRef<HTMLDivElement>(null);
   const currentRoute = parsePageRoute(pathname, search);
   function navigate(route: AppRoute, replace = false) {
     const href = routeHref(route);
@@ -282,6 +283,17 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }
   useEffect(() => {
     if (loading) return;
+    const entity = currentRoute && (preview ? "preview" : workspace?.user.email) + ":" +
+      (currentRoute.calculationId || `new:${currentRoute.calculatorId}:${currentRoute.mode || "blank"}`);
+    // A section address change needs no data reload or temporary loading screen.
+    // Keep the editor, live results, and their scroll positions mounted.
+    if (currentRoute?.view === "editor" && view === "editor" && manifest &&
+        (preview || workspace) && loadedEntity.current === entity) {
+      setGroup(manifest.groups.some(g => g.id === currentRoute.section) ? currentRoute.section! : manifest.groups[0].id);
+      setRouteError("");
+      setRouteLoading(false);
+      return;
+    }
     let cancelled = false;
     setRouteLoading(true);
     setRouteError("");
@@ -393,20 +405,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
   async function openCalculation(c: Calculation) {
     navigate({ view: "editor", preview, calculationId: c.id });
   }
-  function selectInputSection(section: string, navigation: HTMLElement | null) {
-    if (!currentRoute) return;
+  useEffect(() => {
+    // Start the newly selected inputs at the top of their own pane, without moving the page.
+    inputPanelRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [group]);
+
+  function selectInputSection(section: string) {
+    if (!currentRoute || group === section) return;
     navigate({ ...currentRoute, section });
-    // Keep the beginning of the new section below the persistent controls,
-    // including when the previous section was scrolled down to run history.
-    const panel = document.getElementById("calculator-input-panel");
-    if (!panel) return;
-    const toolbarHeight = document.querySelector(".calculator-toolbar")?.getBoundingClientRect().height ?? 0;
-    const navigationHeight = navigation && getComputedStyle(navigation).position === "sticky"
-      ? navigation.getBoundingClientRect().height : 0;
-    window.scrollTo({
-      top: Math.max(0, window.scrollY + panel.getBoundingClientRect().top - toolbarHeight - navigationHeight - 16),
-      behavior: "instant",
-    });
   }
   function updateInput(id: string, value: string | number | null) {
     setInputs((old) => changeInput(manifest, old, id, value));
@@ -897,6 +903,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <div className="calculator-context__name">
                   <div className="calculator-context__name-heading">
                     <label className="form-label" htmlFor="calculation-name">Calculation name</label>
+                    <p className="calculator-name-help" id="calculation-name-help">
+                      {editable ? "Click to rename" : "Saved calculation"}
+                    </p>
                     <span className="calculator-save-status" role="status" aria-label={`Save status: ${calculationSaveStatus}`}>{calculationSaveStatus}</span>
                   </div>
                   <div className="calculator-name-control">
@@ -914,9 +923,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     />
                     {editable && <Pencil className="calculator-name-control__icon" size={17} aria-hidden="true" />}
                   </div>
-                  <p className="calculator-name-help" id="calculation-name-help">
-                    {editable ? "Click the name to rename this calculation." : "The name of this saved calculation."}
-                  </p>
                 </div>
                 <p className="calculator-context__description">{manifest.description}</p>
               </div>
@@ -933,14 +939,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     key={g.id}
                     className={g.id === group ? "active" : ""}
                     aria-current={g.id === group ? "true" : undefined}
-                    onClick={(event) => selectInputSection(g.id, event.currentTarget.closest("nav"))}
+                    onClick={() => selectInputSection(g.id)}
                   >
                     {g.name}
                   </button>
                 ))}
               </nav>
               <div className={manifest.outputViews?.length ? "model-workbench" : undefined}>
-              <div className="form-layout" id="calculator-input-panel">
+              <div className="form-layout" id="calculator-input-panel" ref={inputPanelRef}>
                 <section className="card group-card">
                   <div className="model-section-heading">
                     <h3>{manifest.groups.find((g) => g.id === group)?.name}</h3>

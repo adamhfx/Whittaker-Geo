@@ -1,4 +1,7 @@
-import { Fragment, useId } from "react";
+"use client";
+
+import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { ArrowLeft, Maximize2 } from "lucide-react";
 import type { LiveChart, LiveSummaryItem } from "@/lib/types";
 import { formatOutputValue } from "@/lib/live-calculation";
 import "./output-presentation.css";
@@ -88,6 +91,75 @@ function displayUnit(item: LiveSummaryItem): string | undefined {
 
 function ChartCard({ chart }: { chart: LiveChart }) {
   const headingId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [expanded]);
+
+  function closeChart() {
+    dialogRef.current?.close();
+    setExpanded(false);
+  }
+
+  return (
+    <article className="output-presentation__chart" aria-labelledby={headingId}>
+      <header className="output-presentation__chart-header">
+        <h4 id={headingId}>{chart.title}</h4>
+        <button
+          ref={triggerRef}
+          type="button"
+          className="output-presentation__expand"
+          aria-label={`Expand ${chart.title}`}
+          aria-haspopup="dialog"
+          aria-expanded={expanded}
+          aria-controls={`${headingId}-dialog`}
+          onClick={() => setExpanded(true)}
+        >
+          <Maximize2 size={14} aria-hidden="true" />
+          Expand
+        </button>
+      </header>
+      <ChartContents chart={chart} />
+      <dialog
+        ref={dialogRef}
+        id={`${headingId}-dialog`}
+        className="chart-dialog"
+        aria-labelledby={`${headingId}-expanded-title`}
+        onCancel={(event) => { event.preventDefault(); closeChart(); }}
+        onClose={(event) => {
+          if (event.currentTarget.open) return;
+          setExpanded(false);
+          window.requestAnimationFrame(() => {
+            if (triggerRef.current?.isConnected) triggerRef.current.focus({ preventScroll: true });
+          });
+        }}
+        onClick={(event) => { if (event.target === event.currentTarget) closeChart(); }}
+      >
+        <section className="chart-dialog__panel">
+          <header className="chart-dialog__header">
+            <h2 id={`${headingId}-expanded-title`}>{chart.title}</h2>
+            <button type="button" className="chart-dialog__return" autoFocus onClick={closeChart}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              return
+            </button>
+          </header>
+          <div className="chart-dialog__body">
+            {expanded && <ChartContents chart={chart} expanded />}
+          </div>
+        </section>
+      </dialog>
+    </article>
+  );
+}
+
+function ChartContents({ chart, expanded = false }: { chart: LiveChart; expanded?: boolean }) {
   const allValues = chart.series.flatMap((series) =>
     series.values.filter((value): value is number => value !== null),
   );
@@ -95,13 +167,10 @@ function ChartCard({ chart }: { chart: LiveChart }) {
   const formattedUnit = unit ? ` · ${unit}` : "";
 
   return (
-    <article className="output-presentation__chart" aria-labelledby={headingId}>
-      <header className="output-presentation__chart-header">
-        <h4 id={headingId}>{chart.title}</h4>
-        <p>{chart.categories.length} points{formattedUnit}</p>
-      </header>
+    <>
+      <p className="output-presentation__chart-meta">{chart.categories.length} points{formattedUnit}</p>
       {allValues.length > 0 ? (
-        <ChartSvg chart={chart} values={allValues} unit={unit} />
+        <ChartSvg chart={chart} values={allValues} unit={unit} expanded={expanded} />
       ) : (
         <p className="output-presentation__no-data">No chart values are available.</p>
       )}
@@ -145,13 +214,13 @@ function ChartCard({ chart }: { chart: LiveChart }) {
           </table>
         </div>
       </details>
-    </article>
+    </>
   );
 }
 
-function ChartSvg({ chart, values, unit }: { chart: LiveChart; values: number[]; unit?: string }) {
-  const width = 720;
-  const height = 270;
+function ChartSvg({ chart, values, unit, expanded = false }: { chart: LiveChart; values: number[]; unit?: string; expanded?: boolean }) {
+  const width = expanded ? 1200 : 720;
+  const height = expanded ? 480 : 270;
   const left = 74;
   const right = 18;
   const top = 15;
