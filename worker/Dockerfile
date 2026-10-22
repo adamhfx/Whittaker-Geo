@@ -6,13 +6,17 @@ FROM python:3.12-slim-bookworm
 ARG LO_URL=https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/x86_64/LibreOffice_26.8.1_Linux_x86-64_deb.tar.gz
 ARG LO_SHA256=30903df3b9f61360d9660cd707de48cd2831469114492a5008ed58a0ac77d044
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar python3-uno libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa \
+ && apt-get install -y --no-install-recommends ca-certificates curl fonts-liberation tar python3-uno libcups2 libcairo2 libxinerama1 libxrender1 libsm6 libdbus-1-3 libnss3 libxslt1.1 libx11-6 libxext6 libglu1-mesa \
  && curl --fail --silent --show-error --location "$LO_URL" --output /tmp/libreoffice.tar.gz \
  && echo "$LO_SHA256  /tmp/libreoffice.tar.gz" | sha256sum --check --status \
  && mkdir -p /tmp/libreoffice \
  && tar -xzf /tmp/libreoffice.tar.gz --strip-components=1 -C /tmp/libreoffice \
  && (dpkg -i /tmp/libreoffice/DEBS/*.deb || true) \
  && apt-get install -y --no-install-recommends -f \
+ && ldd /opt/libreoffice26.8/program/soffice.bin > /tmp/soffice-ldd.txt \
+ && cat /tmp/soffice-ldd.txt \
+ && ( ! grep -q 'not found' /tmp/soffice-ldd.txt ) \
+ && rm -f /tmp/soffice-ldd.txt \
  && /opt/libreoffice26.8/program/soffice --headless --version \
  && /usr/bin/python3 -c "import uno" \
  && rm -rf /tmp/libreoffice /tmp/libreoffice.tar.gz /var/lib/apt/lists/*

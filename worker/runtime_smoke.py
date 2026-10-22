@@ -35,7 +35,7 @@ def _make_workbook(path: Path) -> None:
     calculation["A1"] = "=_xlfn.LET(x,UI!B1,x*(5+5)+UI!B2)"
 
     output = workbook.create_sheet("Smoke OUTPUT")
-    output["A1"] = "Nested LET total"
+    output["A1"] = "LET total"
     output["B1"] = "='Model Calc'!A1"
     workbook.calculation = CalcProperties(
         calcMode="auto", fullCalcOnLoad=True, forceFullCalc=True
@@ -65,7 +65,7 @@ def _manifest(path: Path) -> dict[str, Any]:
             "sheet": "Smoke OUTPUT", "sourceRange": "A1:B1",
         }]},
         "presentation": {"summary": [{
-            "label": "Nested LET total", "sheet": "Smoke OUTPUT", "valueCell": "B1",
+            "label": "LET total", "sheet": "Smoke OUTPUT", "valueCell": "B1",
         }]},
     }
 
