@@ -32,7 +32,7 @@ def write_compact_output(book, source, destination, view, hidden_columns, allowe
         text_only = bool(values) and all(isinstance(value, str) for _, value in values)
         footnote = text_only and all(str(value).lstrip().startswith("*") for _, value in values)
         header = not footnote and (output_row == 0 or text_only and (first_data is None or output_row < first_data))
-        section = header and (output_row == 0 or len(values) <= 3 or any(values[i][0] - values[i-1][0] > 1 for i in range(1, len(values))))
+        section = header and (output_row == 0 or len(values) <= max(3, len(columns) // 3))
         height = max((min(72, 15 * max(1, math.ceil(len(str(value)) / max(8, widths[c] - 2))))
                       for c, value in values if isinstance(value, str)), default=18)
         destination.set_row(output_row, 28 if section else 20 if footnote else max(20, height + 6))
