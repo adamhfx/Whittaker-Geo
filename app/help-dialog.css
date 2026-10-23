@@ -157,7 +157,17 @@
 .help-guide__topic > summary h3 { display:flex; align-items:baseline; gap:11px; font-size:16px; line-height:1.4; margin:0; color:var(--ink); }
 .help-guide__number { font-size:11px; color:var(--muted); font-weight:500; flex-shrink:0; }
 .help-guide__topic > summary > svg { flex-shrink:0; color:var(--primary); transition:transform 150ms ease; }
-.help-guide__topic[open] > summary { border-bottom:1px solid var(--line); }
+/* Keep the active topic distinct even when several headings are visible. */
+.help-guide__topic[open] { border-color:var(--brand-navy,#002d43); }
+.help-guide__topic[open] > summary {
+  background:var(--brand-navy,#002d43); border-bottom:1px solid var(--brand-navy-dark,#002236);
+  box-shadow:inset 4px 0 var(--brand-olive-light,#dfe4c9);
+}
+.help-guide__topic[open] > summary:hover { background:var(--brand-navy-dark,#002236); }
+.help-guide__topic[open] > summary h3,
+.help-guide__topic[open] > summary > svg { color:#fff; }
+.help-guide__topic[open] .help-guide__number { color:var(--brand-olive-light,#dfe4c9); font-weight:700; }
+.help-guide__topic[open] > summary:focus-visible { outline-color:var(--brand-olive-light,#dfe4c9); }
 .help-guide__topic[open] > summary > svg { transform:rotate(180deg); }
 .help-guide__content { display:grid; gap:17px; font-size:14px; line-height:1.55; }
 .help-guide__topic .help-guide__content { padding:18px; }
