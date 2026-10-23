@@ -326,7 +326,7 @@ function sanitizeLiveResult(value: LiveCalculationResult): LiveCalculationResult
 }
 
 export class LiveCalculationRequestError extends Error {
-  constructor(message: string, readonly status: number) {
+  constructor(message: string, readonly status: number, readonly reason?: "IRR_UNDEFINED") {
     super(message);
     this.name = "LiveCalculationRequestError";
   }
@@ -381,7 +381,8 @@ export async function requestLiveCalculation(
         retryIndex += 1;
         continue;
       }
-      throw new LiveCalculationRequestError(message, response.status);
+      throw new LiveCalculationRequestError(message, response.status,
+        response.status === 422 && isRecord(payload) && payload.reason === "IRR_UNDEFINED" ? "IRR_UNDEFINED" : undefined);
     }
 
     const resultPayload =

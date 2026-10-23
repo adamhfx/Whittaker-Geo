@@ -40,9 +40,10 @@ def test_export_uses_current_values_without_private_cells_or_formulas(tmp_path):
     assert book.sheetnames==['Summary OUTPUT']
     sheet=book.active
     assert sheet['A1'].value=='=LITERAL_TEXT' and sheet['A1'].data_type=='s'
-    assert sheet['C1'].value==125.5 and sheet['C1'].number_format=='$0.00'
-    assert sheet['A3'].value==0
-    assert sheet['B1'].value is None and sheet['A2'].value is None
+    assert sheet['B1'].value==125.5 and sheet['B1'].number_format=='$0.00'
+    assert sheet['A2'].value==0
+    assert sheet['C1'].value is None and sheet['A3'].value is None
+    assert sheet['A1'].border.left.style=='thin' and sheet['B2'].border.bottom.style=='thin'
     book.close()
     with zipfile.ZipFile(target) as archive:
         data=b''.join(archive.read(name) for name in archive.namelist())
@@ -75,3 +76,24 @@ def test_export_endpoint_shares_capacity_and_returns_validated_values(tmp_path):
         with pytest.raises(LiveError) as caught: service.evaluate(raw,export=True)
         assert caught.value.code=='ENGINE_BUSY'
     finally: service._capacity.release()
+
+
+def test_offset_output_starts_at_a1_with_borders_and_readable_headers(tmp_path):
+    template=tmp_path/'offset.xlsx'
+    book=openpyxl.Workbook();book.active.title='Annual OUTPUT'
+    book.active['N9']='Annual results';book.active['N11']='Year';book.active['O11']='Gross revenue';book.active['N12']=1;book.active['O12']=123.45
+    book.save(template);book.close()
+    manifest={'id':'test','version':'v2','outputs':{'views':[{'id':'annual','label':'Annual','sheet':'Annual OUTPUT','sourceRange':'N9:P12'}]}}
+    result={'outputSheets':[{'name':'Annual OUTPUT','rows':[
+        {'cells':[{'column':14,'value':'Annual results'}]}, {'cells':[]},
+        {'cells':[{'column':14,'value':'Year'},{'column':15,'value':'Gross revenue'}]},
+        {'cells':[{'column':14,'value':1},{'column':15,'value':123.45,'format':'$0.00'}]}]}]}
+    target=tmp_path/'offset-export.xlsx';export_evaluation(template,manifest,result,target)
+    exported=openpyxl.load_workbook(target);sheet=exported.active
+    assert sheet['A1'].value=='Annual results' and sheet['B4'].value==123.45
+    assert sheet['B4'].number_format=='$0.00'
+    assert sheet['A4'].border.bottom.style=='thin'
+    assert sheet['A3'].font.bold and sheet['A3'].alignment.wrap_text
+    assert sheet.freeze_panes=='B4'
+    assert sheet['N9'].value is None
+    exported.close()

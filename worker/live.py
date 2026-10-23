@@ -36,10 +36,11 @@ MAX_TRACKED_USERS = 4096
 
 
 class LiveError(Exception):
-    def __init__(self, status: int, code: str):
+    def __init__(self, status: int, code: str, reason: str | None = None):
         super().__init__(code)
         self.status = status
         self.code = code
+        self.reason = reason if code == "RESULT_INVALID" and reason == "IRR_UNDEFINED" else None
 
 
 class SlidingWindowLimiter:
@@ -292,7 +293,7 @@ class PreviewService:
                     status = 404 if exc.code == "MODEL_UNAVAILABLE" else (
                         400 if exc.code in {"INVALID_REQUEST", "OUTPUT_MAPPING_INVALID"} else 422
                     )
-                    raise LiveError(status, exc.code) from None
+                    raise LiveError(status, exc.code, reason=exc.reason) from None
                 except LiveError:
                     raise
                 except Exception:
@@ -374,7 +375,7 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         except LiveError as exc:
-            self._respond(exc.status, {"error": exc.code})
+            self._respond(exc.status, {"error": exc.code, **({"reason": exc.reason} if exc.reason else {})})
         except (BrokenPipeError, ConnectionResetError):
             return
         except Exception:

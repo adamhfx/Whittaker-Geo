@@ -9,6 +9,7 @@ import math
 import sys
 import time
 import traceback
+from formula_diagnostics import formula_failure_reason
 
 import uno
 from com.sun.star.beans import PropertyValue
@@ -145,9 +146,27 @@ def main():
                 document.calculateAll()
                 # IFERROR can conceal dependency failures in visible outputs.
                 # Query all formula-result errors before accepting any result.
+                has_formula_errors = False
+                error_formulas = []
                 for index in range(document.Sheets.getCount()):
-                    if document.Sheets.getByIndex(index).queryFormulaCells(4).getCount():
-                        raise ArithmeticError('Formula result error')
+                    error_sheet = document.Sheets.getByIndex(index)
+                    failures = error_sheet.queryFormulaCells(4)
+                    if failures.getCount():
+                        has_formula_errors = True
+                        for address in failures.getRangeAddresses():
+                            if len(error_formulas) >= 256:
+                                break
+                            for row in range(address.StartRow, address.EndRow + 1):
+                                if len(error_formulas) >= 256:
+                                    break
+                                for column in range(address.StartColumn, address.EndColumn + 1):
+                                    if len(error_formulas) >= 256:
+                                        break
+                                    error_formulas.append(error_sheet.getCellByPosition(column, row).getFormula())
+                if has_formula_errors:
+                    failure = ArithmeticError('Formula result error')
+                    failure.reason = formula_failure_reason(error_formulas)
+                    raise failure
 
                 outputs = []
                 for view in request['views']:
@@ -176,8 +195,10 @@ def main():
                 display = presentation_values(document, request.get('presentation'))
                 if display is not None:
                     response.update(display)
-            except ArithmeticError:
+            except ArithmeticError as error:
                 response = {'ok': False, 'code': 'RESULT_INVALID'}
+                if getattr(error, 'reason', None) == 'IRR_UNDEFINED':
+                    response['reason'] = 'IRR_UNDEFINED'
             except Exception:
                 if diagnostic_synthetic:
                     traceback.print_exc(file=sys.stderr)

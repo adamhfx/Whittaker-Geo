@@ -94,7 +94,7 @@ export function useLiveCalculation({
             inputKey,
             status: "error",
             ...(inputDependent ? { diagnosis: diagnoseCalculationInputs(manifest,
-              lastSuccess.current?.scope === scope ? lastSuccess.current.inputs : null, inputs) } : {}),
+              lastSuccess.current?.scope === scope ? lastSuccess.current.inputs : null, inputs, requestError.reason) } : {}),
             canRetry: !inputDependent,
             error:
               requestError instanceof Error

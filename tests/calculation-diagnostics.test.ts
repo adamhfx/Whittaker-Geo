@@ -30,7 +30,10 @@ test("multiple changes remain separate candidates, with year-specific schedule l
 });
 
 test("missing success evidence cannot produce an invented culprit or restore action", () => {
-  assert.deepEqual(diagnoseCalculationInputs(manifest, null, { ...working, gas: 0 }), { changes: [], workingInputs: null });
+  const diagnosis = diagnoseCalculationInputs(manifest, null, { ...working, gas: 0 });
+  assert.deepEqual(diagnosis.changes, []);
+  assert.equal(diagnosis.workingInputs, null);
+  assert.match(diagnosis.explanation!.why, /did not identify/);
   assert.deepEqual(diagnoseCalculationInputs(manifest, working, working).changes, []);
 });
 
@@ -56,4 +59,15 @@ test("only mapped inputs can be presented as changed fields", () => {
   const diagnosis = diagnoseCalculationInputs(manifest, working, { ...working, unknown: "private" });
   assert.deepEqual(diagnosis.changes, []);
   assert.equal(JSON.stringify(diagnosis).includes("private"), false);
+});
+
+
+test("a confirmed IRR failure explains the math and gives scenario-specific multiplier guidance", () => {
+  const model = { ...manifest, id: "state-rent", version: "2.0.0-candidate.1" };
+  const diagnosis = diagnoseCalculationInputs(model, working, { ...working, gas: 0 }, "IRR_UNDEFINED");
+  assert.match(diagnosis.explanation!.why, /internal rate of return/);
+  assert.match(diagnosis.explanation!.steps[0], /0.9 for a 10% reduction/);
+  assert.match(diagnosis.explanation!.steps.join(" "), /inputs are correct/);
+  const unknown = diagnoseCalculationInputs(model, working, { ...working, gas: 0 });
+  assert.doesNotMatch(unknown.explanation!.why, /internal rate of return/);
 });

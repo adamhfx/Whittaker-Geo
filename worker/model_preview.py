@@ -45,9 +45,10 @@ _CELL = re.compile(r"^[A-Z]{1,3}[1-9][0-9]{0,6}$")
 class PreviewError(Exception):
     """A safe-to-return model preview failure."""
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, reason: str | None = None):
         super().__init__(code)
         self.code = code
+        self.reason = reason if reason == "IRR_UNDEFINED" else None
 
 
 def _supabase_headers(service_key: str) -> dict[str, str]:
@@ -589,6 +590,7 @@ def scan_formula_errors(path: str | Path, value_workbook: Any) -> None:
     except Exception:
         raise PreviewError("CALCULATION_FAILED") from None
     try:
+        error_formulas = []
         for sheet_name in formulas.sheetnames:
             if sheet_name not in value_workbook.sheetnames:
                 raise PreviewError("CALCULATION_FAILED")
@@ -600,7 +602,11 @@ def scan_formula_errors(path: str | Path, value_workbook: Any) -> None:
                         continue
                     result_cell = result_sheet[formula_cell.coordinate]
                     if result_cell.data_type == "e":
-                        raise PreviewError("CALCULATION_FAILED")
+                        error_formulas.append(formula_cell.value)
+        if error_formulas:
+            from .formula_diagnostics import formula_failure_reason
+            reason = formula_failure_reason(error_formulas)
+            raise PreviewError("RESULT_INVALID" if reason else "CALCULATION_FAILED", reason=reason)
     except PreviewError:
         raise
     except Exception:
@@ -678,6 +684,7 @@ def export_preview_results(
     format_cache: dict[str, Any] = {}
     allowed_cells: dict[str, set[str]] = {view["sheet"]: set() for view in views}
     chart_formula_refs: list[str] = []
+    layouts = {}
     try:
         book.set_properties({
             "title": "Whittaker Geo calculation results",
@@ -690,61 +697,17 @@ def export_preview_results(
                 raise PreviewError("OUTPUT_MAPPING_INVALID")
             destination = book.add_worksheet(view["sheet"])
             destination.hide_gridlines(2)
-            min_col, min_row, max_col, max_row = view["bounds"]
-            hidden_columns = _hidden_columns(source)
-            # Keep visible source positions while excluding values in hidden
-            # rows/columns. Empty cells outside each mapped range are never
-            # copied into the new workbook.
-            for column_index in range(min_col, max_col + 1):
-                if column_index in hidden_columns:
-                    continue
-                letter = openpyxl.utils.get_column_letter(column_index)
-                dimension = source.column_dimensions.get(letter)
-                if dimension and dimension.width:
-                    destination.set_column(column_index - 1, column_index - 1, min(dimension.width, 65))
-            for row_index in range(min_row, max_row + 1):
-                if source.row_dimensions[row_index].hidden:
-                    continue
-                dimension = source.row_dimensions[row_index]
-                if dimension.height:
-                    destination.set_row(row_index - 1, dimension.height)
-                for column_index in range(min_col, max_col + 1):
-                    if column_index in hidden_columns:
-                        continue
-                    allowed_cells[view["sheet"]].add(
-                        f"{openpyxl.utils.get_column_letter(column_index)}{row_index}"
-                    )
-                    cell = source.cell(row=row_index, column=column_index)
-                    if cell.data_type == "e":
-                        raise PreviewError("RESULT_INVALID")
-                    value = _json_value(cell.value)
-                    if value is None:
-                        continue
-                    cell_format = None
-                    number_format = cell.number_format
-                    if isinstance(number_format, str) and number_format and len(number_format) <= 200:
-                        if number_format not in format_cache:
-                            try:
-                                format_cache[number_format] = book.add_format({"num_format": number_format})
-                            except (TypeError, ValueError):
-                                format_cache[number_format] = None
-                        cell_format = format_cache[number_format]
-                    if isinstance(value, str):
-                        destination.write_string(row_index - 1, column_index - 1, value, cell_format)
-                    elif isinstance(value, (int, float)) and not isinstance(value, bool):
-                        if not math.isfinite(value):
-                            raise PreviewError("RESULT_INVALID")
-                        destination.write_number(row_index - 1, column_index - 1, value, cell_format)
-                    else:
-                        raise PreviewError("RESULT_INVALID")
+            from .export_layout import write_compact_output
+            layouts[view["sheet"]] = write_compact_output(book, source, destination, view,
+                _hidden_columns(source), allowed_cells[view["sheet"]], format_cache, _json_value)
 
         if presentation_specs is not None:
             next_helper_column: dict[str, int] = {}
             next_chart_row: dict[str, int] = {}
             for view in views:
-                left, _, right, bottom = view["bounds"]
-                next_helper_column[view["sheet"]] = right + 1  # leave one blank column
-                next_chart_row[view["sheet"]] = bottom + 2
+                geometry = layouts[view["sheet"]]
+                next_helper_column[view["sheet"]] = geometry["columnCount"] + 1
+                next_chart_row[view["sheet"]] = geometry["rowCount"] + 2
             for spec, chart_result in zip(presentation_specs["charts"], presentation["charts"]):
                 destination = book.get_worksheet_by_name(spec["sheet"])
                 if destination is None:
@@ -805,10 +768,13 @@ def export_preview_results(
                     width = max(420, (right - left + 1) * 64)
                     height = max(260, (bottom - top + 1) * 20)
                     chart.set_size({"width": width, "height": height})
-                    anchor_cell = xl_rowcol_to_cell(top - 1, left - 1)
+                    geometry = layouts[spec["sheet"]]
+                    chart_row = sum(r < top for r in geometry["rows"])
+                    chart_column = sum(c < left for c in geometry["columns"])
+                    anchor_cell = xl_rowcol_to_cell(chart_row, chart_column)
                 else:
                     output_view = next(view for view in views if view["sheet"] == spec["sheet"])
-                    chart_left = output_view["bounds"][0] - 1
+                    chart_left = 0
                     anchor_cell = xl_rowcol_to_cell(next_chart_row[spec["sheet"]], chart_left)
                     chart.set_size({"width": 900, "height": 320})
                     next_chart_row[spec["sheet"]] += 17

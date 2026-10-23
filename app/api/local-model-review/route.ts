@@ -91,7 +91,9 @@ export async function POST(request: Request) {
           "The local calculation service is busy. Please retry.",
         );
       if (error instanceof EngineEvaluationError && error.code === "model_result_invalid")
-        throw new ApiError(422, "The workbook returned an undefined result for this combination of inputs.");
+        return Response.json({ error: "The model returned an undefined result for these inputs.",
+          ...(error.reason ? { reason: error.reason } : {}) },
+          { status: 422, headers: { "Cache-Control": "private, no-store" } });
       throw new ApiError(
         503,
         "Local model results could not be calculated. Please retry.",

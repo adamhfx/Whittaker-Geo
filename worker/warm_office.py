@@ -204,7 +204,7 @@ class WarmOffice:
                     raise ValueError('Engine stopped')
                 result = json.loads(message)
                 if result.get('ok') is not True:
-                    raise PreviewError('RESULT_INVALID' if result.get('code') == 'RESULT_INVALID' else 'CALCULATION_FAILED')
+                    raise PreviewError('RESULT_INVALID' if result.get('code') == 'RESULT_INVALID' else 'CALCULATION_FAILED', reason=result.get('reason'))
                 response = {'calculatorId': manifest['id'], 'calculatorVersion': manifest['version'],
                             'outputSheets': result['outputSheets'],
                             'durationSeconds': round(time.monotonic()-started, 4)}

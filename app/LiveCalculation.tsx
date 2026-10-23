@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { LoaderCircle, RotateCw } from "lucide-react";
 import type { InputValues, Manifest } from "@/lib/types";
 import {
@@ -300,6 +300,11 @@ function LiveStatus({
             : workingInputs
               ? "These inputs match the last successful calculation, so no specific input change can be identified. Try again or report this calculation for investigation."
               : "There is no successful calculation to compare in this session, so a specific input cannot be identified yet."}</p>
+        {live.diagnosis?.explanation && <div className="live-calculation__explanation">
+          <h3>Why this happens</h3><p>{live.diagnosis.explanation.why}</p>
+          <h3>How to fix or review it</h3><ol>{live.diagnosis.explanation.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+          {live.diagnosis.explanation.reference && <a href={live.diagnosis.explanation.reference} target="_blank" rel="noreferrer">About IRR calculations</a>}
+        </div>}
         {changes.length > 0 && <>
           {changeList(changes.slice(0, 6))}
           {changes.length > 6 && <details><summary>Show {changes.length - 6} more changed inputs</summary>{changeList(changes.slice(6))}</details>}
@@ -331,6 +336,27 @@ function LiveStatus({
 }
 
 function OutputTable({ sheet, label }: { sheet: OutputSheet; label: string }) {
+  const tableScroll = useRef<HTMLDivElement>(null);
+  const topScroll = useRef<HTMLDivElement>(null);
+  const table = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  useEffect(() => {
+    const container = tableScroll.current;
+    const content = table.current;
+    if (!container || !content) return;
+    const measure = () => {
+      setScrollWidth(content.scrollWidth > container.clientWidth + 1 ? content.scrollWidth : 0);
+      if (topScroll.current) topScroll.current.scrollLeft = container.scrollLeft;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [sheet, label]);
+  const synchronize = (from: HTMLDivElement, to: HTMLDivElement | null) => {
+    if (to && Math.abs(to.scrollLeft - from.scrollLeft) > 1) to.scrollLeft = from.scrollLeft;
+  };
   const rows = sheet.rows.map((row) =>
     row.cells
       .filter((cell) => cell.value !== null && cell.value !== "")
@@ -354,13 +380,22 @@ function OutputTable({ sheet, label }: { sheet: OutputSheet; label: string }) {
   }
 
   return (
+    <div className="live-calculation__table-frame">
+    <div className="live-calculation__top-scroll" ref={topScroll} hidden={!scrollWidth}
+      role="region" aria-label={`Top horizontal scrollbar for ${label}`} tabIndex={0}
+      onScroll={(event) => synchronize(event.currentTarget, tableScroll.current)}>
+      <div style={{ width: scrollWidth, height: 1 }} />
+    </div>
     <div
+      ref={tableScroll}
+      onScroll={(event) => synchronize(event.currentTarget, topScroll.current)}
       className="live-calculation__table-scroll"
       role="region"
       aria-label={`Scrollable ${label} output values`}
       tabIndex={0}
     >
       <div
+        ref={table}
         className="live-calculation__table"
         role="table"
         aria-label={`${label} output values`}
@@ -403,6 +438,7 @@ function OutputTable({ sheet, label }: { sheet: OutputSheet; label: string }) {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

@@ -181,3 +181,15 @@ test("undefined workbook results are distinguished without exposing engine detai
     });
   }
 });
+
+
+test("model failure reasons are allowlisted independently of private engine details", async () => {
+  for (const [reason, expected] of [["IRR_UNDEFINED", "IRR_UNDEFINED"], ["private formula", undefined]]) {
+    await assert.rejects(evaluateWith(async () => new Response(JSON.stringify({ error: "RESULT_INVALID", reason }), { status: 422 })), (error: unknown) => {
+      assert.ok(error instanceof EngineEvaluationError);
+      assert.equal(error.reason, expected);
+      assert.equal(error.message, "ENGINE_FAILED");
+      return true;
+    });
+  }
+});

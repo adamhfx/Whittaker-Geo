@@ -15,7 +15,7 @@ export type EngineEvaluationFailureCode =
 export class EngineEvaluationError extends Error {
   readonly code: EngineEvaluationFailureCode;
 
-  constructor(code: EngineEvaluationFailureCode) {
+  constructor(code: EngineEvaluationFailureCode, readonly reason?: "IRR_UNDEFINED") {
     super("ENGINE_FAILED");
     this.name = "EngineEvaluationError";
     this.code = code;
@@ -119,13 +119,16 @@ async function enginePayload(options: EvaluationOptions, maxLength: number): Pro
       // Only this exact engine code describes an input-dependent undefined
       // result. Provider text, formulas and unknown failures remain private.
       let invalidModelResult = false;
+      let reason: "IRR_UNDEFINED" | undefined;
       try {
         const text = await response.text();
-        invalidModelResult = text.length <= 256 && JSON.parse(text)?.error === "RESULT_INVALID";
+        const payload = text.length <= 256 ? JSON.parse(text) : null;
+        invalidModelResult = payload?.error === "RESULT_INVALID";
+        if (invalidModelResult && payload?.reason === "IRR_UNDEFINED") reason = "IRR_UNDEFINED";
       } catch (error) {
         if (options.signal.aborted) throw error;
       }
-      if (invalidModelResult) throw new EngineEvaluationError("model_result_invalid");
+      if (invalidModelResult) throw new EngineEvaluationError("model_result_invalid", reason);
     }
     const code: EngineEvaluationFailureCode = response.status >= 300 && response.status < 400 ? "http_redirect"
       : response.status === 401 ? "http_401"
