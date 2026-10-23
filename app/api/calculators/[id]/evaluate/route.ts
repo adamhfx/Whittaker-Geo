@@ -54,6 +54,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return retryableCalculationResponse(
           "The calculation service is busy. Your inputs are preserved; please retry.",
         );
+      if (error instanceof EngineEvaluationError && error.code === "model_result_invalid")
+        throw new ApiError(422,
+          "The workbook returned an undefined result for this combination of inputs. Review the values you just changed, especially production, prices and costs. Results will update automatically after your next edit.");
       console.error(JSON.stringify({
         event: "live_calculation_failed",
         code: error instanceof EngineEvaluationError ? error.code

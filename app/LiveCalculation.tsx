@@ -264,16 +264,16 @@ function LiveStatus({
   return (
     <div className="live-calculation__message is-error" role="alert">
       <span>
-        We couldn’t update live results. {live.error || "Please try again."}
+        {live.canRetry ? "We couldn’t update live results. " : ""}{live.error || "Please try again."}
       </span>
-      <button
+      {live.canRetry && <button
         type="button"
         className="live-calculation__retry"
         onClick={onRetry}
       >
         <RotateCw aria-hidden="true" />
         Retry
-      </button>
+      </button>}
     </div>
   );
 }

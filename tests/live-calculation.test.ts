@@ -5,6 +5,7 @@ import {
   liveEvaluationKey,
   LIVE_BUSY_RETRY_DELAYS_MS,
   LatestEvaluationGate,
+  LiveCalculationRequestError,
   requestLiveCalculation,
   scheduleDebouncedEvaluation,
   type LiveCalculationResult,
@@ -374,4 +375,22 @@ test("debounce cancellation drops intermediate input evaluations", async () => {
   cancelLatest();
 
   assert.deepEqual(calls, ["latest"]);
+});
+
+
+test("undefined scenarios require an edit instead of retrying the same inputs", async () => {
+  let attempts = 0;
+  const message = "Review the values you just changed.";
+  await assert.rejects(requestLiveCalculation("state-rent", "1.0.0", {},
+    new AbortController().signal, async () => {
+      attempts++;
+      return new Response(JSON.stringify({ error: message }), { status: 422 });
+    }, async () => { assert.fail("An input-dependent failure must not retry."); }),
+    (error: unknown) => {
+      assert.ok(error instanceof LiveCalculationRequestError);
+      assert.equal(error.status, 422);
+      assert.equal(error.message, message);
+      return true;
+    });
+  assert.equal(attempts, 1);
 });

@@ -6,6 +6,7 @@ export type EngineEvaluationFailureCode =
   | "http_401"
   | "http_404"
   | "http_422"
+  | "model_result_invalid"
   | "http_redirect"
   | "http_other"
   | "invalid_json"
@@ -114,6 +115,18 @@ async function enginePayload(options: EvaluationOptions, maxLength: number): Pro
   }
   if (!response.ok) {
     if (response.status === 429 || response.status === 503) throw new Error("ENGINE_BUSY");
+    if (response.status === 422) {
+      // Only this exact engine code describes an input-dependent undefined
+      // result. Provider text, formulas and unknown failures remain private.
+      let invalidModelResult = false;
+      try {
+        const text = await response.text();
+        invalidModelResult = text.length <= 256 && JSON.parse(text)?.error === "RESULT_INVALID";
+      } catch (error) {
+        if (options.signal.aborted) throw error;
+      }
+      if (invalidModelResult) throw new EngineEvaluationError("model_result_invalid");
+    }
     const code: EngineEvaluationFailureCode = response.status >= 300 && response.status < 400 ? "http_redirect"
       : response.status === 401 ? "http_401"
       : response.status === 404 ? "http_404"

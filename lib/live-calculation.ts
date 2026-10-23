@@ -325,6 +325,13 @@ function sanitizeLiveResult(value: LiveCalculationResult): LiveCalculationResult
   return result;
 }
 
+export class LiveCalculationRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "LiveCalculationRequestError";
+  }
+}
+
 export async function requestLiveCalculation(
   calculatorId: string,
   version: string,
@@ -374,7 +381,7 @@ export async function requestLiveCalculation(
         retryIndex += 1;
         continue;
       }
-      throw new Error(message);
+      throw new LiveCalculationRequestError(message, response.status);
     }
 
     const resultPayload =

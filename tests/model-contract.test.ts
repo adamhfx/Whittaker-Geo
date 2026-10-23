@@ -163,3 +163,21 @@ test("saved export transport validates version and bounded XLSX bytes", async ()
     { result, xlsxBase64: "!!!!" },
   ]) await assert.rejects(evaluateSavedDraft({ ...options, fetcher: reply(payload) }), /ENGINE_FAILED/);
 });
+
+
+test("undefined workbook results are distinguished without exposing engine details", async () => {
+  for (const [body, expected] of [
+    [JSON.stringify({ error: "RESULT_INVALID" }), "model_result_invalid"],
+    [JSON.stringify({ error: "CALCULATION_FAILED" }), "http_422"],
+    [JSON.stringify({ error: "RESULT_INVALID", detail: "private".repeat(100) }), "http_422"],
+    ["private provider formula", "http_422"],
+  ]) {
+    const fetcher = (async () => new Response(body, { status: 422 })) as typeof fetch;
+    await assert.rejects(evaluateWith(fetcher), (error: unknown) => {
+      assert.ok(error instanceof EngineEvaluationError);
+      assert.equal(error.code, expected);
+      assert.equal(error.message, "ENGINE_FAILED");
+      return true;
+    });
+  }
+});

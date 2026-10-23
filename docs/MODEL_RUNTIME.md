@@ -79,3 +79,10 @@ The saved-run implementation uses the existing queue and retains each project's 
 Section guides render as native expandable topics, with one topic open at a time, labelled entry guidance, model-use explanations and a highlighted review note. Long semicolon-separated entry requirements become readable lists. Short field notes retain the same labelled structure without an accordion. The content is unchanged; the existing return, Escape, outside-click, focus-restoration and reduced-motion behavior remains in place.
 
 The annual-results table is an inner horizontal scrolling view. Its vertical overscroll behavior must remain `auto` so wheel movement can reach the containing results pane (or the document on saved-result pages). Containing both axes blocks the wheel over a table that has no vertical scroll range. The outer desktop panes continue containing vertical movement at their own boundaries to preserve independent scrolling.
+
+
+### Input-dependent undefined results
+
+A workbook formula error is different from a hosting failure. The engine continues to reject formula errors across the whole workbook, including hidden dependencies; it never publishes a plausible-looking partial result. The frontend recognizes only the engine's exact `RESULT_INVALID` code and returns HTTP 422 with input-review guidance. It does not suggest retrying an unchanged scenario. Editing inputs automatically starts a fresh calculation and restores the dashboard when the model can calculate again. Unknown engine errors retain their generic service-failure handling, and provider bodies, formulas and paths remain private.
+
+Production checks on 2026-10-22 passed the default, gas-price multipliers 1.1 and 0.9, discount 0.1, and capex multiplier 2. The doubled-capex scenario returned a negative investor NPV successfully. A gas-price multiplier of zero produced `RESULT_INVALID` and reproduced the previously misleading generic outage message. This feedback fix does not change workbook formulas or make every input combination mathematically defined. The exact inputs behind the user's intermittent report were not captured in request logs.

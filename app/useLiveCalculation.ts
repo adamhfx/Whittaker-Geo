@@ -5,6 +5,7 @@ import type { InputValues, Manifest } from "@/lib/types";
 import { validateInputs } from "@/lib/validation";
 import {
   LatestEvaluationGate,
+  LiveCalculationRequestError,
   liveEvaluationKey,
   requestLiveCalculation,
   scheduleDebouncedEvaluation,
@@ -24,13 +25,14 @@ export type LiveCalculationState =
       result: LiveCalculationResult;
       error: null;
     }
-  | { status: "error"; errors: []; result: null; error: string };
+  | { status: "error"; errors: []; result: null; error: string; canRetry: boolean };
 
 type Snapshot = {
   inputKey: string;
   status: "updating" | "success" | "error";
   result?: LiveCalculationResult;
   error?: string;
+  canRetry?: boolean;
 };
 
 export function useLiveCalculation({
@@ -85,6 +87,7 @@ export function useLiveCalculation({
           setSnapshot({
             inputKey,
             status: "error",
+            canRetry: !(requestError instanceof LiveCalculationRequestError && requestError.status === 422),
             error:
               requestError instanceof Error
                 ? requestError.message
@@ -140,6 +143,7 @@ export function useLiveCalculation({
       errors: [],
       result: null,
       error: snapshot.error || "Live results could not be updated.",
+      canRetry: snapshot.canRetry !== false,
       retry,
     };
   if (!snapshot.result)
