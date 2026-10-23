@@ -455,7 +455,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setInputs({ ...workingInputs });
     setNumericDrafts({});
     setDirty(true);
-    setNotice("Restored the last working inputs. Recalculating; save when you’re ready.");
+    setNotice("Restored the last working inputs. Save when you’re ready.");
   }
   function updateInput(id: string, value: string | number | null) {
     setInputs((old) => changeInput(manifest, old, id, value));
