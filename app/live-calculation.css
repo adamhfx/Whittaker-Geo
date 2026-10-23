@@ -266,3 +266,7 @@
 .live-calculation__explanation p,.live-calculation__explanation ol { margin:0; }
 .live-calculation__explanation ol { padding-left:20px; }
 .live-calculation__explanation li + li { margin-top:7px; }
+
+/* Saved results scroll beneath the workspace toolbar; pane scrolling does not. */
+.app--calculator .live-calculation__top-scroll { top:var(--calculator-toolbar-height,0px); }
+.app--calculator .model-live-panel .live-calculation__top-scroll { top:0; }
