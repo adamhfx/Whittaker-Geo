@@ -25,6 +25,8 @@ type LiveCalculationProps = {
   help?: LiveHelp;
   endpoint?: string;
   reviewMode?: boolean;
+  onReviewInput?: (id: string) => void;
+  onRestoreInputs?: (inputs: InputValues) => void;
 };
 
 export function LiveCalculation({
@@ -35,6 +37,8 @@ export function LiveCalculation({
   help,
   endpoint,
   reviewMode = false,
+  onReviewInput,
+  onRestoreInputs,
 }: LiveCalculationProps) {
   const live = useLiveCalculation({ manifest, inputs, enabled, endpoint });
   const result = live.status === "success" ? live.result : null;
@@ -74,6 +78,8 @@ export function LiveCalculation({
         result={result}
         onRetry={live.retry}
         longWait={longWait}
+        onReviewInput={onReviewInput}
+        onRestoreInputs={onRestoreInputs}
       />
 
       {result && (
@@ -177,12 +183,16 @@ function LiveStatus({
   result,
   onRetry,
   longWait,
+  onReviewInput,
+  onRestoreInputs,
 }: {
   live: ReturnType<typeof useLiveCalculation>;
   blockedReason?: string;
   result: LiveCalculationResult | null;
   onRetry: () => void;
   longWait: boolean;
+  onReviewInput?: (id: string) => void;
+  onRestoreInputs?: (inputs: InputValues) => void;
 }) {
   if (live.status === "success") {
     return (
@@ -257,6 +267,48 @@ function LiveStatus({
               : "Your inputs remain available while the results update."}
           </span>
         </div>
+      </div>
+    );
+  }
+
+  if (!live.canRetry) {
+    const changes = live.diagnosis?.changes ?? [];
+    const workingInputs = live.diagnosis?.workingInputs;
+    const changeList = (items: typeof changes) => (
+      <ul className="live-calculation__input-changes">
+        {items.map((change) => (
+          <li key={change.id}>
+            <div><strong>{change.label}</strong>
+              <span>{change.previous} <span aria-label="changed to">→</span> {change.current}</span>
+              <small>{change.section}</small>
+            </div>
+            {onReviewInput && <button type="button" className="btn" onClick={() => onReviewInput(change.id)}
+              aria-label={`Go to ${change.label}`}>Go to input</button>}
+          </li>
+        ))}
+      </ul>
+    );
+    return (
+      <div className="live-calculation__message is-invalid live-calculation__input-diagnosis" role="alert">
+        <strong>{changes.length === 1
+          ? `Calculation stopped after changing ${changes[0].label}.`
+          : "The model couldn’t calculate this combination of inputs."}</strong>
+        <p>{changes.length === 1
+          ? "This is the only input that differs from the last successful calculation. Review its value or restore the working inputs."
+          : changes.length > 1
+            ? `${changes.length} inputs changed since the last successful calculation. One value or their combination may be responsible; a single cause has not been isolated.`
+            : workingInputs
+              ? "These inputs match the last successful calculation, so no specific input change can be identified. Try again or report this calculation for investigation."
+              : "There is no successful calculation to compare in this session, so a specific input cannot be identified yet."}</p>
+        {changes.length > 0 && <>
+          {changeList(changes.slice(0, 6))}
+          {changes.length > 6 && <details><summary>Show {changes.length - 6} more changed inputs</summary>{changeList(changes.slice(6))}</details>}
+          {workingInputs && onRestoreInputs && <button type="button" className="btn" onClick={() => onRestoreInputs({ ...workingInputs })}>
+            <RotateCw size={15} aria-hidden="true" />Restore last working inputs
+          </button>}
+          <p className="small">Your edits are preserved. Results update automatically when you change an input.</p>
+        </>}
+        {workingInputs && changes.length === 0 && <button type="button" className="btn" onClick={onRetry}>Retry calculation</button>}
       </div>
     );
   }

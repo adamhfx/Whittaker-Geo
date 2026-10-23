@@ -238,3 +238,16 @@
   text-align:center;
   font-variant-numeric:tabular-nums;
 }
+
+/* Keep diagnostic input changes readable and directly actionable. */
+.live-calculation__input-diagnosis > p { margin-top:8px !important; }
+.live-calculation__input-diagnosis .live-calculation__input-changes { list-style:none; margin:14px 0; padding:0; }
+.live-calculation__input-changes li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid #e5d6b4; }
+.live-calculation__input-changes li > div { display:grid; gap:3px; min-width:0; overflow-wrap:anywhere; }
+.live-calculation__input-changes li small { color:var(--muted); }
+.live-calculation__input-changes .btn { flex-shrink:0; }
+.live-calculation__input-diagnosis > details { margin-bottom:14px; }
+.live-calculation__input-diagnosis > details > summary { cursor:pointer; font-weight:600; }
+.model-input-review { outline:2px solid #a06d11; outline-offset:6px; border-radius:8px; background:#fff8e9; scroll-margin:14px; }
+.model-input-review__note { font-size:12px; line-height:1.5; color:#765c25; margin:8px 0 0; }
+@media (forced-colors:active) { .model-input-review { outline-color:Highlight; } }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { InputValues, Manifest } from "@/lib/types";
 import { validateInputs } from "@/lib/validation";
+import { diagnoseCalculationInputs, type CalculationInputDiagnosis } from "@/lib/calculation-diagnostics";
 import {
   LatestEvaluationGate,
   LiveCalculationRequestError,
@@ -25,7 +26,7 @@ export type LiveCalculationState =
       result: LiveCalculationResult;
       error: null;
     }
-  | { status: "error"; errors: []; result: null; error: string; canRetry: boolean };
+  | { status: "error"; errors: []; result: null; error: string; canRetry: boolean; diagnosis: CalculationInputDiagnosis | null };
 
 type Snapshot = {
   inputKey: string;
@@ -33,6 +34,7 @@ type Snapshot = {
   result?: LiveCalculationResult;
   error?: string;
   canRetry?: boolean;
+  diagnosis?: CalculationInputDiagnosis;
 };
 
 export function useLiveCalculation({
@@ -49,6 +51,8 @@ export function useLiveCalculation({
   const [gate] = useState(() => new LatestEvaluationGate());
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const lastSuccess = useRef<{ scope: string; inputs: InputValues } | null>(null);
+  const scope = liveEvaluationKey(manifest.id, manifest.version, {}, endpoint);
   const inputKey = liveEvaluationKey(
     manifest.id,
     manifest.version,
@@ -80,14 +84,18 @@ export function useLiveCalculation({
       )
         .then((result) => {
           if (!lease.isCurrent()) return;
+          lastSuccess.current = { scope, inputs: { ...inputs } };
           setSnapshot({ inputKey, status: "success", result });
         })
         .catch((requestError: unknown) => {
           if (!lease.isCurrent()) return;
+          const inputDependent = requestError instanceof LiveCalculationRequestError && requestError.status === 422;
           setSnapshot({
             inputKey,
             status: "error",
-            canRetry: !(requestError instanceof LiveCalculationRequestError && requestError.status === 422),
+            ...(inputDependent ? { diagnosis: diagnoseCalculationInputs(manifest,
+              lastSuccess.current?.scope === scope ? lastSuccess.current.inputs : null, inputs) } : {}),
+            canRetry: !inputDependent,
             error:
               requestError instanceof Error
                 ? requestError.message
@@ -109,6 +117,7 @@ export function useLiveCalculation({
     endpoint,
     retryCount,
     validationKey,
+    scope,
   ]);
 
   const retry = useCallback(() => {
@@ -144,6 +153,7 @@ export function useLiveCalculation({
       result: null,
       error: snapshot.error || "Live results could not be updated.",
       canRetry: snapshot.canRetry !== false,
+      diagnosis: snapshot.diagnosis ?? null,
       retry,
     };
   if (!snapshot.result)

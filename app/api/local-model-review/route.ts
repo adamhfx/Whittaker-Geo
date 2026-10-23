@@ -1,5 +1,5 @@
 import { ApiError, body, failure, ok } from "../_route";
-import { evaluateDraft, engineEndpoint } from "@/lib/evaluation";
+import { evaluateDraft, engineEndpoint, EngineEvaluationError } from "@/lib/evaluation";
 import {
   canUseLocalModelReview,
   isLoopbackEngineUrl,
@@ -90,6 +90,8 @@ export async function POST(request: Request) {
           503,
           "The local calculation service is busy. Please retry.",
         );
+      if (error instanceof EngineEvaluationError && error.code === "model_result_invalid")
+        throw new ApiError(422, "The workbook returned an undefined result for this combination of inputs.");
       throw new ApiError(
         503,
         "Local model results could not be calculated. Please retry.",

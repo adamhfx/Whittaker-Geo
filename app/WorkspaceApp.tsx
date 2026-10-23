@@ -121,6 +121,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [draftKey, setDraftKey] = useState("");
   const loadedEntity = useRef("");
   const inputPanelRef = useRef<HTMLDivElement>(null);
+  const [reviewedInputId, setReviewedInputId] = useState<string | null>(null);
+  const [pendingReviewInput, setPendingReviewInput] = useState<string | null>(null);
   const currentRoute = parsePageRoute(pathname, search);
   function navigate(route: AppRoute, replace = false) {
     const href = routeHref(route);
@@ -423,6 +425,37 @@ export default function App({ preview = false }: { preview?: boolean }) {
   function selectInputSection(section: string) {
     if (!currentRoute || group === section) return;
     navigate({ ...currentRoute, section });
+  }
+  function reviewCalculationInput(id: string) {
+    const field = manifest?.fields.find((candidate) => candidate.id === id);
+    if (!field) return;
+    setReviewedInputId(id);
+    setPendingReviewInput(id);
+    selectInputSection(field.group);
+  }
+  useEffect(() => {
+    setReviewedInputId(null);
+    setPendingReviewInput(null);
+  }, [inputs, draftKey]);
+  useEffect(() => {
+    if (!pendingReviewInput || routeLoading || !manifest ||
+        manifest.fields.find((field) => field.id === pendingReviewInput)?.group !== group) return;
+    const frame = requestAnimationFrame(() => {
+      const container = document.getElementById("input-review-" + pendingReviewInput);
+      container?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+      const control = container?.querySelector<HTMLElement>("input:checked, input:not([type=radio]), select")
+        ?? container?.querySelector<HTMLElement>("input") ?? container;
+      control?.focus({ preventScroll: true });
+      setPendingReviewInput(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingReviewInput, group, routeLoading, manifest]);
+  function restoreWorkingInputs(workingInputs: InputValues) {
+    if (!editable) return;
+    setInputs({ ...workingInputs });
+    setNumericDrafts({});
+    setDirty(true);
+    setNotice("Restored the last working inputs. Recalculating; save when you’re ready.");
   }
   function updateInput(id: string, value: string | number | null) {
     setInputs((old) => changeInput(manifest, old, id, value));
@@ -974,6 +1007,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
                   {group === "schedule" ? (
                     <Schedule
                       fields={manifest.fields.filter((f) => f.group === group)}
+                      reviewedInputId={reviewedInputId}
                       inputs={inputs}
                       setValue={updateInput}
                       numericDrafts={numericDrafts}
@@ -988,6 +1022,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
                         .map((f) => (
                           <Input
                             key={f.id}
+                            reviewed={reviewedInputId === f.id}
                             field={f}
                             options={inputOptions(manifest, f, inputs)}
                             help={isFluidUnit(manifest, f) && !(f.dependsOn ? inputs[f.dependsOn] : inputs.C5) ? "Choose a primary reservoir fluid first." : undefined}
@@ -1007,7 +1042,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 </section>
               </div>
               {manifest.outputViews?.length ? <aside className="model-live-panel">
-                <LiveCalculation manifest={manifest} inputs={inputs}
+                <LiveCalculation key={draftKey + ":" + manifest.id + "@" + manifest.version} manifest={manifest} inputs={inputs}
+                  onReviewInput={reviewCalculationInput} onRestoreInputs={editable ? restoreWorkingInputs : undefined}
                   enabled={isLocalModelReview || (!preview && !!workspace?.canWrite && approved)}
                   endpoint={isLocalModelReview ? "/api/local-model-review" : undefined}
                   reviewMode={isLocalModelReview}
@@ -1416,6 +1452,7 @@ function Input({
   setValue,
   disabled,
   compact = false,
+  reviewed = false,
   options,
   help,
   numericDraft,
@@ -1427,6 +1464,7 @@ function Input({
   setValue: (v: string | number | null) => void;
   disabled: boolean;
   compact?: boolean;
+  reviewed?: boolean;
   options?: string[];
   help?: string;
   numericDraft?: string;
@@ -1434,7 +1472,7 @@ function Input({
   finishNumericDraft?: (rawValue: string) => void;
 }) {
   return (
-    <div className="field">
+    <div className={"field" + (reviewed ? " model-input-review" : "")} id={"input-review-" + f.id} tabIndex={-1}>
       {!compact && (
         <div className="model-field-heading">
           <label className="form-label" htmlFor={"f-" + f.id}>
@@ -1445,7 +1483,7 @@ function Input({
       )}
       {f.type === "milestone" ? (
         <label className="model-year-choice">
-          <input id={"f-" + f.id} type="radio" name={f.radioGroup || "facilities-completion"}
+          <input aria-describedby={reviewed ? "input-review-note-" + f.id : undefined} id={"f-" + f.id} type="radio" name={f.radioGroup || "facilities-completion"}
             aria-label={`${f.label}, year ${f.year}`} disabled={disabled}
             checked={value === "X"} onChange={() => setValue("X")} />
           <span className="sr-only">Year {f.year}</span>
@@ -1453,13 +1491,14 @@ function Input({
       ) : f.type === "select" && f.options?.length === 2 ? (
         <div className="model-radio-options" role="radiogroup" aria-label={f.label}>
           {(options ?? f.options).map((option) => <label key={option}>
-            <input type="radio" name={f.id} value={option} checked={value === option} disabled={disabled}
+            <input aria-describedby={reviewed ? "input-review-note-" + f.id : undefined} type="radio" name={f.id} value={option} checked={value === option} disabled={disabled}
               onChange={() => setValue(option)} />
             <span>{f.optionLabels?.[option] || optionLabel(option)}</span>
           </label>)}
         </div>
       ) : f.type === "select" ? (
         <select
+          aria-describedby={reviewed ? "input-review-note-" + f.id : undefined}
           id={"f-" + f.id}
           aria-label={compact ? f.label + " year " + f.year : undefined}
           className="select"
@@ -1477,6 +1516,7 @@ function Input({
         </select>
       ) : (
         <input
+          aria-describedby={reviewed ? "input-review-note-" + f.id : undefined}
           id={"f-" + f.id}
           aria-label={compact ? f.label + " year " + f.year : undefined}
           className="text-input"
@@ -1491,12 +1531,14 @@ function Input({
           onBlur={f.type === "number" ? (e) => finishNumericDraft?.(e.target.value) : undefined}
         />
       )}
+      {reviewed && <p id={"input-review-note-" + f.id} className="model-input-review__note">Changed since the last successful calculation.</p>}
       {help && <p className="small">{help}</p>}
     </div>
   );
 }
 function Schedule({
   fields,
+  reviewedInputId,
   inputs,
   setValue,
   numericDrafts,
@@ -1505,6 +1547,7 @@ function Schedule({
   disabled,
 }: {
   fields: Field[];
+  reviewedInputId?: string | null;
   inputs: InputValues;
   setValue: (id: string, v: string | number | null) => void;
   numericDrafts: Record<string, string>;
@@ -1552,6 +1595,7 @@ function Schedule({
                       <td key={y}>
                         {f && (
                           <Input
+                            reviewed={reviewedInputId === f.id}
                             field={f}
                             value={inputs[f.id]}
                             setValue={(v) => setValue(f.id, v)}
