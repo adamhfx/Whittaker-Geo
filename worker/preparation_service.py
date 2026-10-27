@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import tempfile
 import uuid
+import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from .export_evaluation import export_evaluation
@@ -112,6 +114,12 @@ def run_preparation_step(store, request: dict, evaluator, validate_result) -> di
                 message='The workbook produced an unsupported or undefined calculation result. Review its formulas and the current test scenario.'
             else:message=str(error)
             store.finish(upload_id,actor,token,'failed',{'error':message})
+            return {'status':'failed'}
+        except (ValueError,TypeError,KeyError,zipfile.BadZipFile,ET.ParseError):
+            # Invalid workbook structures and unsupported chart references are
+            # terminal review issues, not a sleeping-service retry. Never expose
+            # parser text, which can contain formulas or private sheet content.
+            store.finish(upload_id,actor,token,'failed',{'error':'The workbook structure or a mapping is unsupported. Reset the cell mapping and retry, or correct the source workbook and upload it again. Changed formulas, worksheet names or chart references may need developer review.'})
             return {'status':'failed'}
 
 

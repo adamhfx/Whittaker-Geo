@@ -112,6 +112,23 @@ export function ModelMappingEditor({
           Changes create a new private revision and rerun all checks. The active
           calculator stays unchanged.
         </p>
+        <button
+          className="admin-secondary"
+          type="button"
+          disabled={saving || busy}
+          onClick={() => {
+            setMapping((previous) => ({ help: previous.help ?? {} }));
+            setCustomCases(false);
+            setError("");
+          }}
+        >
+          Reset cell mapping to automatic
+        </button>
+        <p className="model-review-muted">
+          This clears cell overrides, extra input/feedback definitions, and
+          custom scenarios in this draft. Published help notes are retained.
+          Apply below to rerun the automatic mapping.
+        </p>
         {!fields.length && (
           <p className="model-review-notice">
             The workbook could not be analyzed. Check its visible input/OUTPUT

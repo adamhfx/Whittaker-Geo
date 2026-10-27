@@ -69,3 +69,36 @@ def test_prepare_identity_is_strict_and_no_browser_manifest_or_path_is_accepted(
     assert parse_preparation_request(json.dumps(valid).encode())==valid
     with pytest.raises(PreparationError):parse_preparation_request(json.dumps({**valid,'path':'/private/data'}).encode())
     with pytest.raises(PreparationError):parse_preparation_request(json.dumps({**valid,'actorId':'not-a-uuid'}).encode())
+
+
+def test_invalid_workbook_format_is_terminal_and_parser_details_stay_private(monkeypatch):
+    from worker.preparation_service import run_preparation_step
+    import worker.preparation_service as preparation
+    published=[]
+    class InvalidWorkbook(Store):
+        def job(self,*args):return {'calculator_id':'demo','base_version':'1.0','storage_path':'source.xlsx','sha256':SOURCE},{'phase':'analyze','candidate_version':VERSION,'mapping':{}}
+        def model(self,*args):return {'approved':True,'manifest':{'id':'demo','version':'1.0','runtimeSha256':DIGEST},'template_sha256':DIGEST,'template_path':f'demo/1.0/{DIGEST}.xlsx'}
+        def download(self,bucket,path,target,digest):target.write_bytes(BYTES)
+        def finish(self,*args):published.append(args);return True
+    def invalid(*args):raise ValueError('Private formula and worksheet parser details')
+    monkeypatch.setattr(preparation,'inspect_candidate',invalid)
+    result=run_preparation_step(InvalidWorkbook(),{'uploadId':UPLOAD,'actorId':ACTOR,'leaseToken':TOKEN},evaluator,lambda *args:None)
+    assert result=={'status':'failed'} and published[0][3]=='failed'
+    assert 'Private formula' not in json.dumps(published)
+    assert 'unsupported' in published[0][4]['error']
+
+
+def test_new_http_routes_require_the_existing_engine_secret():
+    import threading,urllib.request,urllib.error
+    from worker.live import PreviewHTTPServer
+    app=service();server=PreviewHTTPServer(('127.0.0.1',0),app)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        base=f'http://127.0.0.1:{server.server_address[1]}'
+        for action in ('prepare','review'):
+            with pytest.raises(urllib.error.HTTPError) as caught:
+                urllib.request.urlopen(urllib.request.Request(base+'/'+action,data=request(),headers={'Content-Type':'application/json'}),timeout=5)
+            assert caught.value.code==401
+        with urllib.request.urlopen(urllib.request.Request(base+'/review',data=request(),headers={'Content-Type':'application/json','X-GeoFlow-Engine-Secret':'test-private-engine-secret-of-at-least-32-characters'}),timeout=5) as response:
+            assert json.load(response)['calculatorVersion']==VERSION
+    finally:server.shutdown();server.server_close();thread.join(timeout=5)
