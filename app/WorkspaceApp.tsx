@@ -395,7 +395,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
         // An unsaved draft is pinned to the version that shaped its inputs.
         // Restore that exact manifest so a later release cannot silently
         // discard or remap the user's session-only work.
-        const requestedVersion = c?.calculator_version || (!c ? draft?.version : undefined);
+        // The anonymous preview has one bundled manifest; authenticated drafts
+        // can recover their exact published version through the model API.
+        const requestedVersion = c?.calculator_version || (!c && !preview ? draft?.version : undefined);
         let model: Awaited<ReturnType<typeof loadManifest>>;
         try {
           model = await loadManifest(modelId, requestedVersion);
@@ -413,7 +415,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           throw new Error("The calculator version returned by the server did not match this project.");
         }
         m = model.manifest;
-        if (c && draft && draft.version !== model.manifest.version) draft = null;
+        if (draft && draft.version !== model.manifest.version) draft = null;
         setCalculation(c);
         setManifest(m);
         setApproved(model.approved);
