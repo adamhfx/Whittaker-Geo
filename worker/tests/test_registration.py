@@ -100,6 +100,20 @@ class FakeSupabase:
 
 
 class RegistrationTests(unittest.TestCase):
+    def test_prepared_storage_duplicate_is_verified_before_registration(self):
+        path = f"state-rent/{MANIFEST['version']}/{CHECKSUM}.xlsx"
+        class PreparedStorage(FakeSupabase):
+            def post(self, url, **kwargs):
+                if '/storage/' in url:
+                    return FakeResponse(400, {'statusCode': '409', 'error': 'Duplicate'})
+                return super().post(url, **kwargs)
+        matching = PreparedStorage(objects={path: TEMPLATE})
+        self.assertEqual(register_candidate(MANIFEST, TEMPLATE, 'https://project.supabase.co', 'service-role', http=matching), 'registered')
+        mismatched = PreparedStorage(objects={path: b'different private bytes'})
+        with self.assertRaises(RegistrationError):
+            register_candidate(MANIFEST, TEMPLATE, 'https://project.supabase.co', 'service-role', http=mismatched)
+        self.assertEqual(mismatched.versions, [])
+
     def test_registers_unapproved_candidate_without_changing_current_version(self):
         supabase = FakeSupabase()
 

@@ -31,6 +31,7 @@ WORKDIR /app
 COPY worker/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY worker /app/worker
+COPY scripts/register_model.py /app/scripts/register_model.py
 RUN useradd --create-home runner && chown -R runner:runner /app
 USER runner
 ENV PYTHONUNBUFFERED=1 UNO_PYTHON_BIN=/opt/libreoffice26.8/program/python SOFFICE_BIN=/opt/libreoffice26.8/program/soffice

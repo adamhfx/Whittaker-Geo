@@ -234,6 +234,7 @@ class PreviewService:
         limiter: SlidingWindowLimiter | None = None,
         model_loader: Callable[..., dict[str, Any]] = load_approved_model,
         evaluator: Callable[..., dict[str, Any]] = evaluate_template,
+        preparation_store_factory=None,
     ):
         self.secret = engine_secret.encode("utf-8")
         if len(self.secret) < 32:
@@ -249,6 +250,7 @@ class PreviewService:
         self.model_loader = model_loader
         self.evaluator = evaluator
         self._capacity = threading.BoundedSemaphore(max_concurrency)
+        self.preparation_store_factory = preparation_store_factory
 
     def authenticated(self, provided: str | None) -> bool:
         if not isinstance(provided, str):
@@ -306,6 +308,40 @@ class PreviewService:
         finally:
             self._capacity.release()
 
+    def prepare(self, raw: bytes, *, review: bool = False) -> dict[str, Any]:
+        from .engine import ModelError
+        from .model_preparation import PreparationError
+        from .preparation_service import parse_preparation_request, run_preparation_step, evaluate_candidate
+        from .preparation_store import PreparationStore, PreparationStoreError
+        try:
+            request = parse_preparation_request(raw, review=review)
+        except PreparationError:
+            raise LiveError(400, 'INVALID_REQUEST') from None
+        if not self.limiter.allow(request['actorId']):
+            raise LiveError(429, 'RATE_LIMITED')
+        if not self._capacity.acquire(blocking=False):
+            raise LiveError(503, 'ENGINE_BUSY')
+        try:
+            store = (self.preparation_store_factory or PreparationStore)(self.supabase_url, self.service_key)
+            def validate_candidate(value, calculator_id, version, manifest):
+                try: return _validate_result(value, calculator_id, version, manifest)
+                except LiveError: raise PreparationError('The recalculated outputs contain missing, undefined or unsupported values. Review the source defaults and current scenario before retrying.') from None
+            if review:
+                return evaluate_candidate(store, request, self.evaluator, validate_candidate)
+            return run_preparation_step(store, request, self.evaluator, validate_candidate)
+        except (PreparationError, ModelError):
+            raise LiveError(422, 'CANDIDATE_INVALID') from None
+        except PreviewError as error:
+            raise LiveError(422, error.code, reason=error.reason) from None
+        except (PreparationStoreError, __import__('requests').RequestException):
+            raise LiveError(503, 'PREPARATION_UNAVAILABLE') from None
+        except LiveError:
+            raise
+        except Exception:
+            raise LiveError(502, 'PREPARATION_FAILED') from None
+        finally:
+            self._capacity.release()
+
 
 class PreviewHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
@@ -343,7 +379,7 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
         self._respond(404, {"error": "NOT_FOUND"})
 
     def do_POST(self) -> None:
-        if self.path not in {"/evaluate", "/export"}:
+        if self.path not in {"/evaluate", "/export", "/prepare", "/review"}:
             self._respond(404, {"error": "NOT_FOUND"})
             return
         if not self.server.service.authenticated(self.headers.get("X-GeoFlow-Engine-Secret")):
@@ -365,7 +401,9 @@ class PreviewRequestHandler(BaseHTTPRequestHandler):
             self._respond(400, {"error": "INVALID_REQUEST"})
             return
         try:
-            result = self.server.service.evaluate(raw, export=self.path == "/export")
+            result = (self.server.service.prepare(raw, review=self.path == "/review")
+                      if self.path in {"/prepare", "/review"}
+                      else self.server.service.evaluate(raw, export=self.path == "/export"))
             body = json.dumps(result, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")
             if len(body) > MAX_RESPONSE_BYTES + (1_400_000 if self.path == "/export" else 0):
                 self._respond(502, {"error": "CALCULATION_FAILED"})

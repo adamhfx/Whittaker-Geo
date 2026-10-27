@@ -128,6 +128,15 @@ def _verify_storage(http, base: str, headers: dict[str, str], template_path: str
         raise RegistrationError("private template path already contains different or unavailable content")
 
 
+def storage_conflict(response) -> bool:
+    if response.status_code in (409, 412): return True
+    if response.status_code != 400: return False
+    try:
+        payload = response.json()
+        return isinstance(payload, dict) and str(payload.get('statusCode')) == '409'
+    except (ValueError, TypeError): return False
+
+
 def register_candidate(
     manifest: object,
     template: bytes,
@@ -168,7 +177,7 @@ def register_candidate(
             f"{base}/storage/v1/object/model-templates/{encoded}",
             data=template, headers=upload_headers, timeout=(5, 60), allow_redirects=False,
         )
-        if uploaded.status_code in (409, 412):
+        if storage_conflict(uploaded):
             _verify_storage(http, base, headers, template_path, digest)
         elif uploaded.status_code not in (200, 201):
             raise RegistrationError("private template upload failed; verify storage configuration")
