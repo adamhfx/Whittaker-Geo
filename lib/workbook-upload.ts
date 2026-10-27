@@ -99,7 +99,7 @@ export function validateWorkbook(buffer: Uint8Array, manifest?: Partial<Manifest
   }
   if (missing) throw new Error("Workbook is missing required mapped input cells.");
   return {
-    checks: ["XLSX ZIP structure accepted", "Macros and external executable content rejected", "Inputs and configured output sheets present", "Mapped input cells checked", "Mapped input formulas rejected"],
+    checks: ["XLSX ZIP structure accepted", "Macros and external executable content rejected", "Inputs and configured output sheets present", ...(fields.length ? ["Mapped input cells checked", "Mapped input formulas rejected"] : [])],
     warnings,
   };
 }

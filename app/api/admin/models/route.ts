@@ -8,16 +8,17 @@ const uploadView = (row: any) => ({ id: row.id, version: row.version, fileName: 
 export async function GET(request: Request) {
   try {
     const { db } = await adminActor(request);
-    const [{ data: calculators, error: calculatorError }, { data: versions, error: versionError }, { data: uploads, error: uploadError }] = await Promise.all([
+    const [{ data: calculators, error: calculatorError }, { data: versions, error: versionError }, { data: uploads, error: uploadError }, { data: preparations, error: preparationError }] = await Promise.all([
       db.from("calculators").select("id,name,current_version").order("name"),
       db.from("calculator_versions").select("calculator_id,version,approved,created_at" ).order("created_at", { ascending: false }),
       db.from("model_uploads").select("id,calculator_id,version,file_name,status,created_at,notes,validation").order("created_at", { ascending: false }),
+      db.from("model_preparations").select("upload_id,state,phase,candidate_version"),
     ]);
-    if (calculatorError || versionError || uploadError) throw new Error("catalog query failed");
+    if (calculatorError || versionError || uploadError || preparationError) throw new Error("catalog query failed");
     return ok({ calculators: (calculators ?? []).map((c: any) => ({
       id: c.id, name: c.name, currentVersion: c.current_version,
       versions: (versions ?? []).filter((v: any) => v.calculator_id === c.id).map((v: any) => ({ version: v.version, approved: v.approved, createdAt: v.created_at })),
-      uploads: (uploads ?? []).filter((u: any) => u.calculator_id === c.id).map(uploadView),
+      uploads: (uploads ?? []).filter((u: any) => u.calculator_id === c.id).map((u: any) => ({ ...uploadView(u), preparation: (preparations ?? []).find((p: any) => p.upload_id === u.id) ?? null })),
     })) });
   } catch (e) { return failure(e); }
 }
@@ -42,7 +43,9 @@ export async function POST(request: Request) {
     const { data: existing } = await db.from("model_uploads").select("id,version,file_name,status,created_at,notes,validation").eq("calculator_id", calculatorId).eq("sha256", sha256).eq("base_version", baseVersionName).maybeSingle();
     if (existing) return ok({ upload: uploadView(existing), duplicate: true });
     let validation;
-    try { validation = validateWorkbook(bytes, baseVersion.manifest); }
+    // Preparation resolves moved inputs against fixed labels. This initial
+    // preflight checks the package/sheets without rejecting old cell positions.
+    try { validation = validateWorkbook(bytes, { ...baseVersion.manifest, fields: [] }); }
     catch (error) { throw new ApiError(422, error instanceof Error ? error.message : "The workbook could not be validated."); }
     const id = crypto.randomUUID();
     const version = draftVersion(id);
@@ -53,7 +56,8 @@ export async function POST(request: Request) {
     if (insertError || !row) throw new Error("upload record failed");
     return ok({ upload: uploadView(row), duplicate: false }, 201);
   } catch (e) {
-    if (storagePath) { try { const { db } = await adminActor(request); await db.storage.from("model-templates").remove([storagePath]); } catch { /* best effort orphan cleanup */ } }
+    // An uncertain insert response may already have committed. Never delete its
+    // immutable source; a duplicate upload can recover the published record.
     return failure(e);
   }
 }

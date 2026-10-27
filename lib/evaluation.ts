@@ -95,7 +95,7 @@ export function parseLiveResult(value: unknown, manifest: Manifest): LiveResult 
   return result;
 }
 
-export function engineEndpoint(configured: string | undefined, development = false, action: "evaluate" | "export" = "evaluate") {
+export function engineEndpoint(configured: string | undefined, development = false, action: "evaluate" | "export" | "prepare" | "review" = "evaluate") {
   if (!configured) throw new Error("ENGINE_NOT_CONFIGURED");
   const url = new URL(configured);
   if (url.username || url.password || url.search || url.hash ||

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./admin-models.css";
+import { AdminModelReview } from "./AdminModelReview";
 
 type Version = { version: string; approved: boolean; createdAt: string };
 type Validation = { checks: string[]; warnings: string[] };
@@ -25,6 +26,7 @@ type ModelUpload = {
   createdAt: string;
   notes?: string | null;
   validation?: Validation | null;
+  preparation?: { state: string; phase: string; candidate_version: string } | null;
 };
 type Calculator = {
   id: string;
@@ -68,6 +70,8 @@ export default function AdminModels({ onBack }: AdminModelsProps) {
   const [success, setSuccess] = useState("");
   const [activateVersion, setActivateVersion] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [autoStartReview, setAutoStartReview] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -147,8 +151,10 @@ export default function AdminModels({ onBack }: AdminModelsProps) {
     try {
       const response = await fetch("/api/admin/models", { method: "POST", body: form });
       if (!response.ok) throw new Error(await readError(response, "Workbook upload failed"));
+      const body = await response.json();
       clearUploadDraft();
-      setSuccess("Workbook uploaded. It is awaiting structural and numerical review.");
+      setSuccess(body.duplicate ? "This workbook is already saved. Open its preparation review below." : "Workbook uploaded. Preparing a private candidate for your review.");
+      setReviewId(body.upload.id); setAutoStartReview(true);
       await load(true);
     } catch (caught) {
       setUploadError(caught instanceof Error ? caught.message : "Workbook upload failed");
@@ -199,7 +205,7 @@ export default function AdminModels({ onBack }: AdminModelsProps) {
         {error && <div className="admin-alert admin-alert-error" role="alert"><AlertCircle size={18} /> <span>{error}</span><button onClick={() => void load()} type="button">Retry</button></div>}
         {success && <div className="admin-alert admin-alert-success" role="status"><CheckCircle2 size={18} /> <span>{success}</span><button onClick={() => setSuccess("")} type="button" aria-label="Dismiss success"><X size={16} /></button></div>}
 
-        {loading ? <div className="admin-loading" role="status">Loading calculator workbooks…</div> : (
+        {reviewId ? <AdminModelReview id={reviewId} autoStart={autoStartReview} onBack={() => { setReviewId(null); setAutoStartReview(false); void load(true); }} onApproved={() => void load(true)} /> : loading ? <div className="admin-loading" role="status">Loading calculator workbooks…</div> : (
           <>
             <section className="admin-card admin-selector-card" aria-labelledby="calculator-label">
               <label id="calculator-label" htmlFor="calculator-select">Calculator</label>
@@ -212,13 +218,13 @@ export default function AdminModels({ onBack }: AdminModelsProps) {
             {selected ? <>
               <section className="admin-card admin-upload-card" aria-labelledby="upload-title">
                 <div className="admin-card-heading"><div><p className="admin-kicker">Private workbook upload</p><h2 id="upload-title">Add a new version</h2></div><FileSpreadsheet size={29} aria-hidden="true" /></div>
-                <p className="admin-card-copy">Upload a private <strong>.xlsx</strong> workbook up to 20 MB. Uploading never replaces an existing version; drafts wait for structural and numerical review.</p>
+                <p className="admin-card-copy">Upload a private <strong>.xlsx</strong> workbook up to 20 MB. We will prepare a runtime, compare its results with saved Excel values, check input scenarios, and generate an Excel export. Review the candidate before approving it to go live.</p>
                 <input ref={inputRef} className="admin-file-input" id="workbook-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => chooseFile(event.target.files?.[0])} disabled={uploading} />
                 <label className={`admin-dropzone ${file ? "has-file" : ""}`} htmlFor="workbook-file"><Upload size={22} /><span>{file ? file.name : "Choose an .xlsx workbook"}</span><small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB · ready to upload` : "Private to admins · 20 MB maximum"}</small></label>
                 <label className="admin-notes-label" htmlFor="upload-notes">Notes <span>{notes.length}/1000</span></label>
                 <textarea id="upload-notes" maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="What changed in this workbook?" disabled={uploading} />
                 {uploadError && <p className="admin-inline-error" role="alert"><AlertCircle size={15} />{uploadError}</p>}
-                <div className="admin-upload-footer"><p><Info size={15} /> Uploads remain drafts until approved in review.</p><button className="admin-primary" onClick={() => void upload()} disabled={!file || uploading} type="button">{uploading ? "Uploading…" : "Upload workbook"}<Upload size={16} /></button></div>
+                <div className="admin-upload-footer"><p><Info size={15} /> The live calculator stays unchanged until you approve.</p><button className="admin-primary" onClick={() => void upload()} disabled={!file || uploading} type="button">{uploading ? "Uploading…" : "Upload & prepare"}<Upload size={16} /></button></div>
               </section>
 
               <section className="admin-card admin-current-card" aria-labelledby="current-title">
@@ -233,7 +239,7 @@ export default function AdminModels({ onBack }: AdminModelsProps) {
 
               <section className="admin-card" aria-labelledby="history-title">
                 <div className="admin-card-heading"><div><p className="admin-kicker">Traceable revisions</p><h2 id="history-title">Upload history</h2></div><span className="admin-history-count">{selected.uploads.length} {selected.uploads.length === 1 ? "upload" : "uploads"}</span></div>
-                {selected.uploads.length === 0 ? <p className="admin-empty">No workbook uploads yet.</p> : <div className="admin-history-list">{selected.uploads.map((uploadItem) => { const reviewStatus = uploadItem.status.toLowerCase() === "review_required" ? "Review required" : uploadItem.status; const statusClass = uploadItem.status.toLowerCase().replace(/\s+/g, "_"); return <article className="admin-history-item" key={uploadItem.id}><div className="admin-history-main"><div className="admin-version-line"><strong>v{uploadItem.version}</strong><span className={`admin-status admin-status-${statusClass}`}>{reviewStatus}</span>{uploadItem.version === selected.currentVersion && <span className="admin-current-label">Current</span>}</div><p className="admin-file-name"><FileSpreadsheet size={15} />{uploadItem.fileName}</p><p className="admin-meta">Uploaded {dateTime(uploadItem.createdAt)}</p>{uploadItem.notes && <p className="admin-history-notes">{uploadItem.notes}</p>}</div><div className="admin-history-actions">{!selected.versions.some((version) => version.version === uploadItem.version && version.approved) && <span className="admin-awaiting">Review required</span>}</div><div className="admin-validation"><div><Check size={15} /> Checks <span>{uploadItem.validation?.checks?.length ?? 0}</span></div>{(uploadItem.validation?.checks ?? []).length > 0 && <ul>{uploadItem.validation?.checks.map((check) => <li key={check}>{check}</li>)}</ul>}{(uploadItem.validation?.warnings ?? []).length > 0 && <><div className="admin-warnings"><AlertCircle size={15} /> <span>{uploadItem.validation?.warnings.length} warning{uploadItem.validation?.warnings.length === 1 ? "" : "s"}</span></div><ul className="admin-warning-list">{uploadItem.validation?.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></>}</div></article>; })}</div>}
+                {selected.uploads.length === 0 ? <p className="admin-empty">No workbook uploads yet.</p> : <div className="admin-history-list">{selected.uploads.map((uploadItem) => { const reviewStatus = uploadItem.preparation?.state?.replaceAll("_", " ") ?? (uploadItem.status.toLowerCase() === "review_required" ? "Not prepared" : uploadItem.status); const statusClass = uploadItem.status.toLowerCase().replace(/\s+/g, "_"); return <article className="admin-history-item" key={uploadItem.id}><div className="admin-history-main"><div className="admin-version-line"><strong>v{uploadItem.version}</strong><span className={`admin-status admin-status-${statusClass}`}>{reviewStatus}</span>{uploadItem.version === selected.currentVersion && <span className="admin-current-label">Current</span>}</div><p className="admin-file-name"><FileSpreadsheet size={15} />{uploadItem.fileName}</p><p className="admin-meta">Uploaded {dateTime(uploadItem.createdAt)}</p>{uploadItem.notes && <p className="admin-history-notes">{uploadItem.notes}</p>}</div><div className="admin-history-actions">{uploadItem.status !== "rejected" && <button className="admin-secondary" type="button" onClick={() => { setAutoStartReview(false); setReviewId(uploadItem.id); }}>{uploadItem.preparation?.state === "approved" ? "View release" : uploadItem.preparation?.state === "ready" ? "Review candidate" : "Open preparation"}</button>}{!selected.versions.some((version) => version.version === uploadItem.version && version.approved) && <span className="admin-awaiting">Review required</span>}</div><div className="admin-validation"><div><Check size={15} /> Checks <span>{uploadItem.validation?.checks?.length ?? 0}</span></div>{(uploadItem.validation?.checks ?? []).length > 0 && <ul>{uploadItem.validation?.checks.map((check) => <li key={check}>{check}</li>)}</ul>}{(uploadItem.validation?.warnings ?? []).length > 0 && <><div className="admin-warnings"><AlertCircle size={15} /> <span>{uploadItem.validation?.warnings.length} warning{uploadItem.validation?.warnings.length === 1 ? "" : "s"}</span></div><ul className="admin-warning-list">{uploadItem.validation?.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></>}</div></article>; })}</div>}
               </section>
             </> : <div className="admin-empty-state">There are no calculators to manage.</div>}
           </>
