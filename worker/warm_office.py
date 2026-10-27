@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import queue
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -189,8 +190,16 @@ class WarmOffice:
             views = geometry['views']
             self._start()
             try:
+                # UNO retains its loaded document between requests. Own that
+                # file for the same lifetime so Windows can clean each request's
+                # staging folder while the warm document remains open.
+                cached_template = Path(self._folder.name) / ('workbook-' + digest + '.xlsx')
+                if not cached_template.exists():
+                    shutil.copyfile(template, cached_template)
+                    if hashlib.sha256(cached_template.read_bytes()).hexdigest() != digest:
+                        raise PreviewError('MODEL_UNAVAILABLE')
                 self._helper.stdin.write(json.dumps({
-                    'template': str(Path(template).resolve()), 'sha256': digest,
+                    'template': str(cached_template.resolve()), 'sha256': digest,
                     # Reuse the loaded UNO document across edits, but reload it
                     # when the immutable workbook or its model/input mapping
                     # changes. Output geometry is cached separately below.
@@ -219,6 +228,12 @@ class WarmOffice:
                     })
                 if geometry['inputFeedback']:
                     response['inputFeedback'] = result['inputFeedback']
+                # A successful switch has closed the earlier UNO document.
+                # Only immutable copies inside our own temporary folder qualify.
+                for previous in Path(self._folder.name).glob('workbook-*.xlsx'):
+                    if previous != cached_template:
+                        try: previous.unlink()
+                        except OSError: pass
                 return response
             except PreviewError:
                 raise
