@@ -14,6 +14,21 @@
   line-height: 1.25;
   margin: 3px 0 0;
 }
+.live-calculation__action {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 42px;
+  white-space: nowrap;
+}
+.live-calculation__action svg {
+  height: 16px;
+  width: 16px;
+}
+.live-calculation__action-spinner {
+  animation: live-calculation-spin 0.9s linear infinite;
+}
 .live-calculation__message {
   align-items: center;
   background: var(--brand-paper);
@@ -29,6 +44,19 @@
 }
 .live-calculation__message.is-blocked {
   background: #f4f5f5;
+}
+.live-calculation__message.is-stale {
+  align-items: flex-start;
+  background: #fff4d6;
+  border: 2px solid #c88a18;
+  color: #624507;
+  font-weight: 500;
+}
+.live-calculation__message.is-stale strong {
+  color: #553800;
+  flex: 0 0 auto;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 .live-calculation__message.is-updating {
   align-items: center;

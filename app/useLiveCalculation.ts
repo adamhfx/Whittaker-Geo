@@ -3,39 +3,181 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InputValues, Manifest } from "@/lib/types";
 import { validateInputs } from "@/lib/validation";
-import { diagnoseCalculationInputs, type CalculationInputDiagnosis } from "@/lib/calculation-diagnostics";
+import {
+  diagnoseCalculationInputs,
+  type CalculationInputDiagnosis,
+} from "@/lib/calculation-diagnostics";
 import {
   LatestEvaluationGate,
   LiveCalculationRequestError,
   liveEvaluationKey,
   requestLiveCalculation,
-  scheduleDebouncedEvaluation,
   type LiveCalculationResult,
 } from "@/lib/live-calculation";
 
-export const LIVE_CALCULATION_DEBOUNCE_MS = 450;
-
-export type LiveCalculationState =
-  | { status: "blocked"; errors: string[]; result: null; error: null }
-  | { status: "invalid"; errors: string[]; result: null; error: null }
-  | { status: "debouncing"; errors: []; result: null; error: null }
-  | { status: "updating"; errors: []; result: null; error: null }
-  | {
-      status: "success";
-      errors: [];
-      result: LiveCalculationResult;
-      error: null;
-    }
-  | { status: "error"; errors: []; result: null; error: string; canRetry: boolean; diagnosis: CalculationInputDiagnosis | null };
-
-type Snapshot = {
+export type LiveCalculationAttempt = {
   inputKey: string;
   status: "updating" | "success" | "error";
-  result?: LiveCalculationResult;
   error?: string;
   canRetry?: boolean;
   diagnosis?: CalculationInputDiagnosis;
 };
+
+export type LastSuccessfulCalculation = {
+  scope: string;
+  inputKey: string;
+  inputs: InputValues;
+  result: LiveCalculationResult;
+};
+
+export function clearCanceledCalculationAttempt(
+  snapshot: LiveCalculationAttempt | null,
+  canceledInputKey: string,
+): LiveCalculationAttempt | null {
+  return snapshot?.status === "updating" &&
+    snapshot.inputKey === canceledInputKey
+    ? null
+    : snapshot;
+}
+
+type LiveCalculationStateBase = {
+  result: LiveCalculationResult | null;
+  isStale: boolean;
+};
+
+export type LiveCalculationState =
+  | (LiveCalculationStateBase & {
+      status: "blocked";
+      errors: [];
+      error: null;
+      canRetry: false;
+      diagnosis: null;
+    })
+  | (LiveCalculationStateBase & {
+      status: "invalid";
+      errors: string[];
+      error: null;
+      canRetry: false;
+      diagnosis: null;
+    })
+  | (LiveCalculationStateBase & {
+      status: "idle";
+      errors: [];
+      error: null;
+      canRetry: false;
+      diagnosis: null;
+    })
+  | (LiveCalculationStateBase & {
+      status: "updating";
+      errors: [];
+      error: null;
+      canRetry: false;
+      diagnosis: null;
+    })
+  | (LiveCalculationStateBase & {
+      status: "success";
+      result: LiveCalculationResult;
+      isStale: false;
+      errors: [];
+      error: null;
+      canRetry: false;
+      diagnosis: null;
+    })
+  | (LiveCalculationStateBase & {
+      status: "error";
+      errors: [];
+      error: string;
+      canRetry: boolean;
+      diagnosis: CalculationInputDiagnosis | null;
+    });
+
+/**
+ * Selects the visible state without discarding the last successful result when
+ * the current inputs change. Attempts only describe the input snapshot they
+ * were sent with, so a late or old error cannot be shown for newer inputs.
+ */
+export function selectLiveCalculationState({
+  scope,
+  inputKey,
+  enabled,
+  validationErrors,
+  snapshot,
+  lastSuccess,
+}: {
+  scope: string;
+  inputKey: string;
+  enabled: boolean;
+  validationErrors: string[];
+  snapshot: LiveCalculationAttempt | null;
+  lastSuccess: LastSuccessfulCalculation | null;
+}): LiveCalculationState {
+  const successful = lastSuccess?.scope === scope ? lastSuccess : null;
+  const result = successful?.result ?? null;
+  const isStale = Boolean(result && successful?.inputKey !== inputKey);
+  const base = { result, isStale };
+
+  if (!enabled)
+    return {
+      ...base,
+      status: "blocked",
+      errors: [],
+      error: null,
+      canRetry: false,
+      diagnosis: null,
+    };
+
+  if (validationErrors.length > 0)
+    return {
+      ...base,
+      status: "invalid",
+      errors: validationErrors,
+      error: null,
+      canRetry: false,
+      diagnosis: null,
+    };
+
+  const currentAttempt = snapshot?.inputKey === inputKey ? snapshot : null;
+  if (currentAttempt?.status === "updating")
+    return {
+      ...base,
+      status: "updating",
+      errors: [],
+      error: null,
+      canRetry: false,
+      diagnosis: null,
+    };
+
+  if (currentAttempt?.status === "error")
+    return {
+      ...base,
+      status: "error",
+      errors: [],
+      error: currentAttempt.error || "Live results could not be updated.",
+      canRetry: currentAttempt.canRetry !== false,
+      diagnosis: currentAttempt.diagnosis ?? null,
+    };
+
+  if (result && !isStale)
+    return {
+      ...base,
+      status: "success",
+      result,
+      isStale: false,
+      errors: [],
+      error: null,
+      canRetry: false,
+      diagnosis: null,
+    };
+
+  return {
+    ...base,
+    status: "idle",
+    errors: [],
+    error: null,
+    canRetry: false,
+    diagnosis: null,
+  };
+}
 
 export function useLiveCalculation({
   manifest,
@@ -47,11 +189,12 @@ export function useLiveCalculation({
   inputs: InputValues;
   enabled: boolean;
   endpoint?: string;
-}): LiveCalculationState & { retry: () => void } {
+}): LiveCalculationState & { calculate: () => void; retry: () => void } {
   const [gate] = useState(() => new LatestEvaluationGate());
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const lastSuccess = useRef<{ scope: string; inputs: InputValues } | null>(null);
+  const [snapshot, setSnapshot] = useState<LiveCalculationAttempt | null>(null);
+  const lastSuccess = useRef<LastSuccessfulCalculation | null>(null);
+  const lastScope = useRef("");
+  const activeInputKey = useRef<string | null>(null);
   const scope = liveEvaluationKey(manifest.id, manifest.version, {}, endpoint);
   const inputKey = liveEvaluationKey(
     manifest.id,
@@ -63,112 +206,114 @@ export function useLiveCalculation({
   const validationKey = validationErrors.join("\u0000");
 
   useEffect(() => {
-    gate.invalidate();
-    if (!enabled || validationKey) {
-      setSnapshot(null);
-      return;
+    if (lastScope.current && lastScope.current !== scope) {
+      lastSuccess.current = null;
+      setSnapshot((current) =>
+        current?.inputKey === inputKey ? current : null,
+      );
     }
+    lastScope.current = scope;
+  }, [inputKey, scope]);
 
-    const cancelDebounce = scheduleDebouncedEvaluation(() => {
-      const lease = gate.begin();
-      setSnapshot({ inputKey, status: "updating" });
+  useEffect(() => {
+    const activeKey = activeInputKey.current;
+    if (activeKey && (!enabled || activeKey !== inputKey)) {
+      gate.invalidate();
+      activeInputKey.current = null;
+      setSnapshot((current) =>
+        clearCanceledCalculationAttempt(current, activeKey),
+      );
+    }
+  }, [enabled, gate, inputKey]);
 
-      void requestLiveCalculation(
-        manifest.id,
-        manifest.version,
-        inputs,
-        lease.signal,
-        undefined,
-        undefined,
-        endpoint,
-      )
-        .then((result) => {
-          if (!lease.isCurrent()) return;
-          lastSuccess.current = { scope, inputs: { ...inputs } };
-          setSnapshot({ inputKey, status: "success", result });
-        })
-        .catch((requestError: unknown) => {
-          if (!lease.isCurrent()) return;
-          const inputDependent = requestError instanceof LiveCalculationRequestError && requestError.status === 422;
-          setSnapshot({
-            inputKey,
-            status: "error",
-            ...(inputDependent ? { diagnosis: diagnoseCalculationInputs(manifest,
-              lastSuccess.current?.scope === scope ? lastSuccess.current.inputs : null, inputs, requestError.reason) } : {}),
-            canRetry: !inputDependent,
-            error:
-              requestError instanceof Error
-                ? requestError.message
-                : "Live results could not be updated.",
-          });
-        });
-    }, LIVE_CALCULATION_DEBOUNCE_MS);
-
+  useEffect(() => {
     return () => {
-      cancelDebounce();
+      activeInputKey.current = null;
       gate.invalidate();
     };
+  }, [gate]);
+
+  const calculate = useCallback(() => {
+    if (!enabled || validationKey) return;
+
+    const requestedInputs = { ...inputs };
+    const requestedInputKey = inputKey;
+    const requestedScope = scope;
+    const lease = gate.begin();
+    activeInputKey.current = requestedInputKey;
+    setSnapshot({ inputKey: requestedInputKey, status: "updating" });
+
+    void requestLiveCalculation(
+      manifest.id,
+      manifest.version,
+      requestedInputs,
+      lease.signal,
+      undefined,
+      undefined,
+      endpoint,
+    )
+      .then((result) => {
+        if (!lease.isCurrent()) return;
+        if (activeInputKey.current === requestedInputKey)
+          activeInputKey.current = null;
+        lastSuccess.current = {
+          scope: requestedScope,
+          inputKey: requestedInputKey,
+          inputs: requestedInputs,
+          result,
+        };
+        setSnapshot({ inputKey: requestedInputKey, status: "success" });
+      })
+      .catch((requestError: unknown) => {
+        if (!lease.isCurrent()) return;
+        if (activeInputKey.current === requestedInputKey)
+          activeInputKey.current = null;
+        const inputDependent =
+          requestError instanceof LiveCalculationRequestError &&
+          requestError.status === 422;
+        const previousInputs =
+          lastSuccess.current?.scope === requestedScope
+            ? lastSuccess.current.inputs
+            : null;
+        setSnapshot({
+          inputKey: requestedInputKey,
+          status: "error",
+          ...(inputDependent
+            ? {
+                diagnosis: diagnoseCalculationInputs(
+                  manifest,
+                  previousInputs,
+                  requestedInputs,
+                  requestError.reason,
+                ),
+              }
+            : {}),
+          canRetry: !inputDependent,
+          error:
+            requestError instanceof Error
+              ? requestError.message
+              : "Live results could not be updated.",
+        });
+      });
   }, [
     enabled,
+    endpoint,
     gate,
     inputKey,
-    manifest.id,
-    manifest.version,
-    endpoint,
-    retryCount,
-    validationKey,
+    inputs,
+    manifest,
     scope,
+    validationKey,
   ]);
 
-  const retry = useCallback(() => {
-    setSnapshot(null);
-    setRetryCount((count) => count + 1);
-  }, []);
+  const live = selectLiveCalculationState({
+    scope,
+    inputKey,
+    enabled,
+    validationErrors,
+    snapshot,
+    lastSuccess: lastSuccess.current,
+  });
 
-  if (!enabled)
-    return { status: "blocked", errors: [], result: null, error: null, retry };
-  if (validationErrors.length > 0)
-    return {
-      status: "invalid",
-      errors: validationErrors,
-      result: null,
-      error: null,
-      retry,
-    };
-
-  if (!snapshot || snapshot.inputKey !== inputKey)
-    return {
-      status: "debouncing",
-      errors: [],
-      result: null,
-      error: null,
-      retry,
-    };
-  if (snapshot.status === "updating")
-    return { status: "updating", errors: [], result: null, error: null, retry };
-  if (snapshot.status === "error")
-    return {
-      status: "error",
-      errors: [],
-      result: null,
-      error: snapshot.error || "Live results could not be updated.",
-      canRetry: snapshot.canRetry !== false,
-      diagnosis: snapshot.diagnosis ?? null,
-      retry,
-    };
-  if (!snapshot.result)
-    return {
-      status: "debouncing",
-      errors: [],
-      result: null,
-      error: null,
-      retry,
-    };
-  return {
-    status: "success",
-    errors: [],
-    result: snapshot.result,
-    error: null,
-    retry,
-  };
+  return { ...live, calculate, retry: calculate };
 }

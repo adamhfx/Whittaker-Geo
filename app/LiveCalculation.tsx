@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { LoaderCircle, RotateCw } from "lucide-react";
+import { Calculator, LoaderCircle, RotateCw } from "lucide-react";
 import type { InputValues, Manifest } from "@/lib/types";
 import {
   formatOutputValue,
@@ -16,6 +16,10 @@ import "./live-calculation.css";
 
 type LiveManifest = Manifest & { outputViews?: OutputView[] };
 type LiveHelp = { outputViews?: Record<string, string> };
+export type LiveCalculationSnapshot = {
+  result: LiveCalculationResult | null;
+  isStale: boolean;
+};
 
 type LiveCalculationProps = {
   manifest: LiveManifest;
@@ -25,8 +29,10 @@ type LiveCalculationProps = {
   help?: LiveHelp;
   endpoint?: string;
   reviewMode?: boolean;
+  pendingEdits?: boolean;
   onReviewInput?: (id: string) => void;
   onRestoreInputs?: (inputs: InputValues) => void;
+  onSnapshotChange?: (snapshot: LiveCalculationSnapshot) => void;
 };
 
 export function LiveCalculation({
@@ -37,14 +43,46 @@ export function LiveCalculation({
   help,
   endpoint,
   reviewMode = false,
+  pendingEdits = false,
   onReviewInput,
   onRestoreInputs,
+  onSnapshotChange,
 }: LiveCalculationProps) {
   const live = useLiveCalculation({ manifest, inputs, enabled, endpoint });
-  const result = live.status === "success" ? live.result : null;
+  const result = live.result;
+  const effectiveIsStale =
+    live.isStale || Boolean(result && pendingEdits);
   const titleId = useId();
   const isUpdating = live.status === "updating";
   const [longWait, setLongWait] = useState(false);
+  const lastNotifiedSnapshot = useRef<LiveCalculationSnapshot | null>(null);
+  const canRetryInputDependentError =
+    live.status === "error" &&
+    !live.canRetry &&
+    !!live.diagnosis?.workingInputs &&
+    live.diagnosis.changes.length === 0;
+  const actionDisabled =
+    live.status === "invalid" ||
+    live.status === "updating" ||
+    (live.status === "error" &&
+      !live.canRetry &&
+      !canRetryInputDependentError);
+  const snapshot = useMemo(
+    () => ({ result: live.result, isStale: effectiveIsStale }),
+    [effectiveIsStale, live.result],
+  );
+
+  useEffect(() => {
+    if (!onSnapshotChange) return;
+    const previous = lastNotifiedSnapshot.current;
+    if (
+      previous &&
+      previous.result === snapshot.result &&
+      previous.isStale === snapshot.isStale
+    ) return;
+    lastNotifiedSnapshot.current = snapshot;
+    onSnapshotChange(snapshot);
+  }, [onSnapshotChange, snapshot]);
 
   useEffect(() => {
     if (!isUpdating) {
@@ -61,22 +99,56 @@ export function LiveCalculation({
     <section
       className="card live-calculation"
       aria-labelledby={titleId}
-      aria-busy={live.status === "debouncing" || isUpdating}
+      aria-busy={isUpdating}
     >
       <header className="live-calculation__header">
         <div>
           <div className="eyebrow">
             {reviewMode ? "Local model review" : "Live calculation"}
           </div>
-          <h2 id={titleId}>Results update as you edit</h2>
+          <h2 id={titleId}>Results</h2>
         </div>
+        {live.status !== "blocked" && (
+          <button
+            type="button"
+            className="btn primary live-calculation__action"
+            onClick={live.calculate}
+            disabled={actionDisabled}
+          >
+            {isUpdating ? (
+              <LoaderCircle className="live-calculation__action-spinner" aria-hidden="true" />
+            ) : (
+              <Calculator aria-hidden="true" />
+            )}
+            {isUpdating
+              ? "Calculating…"
+              : live.status === "error"
+                ? live.canRetry || canRetryInputDependentError
+                  ? "Retry calculation"
+                  : "Review inputs"
+                : result
+                  ? "Update results"
+                  : "Calculate results"}
+          </button>
+        )}
       </header>
+
+      {result && effectiveIsStale && (
+        <div className="live-calculation__message is-stale" role="status" aria-live="polite">
+          <strong>Inputs changed.</strong>
+          <span>
+            {live.status === "blocked"
+              ? "The outputs below show the last successful calculation and are read-only in this session."
+              : "The outputs below show the last successful calculation. Click Update results when your edits are ready."}
+          </span>
+        </div>
+      )}
 
       <LiveStatus
         live={live}
         blockedReason={blockedReason}
         result={result}
-        onRetry={live.retry}
+        isStale={effectiveIsStale}
         longWait={longWait}
         onReviewInput={onReviewInput}
         onRestoreInputs={onRestoreInputs}
@@ -181,7 +253,7 @@ function LiveStatus({
   live,
   blockedReason,
   result,
-  onRetry,
+  isStale,
   longWait,
   onReviewInput,
   onRestoreInputs,
@@ -189,12 +261,13 @@ function LiveStatus({
   live: ReturnType<typeof useLiveCalculation>;
   blockedReason?: string;
   result: LiveCalculationResult | null;
-  onRetry: () => void;
+  isStale: boolean;
   longWait: boolean;
   onReviewInput?: (id: string) => void;
   onRestoreInputs?: (inputs: InputValues) => void;
 }) {
   if (live.status === "success") {
+    if (isStale) return null;
     return (
       <p className="live-calculation__message" role="status" aria-live="polite">
         Live results are current for these inputs.
@@ -239,10 +312,12 @@ function LiveStatus({
     );
   }
 
-  if (live.status === "debouncing") {
+  if (live.status === "idle") {
+    if (live.result && isStale) return null;
     return (
       <p className="live-calculation__message" role="status" aria-live="polite">
-        Waiting for your edits to pause before updating results…
+        No results have been calculated for these inputs yet. Click Calculate
+        results when you’re ready.
       </p>
     );
   }
@@ -263,8 +338,8 @@ function LiveStatus({
           <strong>Calculating...</strong>
           <span>
             {longWait
-              ? "The first calculation after inactivity can take one to two minutes. You can keep editing while it runs."
-              : "Your inputs remain available while the results update."}
+              ? "The first calculation after inactivity can take one to two minutes. Changing inputs cancels this request."
+              : "Changing inputs cancels this request. Run the calculation again when the new values are ready."}
           </span>
         </div>
       </div>
@@ -311,9 +386,9 @@ function LiveStatus({
           {workingInputs && onRestoreInputs && <button type="button" className="btn" onClick={() => onRestoreInputs({ ...workingInputs })}>
             <RotateCw size={15} aria-hidden="true" />Restore last working inputs
           </button>}
-          <p className="small">Your edits are preserved. Results update automatically when you change an input.</p>
+          <p className="small">Your edits are preserved. Adjust the inputs or restore the last working inputs, then update results when ready.</p>
         </>}
-        {workingInputs && changes.length === 0 && <button type="button" className="btn" onClick={onRetry}>Retry calculation</button>}
+        {workingInputs && changes.length === 0 && <p className="small">Retry the calculation with the same inputs using the button above.</p>}
       </div>
     );
   }
@@ -323,14 +398,7 @@ function LiveStatus({
       <span>
         {live.canRetry ? "We couldn’t update live results. " : ""}{live.error || "Please try again."}
       </span>
-      {live.canRetry && <button
-        type="button"
-        className="live-calculation__retry"
-        onClick={onRetry}
-      >
-        <RotateCw aria-hidden="true" />
-        Retry
-      </button>}
+      {live.canRetry && <span>Use Retry calculation above to try again.</span>}
     </div>
   );
 }
