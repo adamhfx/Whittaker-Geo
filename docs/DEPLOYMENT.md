@@ -1,6 +1,6 @@
 # Whittaker Geo deployment
 
-The production frontend is the Cloudflare Worker serving `https://whittakergeo.com`. Render hosts the HTTPS calculation engine for transient live edits. The optional saved-run Python worker is deferred under the current Free setup. The legacy Node Render web service remains in the blueprint as a reference; it is not the production frontend. Git deployment and private model release are separate processes: pushing code does not upload a workbook, approve a model, or activate a version. See [Cloudflare setup](CLOUDFLARE.md) for the current hosting state.
+The production frontend is the Cloudflare Worker serving `https://whittakergeo.com`. Render hosts the HTTPS calculation engine for explicitly requested transient calculations. The optional saved-run Python worker is deferred under the current Free setup. The legacy Node Render web service remains in the blueprint as a reference; it is not the production frontend. Git deployment and private model release are separate processes: pushing code does not upload a workbook, approve a model, or activate a version. See [Cloudflare setup](CLOUDFLARE.md) for the current hosting state.
 
 ## Temporary sign-in entry
 
@@ -68,14 +68,14 @@ The migrations create immutable calculator versions, user-owned calculations/run
 
 ## Registering a model version
 
-Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The new candidate is `state-rent@2.0.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
+Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The latest candidate is `state-rent@2.1.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
 
 As of 2026-10-22, `2.0.0-candidate.1` is approved and active for new calculations. The user explicitly approved release with the fresh Excel recalculation limitation recorded privately. Existing saved calculations and runs remain pinned to their original versions. Registration and activation remain separate actions: the registration script verifies the runtime SHA-256, uploads the private template, and inserts a new immutable candidate with `approved=false` without changing the current pointer:
 
 ```text
 python scripts/register_model.py \
-  --manifest models/state-rent/2.0.0-candidate.1.json \
-  --template private/models/state-rent/2.0.0-candidate.1.xlsx
+  --manifest models/state-rent/2.1.0-candidate.1.json \
+  --template private/models/state-rent/2.1.0-candidate.1.xlsx
 ```
 
 It requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, but not `DATABASE_URL`. It confirms the calculator already exists, then verifies the entire manifest, template path, checksum, and stored object on an idempotent rerun. Registration never approves or activates a version. The database, frontend API, and worker reject customer execution of an unapproved version.
@@ -83,7 +83,7 @@ It requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, but not `DATABASE_UR
 Generate the allowlisted public preview separately:
 
 ```text
-node scripts/generate-preview-manifest.mjs --manifest models/state-rent/2.0.0-candidate.1.json
+node scripts/generate-preview-manifest.mjs --manifest models/state-rent/2.1.0-candidate.1.json
 ```
 
 The new artifact contains 195 operational input definitions, guide notes, display choices and validation only. It excludes formulas, private mappings and presentation source ranges, hashes, paths, repairs, and review records.
@@ -169,3 +169,6 @@ The deployed live engine has passed real v2 baseline, changed-input, and reset c
 - [Supabase passwordless email](https://supabase.com/docs/guides/auth/passwordless-login/auth-magic-link)
 - [Stripe Checkout quickstart](https://docs.stripe.com/payments/checkout/quickstarts)
 - [Stripe Checkout Sessions API](https://docs.stripe.com/api/checkout/sessions)
+
+
+As of 2026-10-26, the October 26 source workbook is prepared as a separate `2.1.0-candidate.1` with 28 interim feedback mappings and the source’s 15% default discount rate. Local numerical/cache comparisons and gas/oil fiscal branch checks passed; fresh Excel parity remains unverified. Production approval/activation is a separate model-owner decision. The explicit Calculate/Update workflow and horizontal/frozen input tables are code changes; deploying them must not implicitly change the active model pointer or saved project versions. See MODEL_RUNTIME.md for behavior and validation details.

@@ -1,0 +1,14 @@
+.input-feedback { margin-top:24px; padding:18px; border:1px solid #e5d394; border-radius:12px; background:#fff9e4; color:var(--ink); }
+.input-feedback > header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+.input-feedback h4 { margin:0; font-size:15px; }
+.input-feedback__status { border:1px solid #d6c37c; border-radius:20px; padding:4px 9px; font-size:11px; color:#66511b; background:#fffdf4; }
+.input-feedback__status.is-stale { background:#785d19; border-color:#785d19; color:#fff; }
+.input-feedback__hint { color:#6d602f; font-size:12px; line-height:1.5; margin:10px 0 16px; }
+.input-feedback dl { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
+.input-feedback dl > div { padding:12px 0; border-top:1px solid #e8dcad; min-width:0; }
+.input-feedback dt { font-size:12px; line-height:1.45; color:#5d562f; }
+.input-feedback dd { margin:5px 0 0; display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px; }
+.input-feedback dd strong { font-size:18px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.input-feedback dd span { font-size:11px; color:#6d602f; }
+@container calculator-inputs (max-width:450px) { .input-feedback dl { grid-template-columns:minmax(0,1fr); } }
+@media(forced-colors:active) { .input-feedback,.input-feedback dl > div { border-color:CanvasText; }.input-feedback__status { border-color:CanvasText; } }

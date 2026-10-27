@@ -16,6 +16,7 @@ import openpyxl
 
 from .model_preview import (PreviewError, _hidden_columns, _input_cells,
                             _presentation_specs, _views, normalize_model_inputs)
+from .input_feedback import feedback_geometry, feedback_specs
 
 
 class WarmOffice:
@@ -119,6 +120,7 @@ class WarmOffice:
             digest,
             json.dumps(_views(manifest), sort_keys=True),
             json.dumps(presentation_specs, sort_keys=True),
+            json.dumps(feedback_specs(manifest), sort_keys=True),
         )
         if self._geometry_hash == geometry_key:
             return self._geometry
@@ -168,9 +170,10 @@ class WarmOffice:
                             'bounds': series['bounds'], 'length': series['length'],
                         } for series in chart['series']],
                     })
+            feedback = feedback_geometry(workbook, manifest)
         finally:
             workbook.close()
-        geometry = {'views': views, 'presentation': presentation}
+        geometry = {'views': views, 'presentation': presentation, 'inputFeedback': feedback}
         self._geometry_hash, self._geometry = geometry_key, geometry
         return geometry
 
@@ -197,6 +200,7 @@ class WarmOffice:
                     ], sort_keys=True).encode()).hexdigest(),
                     'inputSheet': input_sheet, 'cells': cells, 'views': views,
                     'presentation': geometry['presentation'],
+                    'inputFeedback': geometry['inputFeedback'],
                 }, allow_nan=False) + '\n')
                 self._helper.stdin.flush()
                 message = self._messages.get(timeout=timeout)
@@ -213,6 +217,8 @@ class WarmOffice:
                         'summary': result['summary'],
                         'charts': result['charts'],
                     })
+                if geometry['inputFeedback']:
+                    response['inputFeedback'] = result['inputFeedback']
                 return response
             except PreviewError:
                 raise

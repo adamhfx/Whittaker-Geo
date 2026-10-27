@@ -1,5 +1,7 @@
 export type InputValues = Record<string, string | number | null>;
 export type HelpNote = { title: string; body: string };
+export type InputFeedbackSpec = { id: string; group: string; label: string; unit?: string; cell?: string };
+export type InputFeedbackValue = Omit<InputFeedbackSpec, "cell"> & { value: string | number | null; format?: string };
 export type OutputView = { id: string; name: string; sheet: string };
 export type Field = {
   id: string;
@@ -33,6 +35,7 @@ export type Manifest = {
   description: string;
   groups: { id: string; name: string; help?: HelpNote }[];
   inputSheet?: string;
+  inputFeedback?: InputFeedbackSpec[];
   inputRules?: { ascending?: { label: string; fields: string[] }[] };
   outputViews?: OutputView[];
   fields: Field[];
@@ -117,4 +120,5 @@ export type LiveResult = {
   durationSeconds: number;
   summary?: LiveSummaryItem[];
   charts?: LiveChart[];
+  inputFeedback?: InputFeedbackValue[];
 };

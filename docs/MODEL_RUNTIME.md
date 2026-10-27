@@ -1,10 +1,10 @@
 # Model runtime and local review
 
-The 2.0.0-candidate.1 Resource-to-Value model has 195 operational inputs across six sections and a 20-year schedule. Its source is the owner's `261018__EconMod GovRevLock.xlsx`; the original file is never modified. One locked, unlabeled, unused grey/red cell with a broken validation reference is excluded. The private mapping records that exception.
+The latest local candidate is `2.1.0-candidate.1`, based on the client’s `261026__EconMod Webpage GovRev Lock.xlsx`. It retains 195 operational inputs across six sections and a 20-year schedule, adds 28 explicitly mapped interim feedback values, and adopts the source’s 15% default discount rate and reorganized output columns. The original source workbook is never modified. Existing saved calculations remain pinned to their original version. One locked, unlabeled, unused grey/red cell with a broken validation reference is excluded. The private mapping records that exception.
 
-The public interface contains only input definitions, examples, guide text, validation, and output view names. Source workbooks, runtime templates, cell mappings, presentation source ranges, preparation tools, checksums, and numerical review records remain in ignored owner-only folders. They must be supplied separately on another computer. Git does not synchronize them or `.env.local`.
+The public interface contains only input definitions, examples, guide text, validation, output view names, and the labels/units of the allowed interim feedback values. Calculation responses add their scalar values and number formats; source cells and formulas remain private. Source workbooks, runtime templates, cell mappings, presentation source ranges, preparation tools, checksums, and numerical review records remain in ignored owner-only folders. They must be supplied separately on another computer. Git does not synchronize them or `.env.local`.
 
-Current release state (2026-10-22): version `2.0.0-candidate.1` is approved and active for new calculations. The user explicitly approved release with fresh Excel recalculation still unverified; the approval and exact runtime identity are recorded privately. The hosted baseline matched the local baseline, a gas-price change updated outputs/charts, and reset restored the baseline. Existing saved calculations and runs keep their pinned versions. GitHub application deployments do not independently change model approval or activation.
+Current release state (2026-10-26): version `2.0.0-candidate.1` remains approved and active. Candidate `2.1.0-candidate.1` is prepared for owner review; it has not been approved or activated. The user explicitly approved release with fresh Excel recalculation still unverified; the approval and exact runtime identity are recorded privately. The hosted baseline matched the local baseline, a gas-price change updated outputs/charts, and reset restored the baseline. Existing saved calculations and runs keep their pinned versions. GitHub application deployments do not independently change model approval or activation.
 
 ## Calculator workspace
 
@@ -17,8 +17,8 @@ The local review deliberately runs without changing the database's model approva
 Required private files:
 
 ```text
-models/state-rent/2.0.0-candidate.1.json
-private/models/state-rent/2.0.0-candidate.1.xlsx
+models/state-rent/2.1.0-candidate.1.json
+private/models/state-rent/2.1.0-candidate.1.xlsx
 ```
 
 Install `worker/requirements.txt` into `.venv`. Use LibreOffice 26.8.1 and a Python runtime with its matching UNO bridge. The prepared Windows installation on this PC is under `private/tooling/LibreOffice/program/`. Configure these ignored `.env.local` entries:
@@ -46,7 +46,7 @@ Keep it running, then run `pnpm dev` in a second terminal. Open:
 http://127.0.0.1:3000/preview/calculations/new?calculator=state-rent&mode=example
 ```
 
-The first calculation warms Calc and takes longer. Subsequent valid edits are debounced for 450 ms and recalculate in the same isolated process. Every evaluation rewrites the complete allowlisted input set, including blanks, before calculating. An invalid or newer edit hides the previous results immediately. Temporary busy failures receive bounded retries. The process disables workbook macros and external updates and rejects formula errors on any sheet.
+The first explicit **Calculate results** action warms Calc and takes longer. Editing never automatically evaluates the workbook. The last successful outputs and section feedback remain visible with an **Inputs changed** warning until **Update results** is clicked. Invalid edits show their validation errors while preserving the previous snapshot. Edits during an active request cancel that request, and late responses cannot be presented as current. Every requested evaluation rewrites the complete allowlisted input set, including blanks, before calculating. Temporary busy failures receive bounded retries. The process disables workbook macros and external updates and rejects formula errors on any sheet.
 
 Try a gas-price change, switch reservoir fluid and select its units, select one facilities year, and open an information circle. The dashboard includes eight summary values and three charts. Detailed output cells and accessible chart tables are available. Each chart has an **Expand** button for a larger modal view with the same current values; **← return**, Escape, or an outside click closes it and restores focus. Year columns use a compact width. On desktop, the compact header and independent input/results panes fit the available viewport. The panes use slim olive scrollbars; browser scrollbars and forced-color accessibility preferences retain their native appearance. Section changes preserve the page and results position without reloading the model. On smaller screens the calculator keeps its stacked layout. Guide dialogs support **← return**, outside click, and Escape, restore focus, and respect reduced-motion preferences. A fluid change clears incompatible units without converting the numeric quantity.
 
@@ -54,7 +54,7 @@ Try a gas-price change, switch reservoir fluid and select its units, select one 
 
 A fresh LibreOffice calculation exposed an incompatibility in eight nested LET expressions: internal errors were being concealed by existing IFERROR formulas. The owner-only preparation tool builds a separate, cache-cleared runtime with equivalent inline expressions for those eight cells. No business assumptions or original source cells are changed.
 
-The prepared runtime's fresh results match the source file's saved Excel values across both allowlisted output ranges (relative tolerance 1e-8, absolute tolerance 1e-5), with no formula errors anywhere in the workbook. Increasing the default gas price by 10% changed 444 numeric output cells; restoring all defaults reproduced the baseline exactly. Warm evaluations measured approximately 0.3–0.5 seconds on the development PC, excluding debounce and initial startup. Warm and saved-export result values also agree in the tested scenario.
+The prepared runtime's fresh results match the source file's saved Excel values across both allowlisted output ranges (relative tolerance 1e-8, absolute tolerance 1e-5), with no formula errors anywhere in the workbook. Increasing the default gas price by 10% changed 444 numeric output cells; restoring all defaults reproduced the baseline exactly. Warm evaluations measured approximately 0.3–0.5 seconds on the development PC, excluding initial startup. Warm and saved-export result values also agree in the tested scenario.
 
 These checks establish local compatibility with the source's saved caches. They do not establish owner-approved parity against a newly recalculated Excel workbook. The model owner must approve representative baseline and changed-input scenarios before release. The earlier model's outstanding 12% calculation / 15% label decision remains a separate legacy release issue.
 
@@ -83,14 +83,14 @@ The annual-results table is an inner horizontal scrolling view. Its vertical ove
 
 ### Input-dependent undefined results
 
-A workbook formula error is different from a hosting failure. The engine continues to reject formula errors across the whole workbook, including hidden dependencies; it never publishes a plausible-looking partial result. The frontend recognizes only the engine's exact `RESULT_INVALID` code and returns HTTP 422 with input-review guidance. It does not suggest retrying an unchanged scenario. Editing inputs automatically starts a fresh calculation and restores the dashboard when the model can calculate again. Unknown engine errors retain their generic service-failure handling, and provider bodies, formulas and paths remain private.
+A workbook formula error is different from a hosting failure. The engine continues to reject formula errors across the whole workbook, including hidden dependencies; it never publishes a plausible-looking partial result. The frontend recognizes only the engine's exact `RESULT_INVALID` code and returns HTTP 422 with input-review guidance. It does not suggest retrying an unchanged scenario. Editing inputs clears the old error for that input snapshot; the user clicks **Update results** to calculate the revised scenario. Previous successful outputs remain visibly marked as stale until the requested calculation succeeds. Unknown engine errors retain their generic service-failure handling, and provider bodies, formulas and paths remain private.
 
 Production checks on 2026-10-22 passed the default, gas-price multipliers 1.1 and 0.9, discount 0.1, and capex multiplier 2. The doubled-capex scenario returned a negative investor NPV successfully. A gas-price multiplier of zero produced `RESULT_INVALID` and reproduced the previously misleading generic outage message. This feedback fix does not change workbook formulas or make every input combination mathematically defined. The exact inputs behind the user's intermittent report were not captured in request logs.
 
 
 Live input diagnostics compare a failed HTTP 422 request against the last successful input snapshot for that calculator in the current editor session. A single change is named with its old and new values. Multiple changes are presented as candidates, explicitly noting that their interaction may be responsible. The app does not infer formula dependencies or claim that a field is inherently invalid. Without a successful snapshot, or when no inputs differ, it explains that an input cannot be isolated.
 
-Each candidate links to its section and exact control, including schedule year, with an amber highlight and an accessible description. Restoring the last working inputs stages the verified snapshot in the editor and recalculates; it does not save or submit a run. Edits clear the highlight. Successful snapshots are held in memory, isolated by account/calculation, model version and evaluation endpoint, and updated only by a current, successful request. Reloading starts a new comparison history. No additional engine evaluations, provider permissions or hosting plan changes are required.
+Each candidate links to its section and exact control, including schedule year, with an amber highlight and an accessible description. Restoring the last working inputs stages the verified snapshot in the editor; the user then clicks **Update results** when ready; it does not save or submit a run. Edits clear the highlight. Successful snapshots are held in memory, isolated by account/calculation, model version and evaluation endpoint, and updated only by a current, successful request. Reloading starts a new comparison history. No additional engine evaluations, provider permissions or hosting plan changes are required.
 
 
 ### Explanation and export presentation, 2026-10-23
@@ -100,3 +100,16 @@ A failed direct IRR/XIRR formula now emits only the allowlisted `IRR_UNDEFINED` 
 Fresh XLSX exports retain the two output tabs and three charts, but compact the visible output grid to A1. Hidden source rows/columns and leading empty space are excluded, values and number formats are preserved, and the exporter adds borders, wrapped headers, banded rows, and frozen annual headings/year column. Chart anchors and numeric helper references are remapped to the new output coordinates. Existing stored files keep their original formatting; a new run creates the updated workbook. Numerical results and the approved model remain unchanged.
 
 Detailed output tables now include a sticky top horizontal scrollbar synchronized with the bottom scrollbar. Resize observation keeps its range aligned with the table, and vertical wheel movement still reaches the enclosing results pane or page.
+
+
+### Client workbook and manual workflow, 2026-10-26
+
+Drilling and completion cost curves now run horizontally by reference depth or lateral length. Facilities are separate gas/oil matrices with capacity tiers as columns and cost components as rows. All existing controls, semantic field mappings, validation and field guide notes remain available; input IDs remain version-scoped. Each matrix has a bounded scroll region with frozen headings and a frozen description column. Wheel gestures reach the surrounding pane at the inner region’s boundary. The development schedule uses the same frozen-heading behavior.
+
+The candidate’s yellow calculated UI values appear in **Calculated feedback** under the applicable input section: reservoir (8), schedule (2), drilling/completions (5), facilities (10 including the inactive branch), and fiscal controls (3). The source has no yellow interim values for opex. Blank inactive gas/oil facility feedback is omitted from the display. This is a separate, read-only allowlist from the two OUTPUT views; no formulas or arbitrary UI ranges are exposed. Feedback and the dashboard share one explicit evaluation and one input snapshot.
+
+The annual table has a frozen Year column and column headings. **Columns** can show just one source category (such as Capex); **Table** switches between annual cash flow and production blocks while preserving distinct legacy field/type-well labels. **View all output cells** keeps the complete allowlisted raw view available. Top and bottom horizontal scrollbars remain synchronized. These controls do not discard or change the exported values.
+
+**Calculate results / Update results** refresh the in-memory feedback/dashboard only. **Save** saves inputs, and **Save & run** creates an immutable saved result with a downloadable XLSX. The XLSX retains both OUTPUT tabs, borders, frozen annual headings, values/number formats, and three dashboard charts. No CSV switch was made. Older stored files remain immutable.
+
+The exact 2.1 candidate passed a fresh LibreOffice baseline against the source’s saved Excel caches across both output views, all eight summary values, three chart series groups, and all 28 interim values (relative tolerance 1e-8, absolute tolerance 1e-5). Gas-price 0.9, capex 1.1, PSA, oil CTR/PSA, reset, and the original approved v2 baseline were exercised. Oil feedback replaces the inactive gas feedback after recalculation. The source checksum remained unchanged. This is saved-cache compatibility evidence, not parity with a freshly recalculated Excel reference. Model-owner release sign-off remains required by the deployment checklist.

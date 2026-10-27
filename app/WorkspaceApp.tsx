@@ -6,7 +6,8 @@ import { safeReturnPath } from "@/lib/auth-helpers";
 import AccountSettings from "./AccountSettings";
 import LoadingSpinner from "./LoadingSpinner";
 import { HelpDialog } from "./HelpDialog";
-import { LiveCalculation, WorkbookOutputs } from "./LiveCalculation";
+import { LiveCalculation, WorkbookOutputs, type LiveCalculationSnapshot } from "./LiveCalculation";
+import { InputFeedback } from "./InputFeedback";
 import "./model-editor.css";
 import {
   ArrowLeft,
@@ -123,6 +124,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const inputPanelRef = useRef<HTMLDivElement>(null);
   const [reviewedInputId, setReviewedInputId] = useState<string | null>(null);
   const [pendingReviewInput, setPendingReviewInput] = useState<string | null>(null);
+  const [feedbackSnapshot, setFeedbackSnapshot] = useState<(LiveCalculationSnapshot & {scope:string}) | null>(null);
   const currentRoute = parsePageRoute(pathname, search);
   function navigate(route: AppRoute, replace = false) {
     const href = routeHref(route);
@@ -168,6 +170,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false);
+  const feedbackScope = draftKey + ":" + (manifest ? manifest.id + "@" + manifest.version : "");
+  const currentFeedback = feedbackSnapshot?.scope === feedbackScope ? feedbackSnapshot : null;
+  const receiveFeedbackSnapshot = useCallback((snapshot: LiveCalculationSnapshot) => {
+    setFeedbackSnapshot({...snapshot,scope:feedbackScope});
+  },[feedbackScope]);
   useEffect(() => {
     const loopbackHosts = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
     setLocalModelReview(
@@ -1052,6 +1059,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
                       disabled={!editable}
                     />
                   )}
+                  <InputFeedback specs={(manifest.inputFeedback ?? []).filter(item=>item.group===group)}
+                    values={currentFeedback?.result?.inputFeedback}
+                    isStale={Boolean(currentFeedback?.isStale || currentFeedback?.result && Object.keys(numericDrafts).length)} />
                   <p className="small" style={{ marginTop: 24 }}>
                     Project amounts use USD.
                   </p>
@@ -1059,6 +1069,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
               </div>
               {manifest.outputViews?.length ? <aside className="model-live-panel">
                 <LiveCalculation key={draftKey + ":" + manifest.id + "@" + manifest.version} manifest={manifest} inputs={inputs}
+                  pendingEdits={Object.keys(numericDrafts).length > 0} onSnapshotChange={receiveFeedbackSnapshot}
                   onReviewInput={reviewCalculationInput} onRestoreInputs={editable ? restoreWorkingInputs : undefined}
                   enabled={isLocalModelReview || (!preview && !!workspace?.canWrite && approved)}
                   endpoint={isLocalModelReview ? "/api/local-model-review" : undefined}

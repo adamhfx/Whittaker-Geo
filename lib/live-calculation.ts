@@ -4,6 +4,7 @@ import type {
   LiveChart,
   LiveSummaryItem,
   Result,
+  InputFeedbackValue,
 } from "./types";
 
 export type OutputCellValue = string | number | null;
@@ -25,6 +26,7 @@ export type LiveCalculationResult = {
   annual?: Annual[];
   summary?: LiveSummaryItem[];
   charts?: LiveChart[];
+  inputFeedback?: InputFeedbackValue[];
 };
 
 export const LIVE_BUSY_RETRY_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000] as const;
@@ -280,7 +282,16 @@ export function isLiveCalculationResult(
     (value.charts === undefined ||
       (Array.isArray(value.charts) &&
         value.charts.length <= 8 &&
-        value.charts.every(isPresentationChart)))
+        value.charts.every(isPresentationChart))) &&
+    (value.inputFeedback === undefined || (Array.isArray(value.inputFeedback) && value.inputFeedback.length <= 150 &&
+      new Set(value.inputFeedback.map(item => isRecord(item) ? item.id : null)).size === value.inputFeedback.length &&
+      value.inputFeedback.every(item => isRecord(item) &&
+        typeof item.id === "string" && item.id.length > 0 && item.id.length <= 100 &&
+        typeof item.group === "string" && item.group.length > 0 && item.group.length <= 100 &&
+        typeof item.label === "string" && item.label.length > 0 && item.label.length <= 160 &&
+        (item.value === null || (typeof item.value === "string" && item.value.length <= 500) || isFiniteNumber(item.value)) &&
+        (item.unit === undefined || (typeof item.unit === "string" && item.unit.length <= 100)) &&
+        (item.format === undefined || (typeof item.format === "string" && item.format.length <= 200)))))
   );
 }
 
@@ -321,6 +332,10 @@ function sanitizeLiveResult(value: LiveCalculationResult): LiveCalculationResult
         values: [...series.values],
       })),
     }));
+  }
+  if (value.inputFeedback !== undefined) {
+    result.inputFeedback = value.inputFeedback.map(({id,group,label,value: cellValue,format,unit}) =>
+      ({id,group,label,value:cellValue,...(format === undefined ? {} : {format}),...(unit === undefined ? {} : {unit})}));
   }
   return result;
 }

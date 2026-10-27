@@ -16,8 +16,8 @@ def main():
         raise SystemExit('Set LOCAL_MODEL_REVIEW=true only for owner review on this computer.')
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description='Review a private candidate on localhost only.')
-    parser.add_argument('--manifest', type=Path, default=root/'models/state-rent/2.0.0-candidate.1.json')
-    parser.add_argument('--template', type=Path, default=root/'private/models/state-rent/2.0.0-candidate.1.xlsx')
+    parser.add_argument('--manifest', type=Path, default=root/'models/state-rent/2.1.0-candidate.1.json')
+    parser.add_argument('--template', type=Path, default=root/'private/models/state-rent/2.1.0-candidate.1.xlsx')
     parser.add_argument('--port', type=int, default=8765)
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:

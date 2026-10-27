@@ -1,9 +1,11 @@
 param(
     [string]$Python = '',
+    [string]$ModelVersion = '2.1.0-candidate.1',
     [switch]$Check
 )
 
 $ErrorActionPreference = 'Stop'
+if ($ModelVersion -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$') { throw 'Invalid local model version.' }
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $settingsPath = Join-Path $repoRoot '.env.local'
 if (-not (Test-Path -LiteralPath $settingsPath)) {
@@ -39,7 +41,7 @@ foreach ($binary in @($env:SOFFICE_BIN, $env:UNO_PYTHON_BIN)) {
         throw 'Configure existing SOFFICE_BIN and UNO_PYTHON_BIN paths; see docs/MODEL_RUNTIME.md.'
     }
 }
-foreach ($relativePath in @('models/state-rent/2.0.0-candidate.1.json', 'private/models/state-rent/2.0.0-candidate.1.xlsx')) {
+foreach ($relativePath in @("models/state-rent/$ModelVersion.json", "private/models/state-rent/$ModelVersion.xlsx")) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relativePath) -PathType Leaf)) {
         throw "Missing private model file: $relativePath"
     }
@@ -56,7 +58,7 @@ if ($Check) {
 Push-Location $repoRoot
 try {
     Write-Output 'Starting private model review on loopback. Keep this terminal open; press Ctrl+C to stop.'
-    & $Python -m worker.local_review --port $engineUri.Port
+    & $Python -m worker.local_review --port $engineUri.Port --manifest (Join-Path $repoRoot "models/state-rent/$ModelVersion.json") --template (Join-Path $repoRoot "private/models/state-rent/$ModelVersion.xlsx")
     if ($LASTEXITCODE -ne 0) { throw "The local review service exited with code $LASTEXITCODE." }
 } finally {
     Pop-Location

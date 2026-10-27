@@ -70,6 +70,12 @@ const liveResultSchema = z.object({
   })).max(8),
   summary: z.array(summaryItemSchema).max(30).optional(),
   charts: z.array(chartSchema).max(8).optional(),
+  inputFeedback: z.array(z.object({
+    id: z.string().min(1).max(100), group: z.string().min(1).max(100),
+    label: z.string().min(1).max(160),
+    value: z.union([z.string().max(500), z.number().finite(), z.null()]),
+    format: z.string().max(200).optional(), unit: z.string().max(100).optional(),
+  })).max(150).optional(),
 });
 
 export function parseLiveResult(value: unknown, manifest: Manifest): LiveResult {
@@ -80,6 +86,12 @@ export function parseLiveResult(value: unknown, manifest: Manifest): LiveResult 
       result.outputSheets.length !== names.length || new Set(result.outputSheets.map((sheet) => sheet.name)).size !== names.length ||
       result.outputSheets.some((sheet) => !names.includes(sheet.name)))
     throw new Error("Calculation response does not match the requested model.");
+  const expectedFeedback = manifest.inputFeedback ?? [];
+  const feedback = result.inputFeedback ?? [];
+  if (feedback.length !== expectedFeedback.length || new Set(feedback.map(item => item.id)).size !== feedback.length ||
+      feedback.some(item => !expectedFeedback.some(spec => spec.id === item.id && spec.group === item.group &&
+        spec.label === item.label && spec.unit === item.unit)))
+    throw new Error("Interim results do not match the requested model.");
   return result;
 }
 

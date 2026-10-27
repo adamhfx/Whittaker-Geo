@@ -203,6 +203,8 @@ def _validate_result(result: Any, calculator_id: str, version: str, manifest: di
                 "series": clean_series,
             })
         presentation_result = {"summary": clean_summary, "charts": clean_charts}
+    from .input_feedback import validate_feedback_result
+    feedback = validate_feedback_result(result, manifest)
     # Emit exactly the public response contract; discard any accidental fields.
     return {
         "calculatorId": calculator_id,
@@ -215,6 +217,7 @@ def _validate_result(result: Any, calculator_id: str, version: str, manifest: di
             for sheet in sheets
         ],
         **presentation_result,
+        **({"inputFeedback": feedback} if feedback else {}),
         "durationSeconds": float(result["durationSeconds"]),
     }
 

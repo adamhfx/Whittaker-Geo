@@ -21,7 +21,7 @@
 .model-workbench .group-nav button { white-space:normal; overflow-wrap:break-word; max-width:100%; line-height:1.4; }
 
 /* Keep wide input matrices readable as their headings and descriptor column stay in view. */
-.model-input-table { max-width:100%; max-height:min(55vh,500px); overflow:auto; scroll-padding-left:210px; overscroll-behavior-x:contain; overscroll-behavior-y:auto; }
+.model-input-table { max-width:100%; max-height:min(45vh,360px); overflow:auto; scroll-padding-left:210px; overscroll-behavior-x:contain; overscroll-behavior-y:auto; }
 .model-input-matrix__table { width:max-content; min-width:100%; border-collapse:separate; border-spacing:0; }
 .model-input-table .model-input-matrix__table th,
 .model-input-table .model-input-matrix__table td { background:var(--card,#fff); }

@@ -1,0 +1,26 @@
+.annual-output { min-width:0; }
+.annual-output__controls { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin-bottom:10px; }
+.annual-output__controls label { display:grid; flex:1 1 150px; max-width:220px; min-width:0; gap:5px; color:var(--muted); font-size:12px; font-weight:600; }
+.annual-output__controls .select { min-width:0; width:100%; padding:8px 12px; }
+.annual-output__controls .btn { margin-left:auto; font-size:12px; }
+.annual-output__hint { margin:0 0 8px; }
+.annual-output__viewport { max-height:min(55vh,520px); overflow:auto; max-width:100%; border:1px solid var(--line); border-radius:8px; overscroll-behavior-x:contain; overscroll-behavior-y:auto; scrollbar-color:var(--brand-olive,#596238) var(--brand-paper,#f8f9f5); }
+.annual-output__table { border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:13px; }
+.annual-output__table th,.annual-output__table td { border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:10px 12px; background:#fff; min-width:165px; max-width:210px; }
+.annual-output__table thead { position:sticky; top:0; z-index:4; }
+.annual-output__table th { background:var(--brand-wash,#eef0e8); color:var(--ink); font-weight:600; text-align:left; vertical-align:top; line-height:1.4; white-space:normal; }
+.annual-output__table th span { display:block; font-weight:400; font-size:11px; color:var(--muted); margin-top:5px; }
+.annual-output__table td { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.annual-output__table tbody tr:nth-child(even) td { background:var(--brand-paper,#f8f9f5); }
+.annual-output__table .is-year { position:sticky; left:0; z-index:2; min-width:64px; width:64px; max-width:64px; text-align:center; box-shadow:2px 0 0 var(--line); }
+.annual-output__table th.is-year { z-index:5; background:var(--brand-wash,#eef0e8); }
+.annual-output__top-scroll { position:sticky; top:0; z-index:5; overflow-x:scroll; overflow-y:hidden; height:20px; border:1px solid var(--line); border-radius:8px 8px 0 0; background:var(--brand-paper); scrollbar-color:var(--brand-olive,#596238) var(--brand-paper,#f8f9f5); }
+.app--calculator .annual-output__top-scroll { top:var(--calculator-toolbar-height,0px); }
+.app--calculator .model-live-panel .annual-output__top-scroll { top:0; }
+.annual-output__top-scroll[hidden] { display:none; }
+.annual-output__top-scroll::-webkit-scrollbar { height:14px; }
+.annual-output__top-scroll::-webkit-scrollbar-thumb { background:var(--brand-olive,#596238); border:3px solid var(--brand-paper,#f8f9f5); border-radius:12px; }
+.annual-output__top-scroll::-webkit-scrollbar-track { background:var(--brand-paper,#f8f9f5); }
+.annual-output__viewport:focus-visible,.annual-output__top-scroll:focus-visible { outline:2px solid var(--primary-dark); outline-offset:2px; }
+@media(max-width:600px) { .annual-output__controls .btn { margin-left:0; }.annual-output__table th,.annual-output__table td { min-width:145px; padding:9px 10px; }.annual-output__table .is-year { min-width:60px; } }
+@media(forced-colors:active) { .annual-output__viewport,.annual-output__top-scroll { scrollbar-color:auto; }.annual-output__table th,.annual-output__table td { border-color:CanvasText; } }

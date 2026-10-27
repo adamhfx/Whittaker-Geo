@@ -646,6 +646,8 @@ def evaluate_template(
                 scan_formula_errors(calculated_path, workbook)
                 output_sheets = serialize_output_sheets(workbook, manifest)
                 presentation = serialize_presentation(workbook, manifest)
+                from .input_feedback import serialize_input_feedback
+                feedback = serialize_input_feedback(workbook, manifest)
             finally:
                 workbook.close()
         duration = round(time.monotonic() - started, 3)
@@ -654,6 +656,7 @@ def evaluate_template(
             "calculatorVersion": manifest["version"],
             "outputSheets": output_sheets,
             **presentation,
+            **({"inputFeedback": feedback} if feedback else {}),
             "durationSeconds": duration,
         }
     except PreviewError:
@@ -893,6 +896,8 @@ def run_saved_model(
                 output_sheets = serialize_output_sheets(workbook, manifest)
                 presentation = serialize_presentation(workbook, manifest)
                 export_preview_results(workbook, manifest, output, presentation=presentation)
+                from .input_feedback import serialize_input_feedback
+                feedback = serialize_input_feedback(workbook, manifest)
             finally:
                 workbook.close()
         return {
@@ -901,6 +906,7 @@ def run_saved_model(
             "outputSheets": output_sheets,
             **presentation,
             "durationSeconds": round(time.monotonic() - started, 3),
+            **({"inputFeedback": feedback} if feedback else {}),
         }
     except PreviewError:
         raise

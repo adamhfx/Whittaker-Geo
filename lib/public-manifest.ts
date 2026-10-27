@@ -33,6 +33,8 @@ export function publicManifest(manifest: Manifest) {
       const guide = help(modelGuide(manifest.id, manifest.version, "groups", id, note));
       return { id, name, ...(guide ? { help: guide } : {}) };
     }), fields,
+    ...(manifest.inputFeedback?.length ? { inputFeedback: manifest.inputFeedback.map(({id, group, label, unit}) =>
+      ({id, group, label, ...(unit === undefined ? {} : {unit})})) } : {}),
     ...(outputViews ? { outputViews } : {}),
     ...(manifest.inputRules?.ascending ? { inputRules: { ascending: manifest.inputRules.ascending.map(({label, fields}) => ({label, fields})) } } : {}) };
 }

@@ -95,6 +95,27 @@ def connect(pipe):
             time.sleep(.05)
 
 
+def input_feedback_values(document, mapping):
+    results = []
+    for item in mapping:
+        source = document.Sheets.getByName(item['sheet'])
+        cell = source.getCellRangeByName(item['cell'])
+        if cell.getError():
+            raise ArithmeticError('Interim calculation error')
+        value = cell.getDataArray()[0][0]
+        if value == '' or value is None:
+            value = None
+        elif isinstance(value, bool):
+            value = 'TRUE' if value else 'FALSE'
+        elif isinstance(value, float) and not math.isfinite(value):
+            raise ArithmeticError('Non-finite interim result')
+        elif not isinstance(value, (str, int, float)) or (isinstance(value, str) and len(value) > 500):
+            raise ValueError('Invalid interim result')
+        results.append({key: item[key] for key in ('id', 'group', 'label', 'format', 'unit') if key in item}
+                       | {'value': value})
+    return results
+
+
 def main():
     # This helper switch is set only by WarmOffice's explicit build-smoke
     # option. It is never derived from HTTP/request data.
@@ -192,6 +213,8 @@ def main():
                         rows.append({'cells': cells})
                     outputs.append({'name': view['name'], 'rows': rows})
                 response = {'ok': True, 'outputSheets': outputs}
+                if request.get('inputFeedback'):
+                    response['inputFeedback'] = input_feedback_values(document, request['inputFeedback'])
                 display = presentation_values(document, request.get('presentation'))
                 if display is not None:
                     response.update(display)
