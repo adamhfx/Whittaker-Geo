@@ -1015,26 +1015,42 @@ export default function App({ preview = false }: { preview?: boolean }) {
                       finishNumericDraft={finishNumericDraft}
                       disabled={!editable}
                     />
+                  ) : group === "costs" ? (
+                    <CostSchedule
+                      fields={manifest.fields.filter((f) => f.group === group)}
+                      reviewedInputId={reviewedInputId}
+                      inputs={inputs}
+                      setValue={updateInput}
+                      numericDrafts={numericDrafts}
+                      setNumericDraft={updateNumericDraft}
+                      finishNumericDraft={finishNumericDraft}
+                      disabled={!editable}
+                      manifest={manifest}
+                    />
+                  ) : group === "facilities" ? (
+                    <FacilitiesSchedule
+                      fields={manifest.fields.filter((f) => f.group === group)}
+                      reviewedInputId={reviewedInputId}
+                      inputs={inputs}
+                      setValue={updateInput}
+                      numericDrafts={numericDrafts}
+                      setNumericDraft={updateNumericDraft}
+                      finishNumericDraft={finishNumericDraft}
+                      disabled={!editable}
+                      manifest={manifest}
+                    />
                   ) : (
-                    <div className="field-grid">
-                      {manifest.fields
-                        .filter((f) => f.group === group)
-                        .map((f) => (
-                          <Input
-                            key={f.id}
-                            reviewed={reviewedInputId === f.id}
-                            field={f}
-                            options={inputOptions(manifest, f, inputs)}
-                            help={isFluidUnit(manifest, f) && !(f.dependsOn ? inputs[f.dependsOn] : inputs.C5) ? "Choose a primary reservoir fluid first." : undefined}
-                            value={inputs[f.id]}
-                            setValue={(v) => updateInput(f.id, v)}
-                            numericDraft={numericDrafts[f.id]}
-                            setNumericDraft={(raw) => updateNumericDraft(f.id, raw)}
-                            finishNumericDraft={(raw) => finishNumericDraft(f.id, raw)}
-                            disabled={!editable}
-                          />
-                        ))}
-                    </div>
+                    <InputFieldGrid
+                      fields={manifest.fields.filter((f) => f.group === group)}
+                      manifest={manifest}
+                      inputs={inputs}
+                      reviewedInputId={reviewedInputId}
+                      numericDrafts={numericDrafts}
+                      setValue={updateInput}
+                      setNumericDraft={updateNumericDraft}
+                      finishNumericDraft={finishNumericDraft}
+                      disabled={!editable}
+                    />
                   )}
                   <p className="small" style={{ marginTop: 24 }}>
                     Project amounts use USD.
@@ -1455,6 +1471,7 @@ function Input({
   reviewed = false,
   options,
   help,
+  ariaLabel,
   numericDraft,
   setNumericDraft,
   finishNumericDraft,
@@ -1467,6 +1484,7 @@ function Input({
   reviewed?: boolean;
   options?: string[];
   help?: string;
+  ariaLabel?: string;
   numericDraft?: string;
   setNumericDraft?: (rawValue: string) => void;
   finishNumericDraft?: (rawValue: string) => void;
@@ -1500,7 +1518,7 @@ function Input({
         <select
           aria-describedby={reviewed ? "input-review-note-" + f.id : undefined}
           id={"f-" + f.id}
-          aria-label={compact ? f.label + " year " + f.year : undefined}
+          aria-label={compact ? ariaLabel ?? f.label + " year " + f.year : undefined}
           className="select"
           disabled={disabled}
           value={value ?? ""}
@@ -1518,7 +1536,7 @@ function Input({
         <input
           aria-describedby={reviewed ? "input-review-note-" + f.id : undefined}
           id={"f-" + f.id}
-          aria-label={compact ? f.label + " year " + f.year : undefined}
+          aria-label={compact ? ariaLabel ?? f.label + " year " + f.year : undefined}
           className="text-input"
           disabled={disabled}
           type="text"
@@ -1536,6 +1554,306 @@ function Input({
     </div>
   );
 }
+
+type InputMatrixProps = {
+  fields: Field[];
+  reviewedInputId?: string | null;
+  inputs: InputValues;
+  setValue: (id: string, value: string | number | null) => void;
+  numericDrafts: Record<string, string>;
+  setNumericDraft: (id: string, rawValue: string) => void;
+  finishNumericDraft: (id: string, rawValue: string) => void;
+  disabled: boolean;
+};
+
+type ManifestInputMatrixProps = InputMatrixProps & { manifest: Manifest };
+
+function InputFieldGrid({
+  fields,
+  manifest,
+  reviewedInputId,
+  inputs,
+  setValue,
+  numericDrafts,
+  setNumericDraft,
+  finishNumericDraft,
+  disabled,
+}: ManifestInputMatrixProps) {
+  return (
+    <div className="field-grid">
+      {fields.map((field) => (
+        <Input
+          key={field.id}
+          reviewed={reviewedInputId === field.id}
+          field={field}
+          options={inputOptions(manifest, field, inputs)}
+          help={isFluidUnit(manifest, field) && !(field.dependsOn ? inputs[field.dependsOn] : inputs.C5) ? "Choose a primary reservoir fluid first." : undefined}
+          value={inputs[field.id]}
+          setValue={(value) => setValue(field.id, value)}
+          numericDraft={numericDrafts[field.id]}
+          setNumericDraft={(raw) => setNumericDraft(field.id, raw)}
+          finishNumericDraft={(raw) => finishNumericDraft(field.id, raw)}
+          disabled={disabled}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MatrixInput({
+  field,
+  reviewed,
+  value,
+  options,
+  numericDraft,
+  setValue,
+  setNumericDraft,
+  finishNumericDraft,
+  disabled,
+}: {
+  field: Field;
+  reviewed: boolean;
+  value: InputValues[string];
+  options?: string[];
+  numericDraft?: string;
+  setValue: (value: string | number | null) => void;
+  setNumericDraft: (rawValue: string) => void;
+  finishNumericDraft: (rawValue: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="model-input-matrix__cell-control">
+      <Input
+        field={field}
+        value={value}
+        setValue={setValue}
+        disabled={disabled}
+        compact
+        reviewed={reviewed}
+        ariaLabel={field.label}
+        options={options}
+        numericDraft={numericDraft}
+        setNumericDraft={setNumericDraft}
+        finishNumericDraft={finishNumericDraft}
+      />
+      {field.help && <HelpDialog {...field.help} triggerLabel={`Help for ${field.label}`} />}
+    </div>
+  );
+}
+
+function InputParameterTable({
+  fields,
+  heading,
+  manifest,
+  reviewedInputId,
+  inputs,
+  setValue,
+  numericDrafts,
+  setNumericDraft,
+  finishNumericDraft,
+  disabled,
+}: ManifestInputMatrixProps & { heading: string }) {
+  if (!fields.length) return null;
+  return (
+    <div className="table-scroll model-input-table model-input-table--parameters">
+      <table className="table model-input-matrix__table" aria-label={heading}>
+        <thead>
+          <tr><th scope="col">{heading}</th><th scope="col">Input value</th></tr>
+        </thead>
+        <tbody>
+          {fields.map((field) => (
+            <tr key={field.id}>
+              <th scope="row">
+                <span>{field.label}</span>
+                <span className="model-input-matrix__unit">{field.unit}</span>
+              </th>
+              <td>
+                <MatrixInput
+                  field={field}
+                  reviewed={reviewedInputId === field.id}
+                  value={inputs[field.id]}
+                  options={inputOptions(manifest, field, inputs)}
+                  numericDraft={numericDrafts[field.id]}
+                  setValue={(value) => setValue(field.id, value)}
+                  setNumericDraft={(raw) => setNumericDraft(field.id, raw)}
+                  finishNumericDraft={(raw) => finishNumericDraft(field.id, raw)}
+                  disabled={disabled}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CostCurveTable({
+  fields,
+  label,
+  reviewedInputId,
+  inputs,
+  setValue,
+  numericDrafts,
+  setNumericDraft,
+  finishNumericDraft,
+  disabled,
+}: InputMatrixProps & { label: string }) {
+  if (!fields.length) return null;
+  const referencePoint = (field: Field) => field.label.match(/\bat\s+(.+)$/i)?.[1] ?? field.label;
+  return (
+    <div className="table-scroll model-input-table model-input-table--cost-curve">
+      <table className="table model-input-matrix__table" aria-label={`${label} by reference point`}>
+        <thead>
+          <tr>
+            <th scope="col">Reference point</th>
+            {fields.map((field) => <th scope="col" key={field.id}>{referencePoint(field)}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">
+              <span>{label}</span>
+              <span className="model-input-matrix__unit">{fields[0].unit}</span>
+            </th>
+            {fields.map((field) => (
+              <td key={field.id}>
+                <MatrixInput
+                  field={field}
+                  reviewed={reviewedInputId === field.id}
+                  value={inputs[field.id]}
+                  setValue={(value) => setValue(field.id, value)}
+                  numericDraft={numericDrafts[field.id]}
+                  setNumericDraft={(raw) => setNumericDraft(field.id, raw)}
+                  finishNumericDraft={(raw) => finishNumericDraft(field.id, raw)}
+                  disabled={disabled}
+                />
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CostSchedule(props: ManifestInputMatrixProps) {
+  const vertical = props.fields
+      .filter((field) => /^Vertical drilling unit cost at /i.test(field.label))
+      .sort((a, b) => referenceValue(a.label) - referenceValue(b.label)),
+    lateral = props.fields
+      .filter((field) => /^Lateral drilling unit cost at /i.test(field.label))
+      .sort((a, b) => referenceValue(a.label) - referenceValue(b.label)),
+    curveIds = new Set([...vertical, ...lateral].map((field) => field.id)),
+    otherFields = props.fields.filter((field) => !curveIds.has(field.id));
+
+  return (
+    <>
+      <p className="subtitle model-input-matrix__intro">
+        Reference depths and lateral lengths run across each row; enter the unit cost at each point.
+      </p>
+      <div className="model-input-matrix__section">
+        <h4 className="model-input-matrix__section-title">Vertical drilling</h4>
+        <CostCurveTable {...props} fields={vertical} label="Vertical drilling unit cost" />
+      </div>
+      <div className="model-input-matrix__section">
+        <h4 className="model-input-matrix__section-title">Lateral drilling</h4>
+        <CostCurveTable {...props} fields={lateral} label="Lateral drilling unit cost" />
+      </div>
+      <InputParameterTable {...props} fields={otherFields} heading="Other cost assumptions" />
+    </>
+  );
+}
+
+function referenceValue(label: string) {
+  const match = label.match(/\bat\s+([\d,.]+)/i);
+  return match ? Number(match[1].replace(/,/g, "")) : 0;
+}
+
+function FacilitiesSchedule(props: ManifestInputMatrixProps) {
+  const parsed = props.fields.flatMap((field) => {
+    const match = field.label.match(/^(Gas|Oil) facilities tier (\d+) — (.+)$/i);
+    return match ? [{ field, product: match[1].toLowerCase(), tier: Number(match[2]), component: match[3] }] : [];
+  });
+  const ungrouped = props.fields.filter((field) => !parsed.some((item) => item.field.id === field.id));
+
+  return (
+    <>
+      <p className="subtitle model-input-matrix__intro">
+        Set annual capacity and capital by tier. Each tier heading repeats its current capacity for quick comparison.
+      </p>
+      {(["gas", "oil"] as const).map((product) => {
+        const productFields = parsed.filter((item) => item.product === product);
+        if (!productFields.length) return null;
+        const tiers = Array.from(new Set(productFields.map((item) => item.tier))).sort((a, b) => a - b);
+        const components = Array.from(new Set(productFields.map((item) => item.component)));
+        const productName = product === "gas" ? "Gas facilities" : "Oil facilities";
+        return (
+          <section className="model-input-matrix__section" key={product} aria-label={productName}>
+            <h4 className="model-input-matrix__section-title">{productName}</h4>
+            <div className="table-scroll model-input-table model-input-table--facilities">
+              <table className="table model-input-matrix__table" aria-label={`${productName} capex by tier`}>
+                <thead>
+                  <tr>
+                    <th scope="col">Facility component</th>
+                    {tiers.map((tier) => {
+                      const capacity = productFields.find((item) => item.tier === tier && item.component === "Design capacity")?.field;
+                      const draft = capacity ? props.numericDrafts[capacity.id] : undefined;
+                      const value = capacity ? draft ?? props.inputs[capacity.id] : undefined;
+                      const valueText = value == null || String(value).trim() === "" || !Number.isFinite(Number(value))
+                        ? "Capacity not set"
+                        : `Capacity ${value} ${capacity?.unit ?? ""}`;
+                      return (
+                        <th scope="col" key={tier}>
+                          <span className="model-input-matrix__tier">Tier {tier}</span>
+                          <span className="model-input-matrix__capacity">{valueText}</span>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {components.map((component) => {
+                    const first = productFields.find((item) => item.component === component)!.field;
+                    return (
+                      <tr key={component}>
+                        <th scope="row">
+                          <span>{component}</span>
+                          <span className="model-input-matrix__unit">{first.unit}</span>
+                        </th>
+                        {tiers.map((tier) => {
+                          const field = productFields.find((item) => item.tier === tier && item.component === component)?.field;
+                          return (
+                            <td key={tier}>
+                              {field && (
+                                <MatrixInput
+                                  field={field}
+                                  reviewed={props.reviewedInputId === field.id}
+                                  value={props.inputs[field.id]}
+                                  setValue={(value) => props.setValue(field.id, value)}
+                                  numericDraft={props.numericDrafts[field.id]}
+                                  setNumericDraft={(raw) => props.setNumericDraft(field.id, raw)}
+                                  finishNumericDraft={(raw) => props.finishNumericDraft(field.id, raw)}
+                                  disabled={props.disabled}
+                                />
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })}
+      <InputParameterTable {...props} fields={ungrouped} heading="Other facilities inputs" />
+    </>
+  );
+}
+
 function Schedule({
   fields,
   reviewedInputId,
@@ -1566,13 +1884,13 @@ function Schedule({
         facilities completion year. Blank numeric schedule cells are treated as
         zero.
       </p>
-      <div className="table-scroll schedule">
-        <table className="table">
+      <div className="table-scroll model-input-table schedule">
+        <table className="table model-input-matrix__table" aria-label="Development schedule by year">
           <thead>
             <tr>
-              <th>Activity</th>
+              <th scope="col">Activity</th>
               {years.map((y) => (
-                <th key={y}>Year {y}</th>
+                <th scope="col" key={y}>Year {y}</th>
               ))}
             </tr>
           </thead>
@@ -1581,7 +1899,7 @@ function Schedule({
               const first = fields.find((f) => f.scheduleRow === r)!;
               return (
                 <tr key={r}>
-                  <th>
+                  <th scope="row">
                     <div className="model-field-heading"><span>{first.label}</span>
                       {first.help && <HelpDialog {...first.help} triggerLabel={`Help for ${first.label}`} />}
                     </div>
