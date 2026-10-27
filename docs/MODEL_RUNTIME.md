@@ -78,6 +78,8 @@ The saved-run implementation uses the existing queue and retains each project's 
 
 Section guides render as native expandable topics, with one topic open at a time, labelled entry guidance, model-use explanations and a highlighted review note. Long semicolon-separated entry requirements become readable lists. Short field notes retain the same labelled structure without an accordion. The content is unchanged; the existing return, Escape, outside-click, focus-restoration and reduced-motion behavior remains in place.
 
+Help dialog and topic headings use sentence case for ordinary words. Acronyms, case-sensitive units, and technical symbols retain their source spelling. The guide prose and numerical model metadata are unchanged. The model-update review's small heading also uses sentence case instead of a CSS uppercase transform.
+
 The annual-results table is an inner horizontal scrolling view. Its vertical overscroll behavior must remain `auto` so wheel movement can reach the containing results pane (or the document on saved-result pages). Containing both axes blocks the wheel over a table that has no vertical scroll range. The outer desktop panes continue containing vertical movement at their own boundaries to preserve independent scrolling.
 
 
@@ -125,3 +127,13 @@ Hosted browser acceptance carried all 195 inputs from an existing 2.0 example in
 Superseded unsaved drafts offer **Update draft** without creating a database record. Focus/visibility checks refresh the available release metadata, not the calculation. Reloading restores the draft's original version and values before offering an update. Creating a new project on a superseded release is rejected with a review-update message; existing saved projects continue to save and run on their pinned version. Updating a model or copying inputs never starts a calculation automatically.
 
 For each future calculator release, prepare a new immutable version and private runtime, validate its mapped inputs/outputs and representative scenarios, record owner release approval and remaining numerical limitations, then activate that version. The same version/checksum resolution and update offer apply to every calculator ID. Never overwrite a previously approved version's manifest or template. Source workbooks and server credentials remain outside Git.
+
+### When the client supplies another spreadsheet
+
+1. Keep the client's original XLSX and send it with their change notes, identifying which calculator it updates. A workbook recalculated and saved in Excel, plus expected results for representative scenarios, provides the strongest comparison evidence.
+2. Prepare a new version: review changed formulas and cell locations, update input/guide/interim/output/chart mappings as needed, and build a separate compatible runtime. This remains a preparation task rather than a direct file replacement.
+3. Compare baseline and changed-input results, branch cases, reset behavior, and Excel exports; record any unverified Excel parity. Obtain model-owner release sign-off on that evidence.
+4. Register the immutable candidate and private runtime through `scripts/register_model.py`, then approve and activate the reviewed version. Supabase selects the release and Render verifies and loads that exact workbook. Publish any accompanying interface/code changes through GitHub's existing deployment workflow.
+5. Verify a new calculation and saved export on the live site. New projects use the active release; older projects receive the explicit update offer and preserve their original runs.
+
+An administrator can stage the source under **Settings → Calculator workbooks**. That upload performs structural checks and creates a review draft; it does not prepare, approve, or activate a production model. Sending the workbook here is the simplest current way to have the full preparation and validation completed. No Cloudflare/Render credential changes are normally needed for a workbook update that the existing engine supports.

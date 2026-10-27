@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, Info } from "lucide-react";
 import "./help-dialog.css";
-import { organizeHelp } from "@/lib/help-content";
+import { helpHeading, organizeHelp } from "@/lib/help-content";
 import { HelpContent } from "./HelpContent";
 
 type HelpDialogProps = {
@@ -16,7 +16,7 @@ type HelpDialogProps = {
 export function HelpDialog({
   title,
   body,
-  triggerLabel = `More information about ${title}`,
+  triggerLabel = `More information about ${helpHeading(title)}`,
 }: HelpDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -102,7 +102,7 @@ export function HelpDialog({
       >
         <section className="help-dialog__panel">
           <header className="help-dialog__header">
-            <h2 id={titleId}>{title}</h2>
+            <h2 id={titleId}>{helpHeading(title)}</h2>
             <button
               type="button"
               className="help-dialog__return"
@@ -110,7 +110,7 @@ export function HelpDialog({
               onClick={closeDialog}
             >
               <ArrowLeft aria-hidden="true" focusable="false" />
-              <span>return</span>
+              <span>Return</span>
             </button>
           </header>
           <div id={bodyId} className="help-dialog__body">

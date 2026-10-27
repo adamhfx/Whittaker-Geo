@@ -29,6 +29,7 @@
   overflow: visible;
   padding: 0;
   width: min(640px, calc(100vw - 24px));
+  text-transform: none;
 }
 .help-dialog::backdrop {
   background: rgba(0, 45, 67, 0.36);

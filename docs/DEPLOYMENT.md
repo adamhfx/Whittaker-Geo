@@ -70,7 +70,7 @@ The migrations create immutable calculator versions, user-owned calculations/run
 
 Source workbooks, prepared runtime templates, manifests, preparation scripts, and numerical records are owner-only files excluded from Git. The latest candidate is `state-rent@2.1.0-candidate.1`; older saved runs retain their original model version. See [model runtime and review](MODEL_RUNTIME.md) for the private runtime requirements, compatibility evidence, and local review setup. Do not use the legacy preparation script to regenerate the new model.
 
-As of 2026-10-22, `2.0.0-candidate.1` is approved and active for new calculations. The user explicitly approved release with the fresh Excel recalculation limitation recorded privately. Existing saved calculations and runs remain pinned to their original versions. Registration and activation remain separate actions: the registration script verifies the runtime SHA-256, uploads the private template, and inserts a new immutable candidate with `approved=false` without changing the current pointer:
+As of 2026-10-26, `2.1.0-candidate.1` is approved and active for new calculations. The user explicitly approved release with the fresh Excel recalculation limitation recorded privately. Existing saved calculations and runs remain pinned to their original versions. Registration and activation remain separate actions: the registration script verifies the runtime SHA-256, uploads the private template, and inserts a new immutable candidate with `approved=false` without changing the current pointer. For the next client workbook, follow the [release workflow](MODEL_RUNTIME.md#when-the-client-supplies-another-spreadsheet):
 
 ```text
 python scripts/register_model.py \

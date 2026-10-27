@@ -34,6 +34,7 @@
   width:min(840px,calc(100vw - 28px));
 }
 .model-update-dialog::backdrop { background:rgba(0,35,53,.48); }
+.model-update-dialog .eyebrow { text-transform:none; letter-spacing:normal; }
 .model-update-dialog__panel {
   background:var(--card,#fff);
   border:1px solid var(--line);

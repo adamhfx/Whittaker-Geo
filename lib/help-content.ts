@@ -6,6 +6,22 @@ export type GuideTopic = {
   review: string[];
 };
 
+const technicalTerms = new Set(["Qi", "Qf", "Mcf", "Mscf", "Mcfd", "Mscfd", "Mboe", "Mbbl", "Mstb", "Arps", "Excel"]);
+
+/** Display title-style headings as sentences, retaining acronyms and unit case. */
+export function helpHeading(text: string): string {
+  let firstWord = true;
+  return text.replace(/[A-Za-z][A-Za-z0-9]*/g, (word) => {
+    // Only ordinary capitalized words change. NPV, USD, A–G, Qi, mD,
+    // and other technical symbols keep their source spelling.
+    if (firstWord) {
+      firstWord = false;
+      return word;
+    }
+    return /^[A-Z][a-z]+$/.test(word) && !technicalTerms.has(word) ? word.toLowerCase() : word;
+  });
+}
+
 /** Organize the guide's existing labelled paragraphs without changing its advice. */
 export function organizeHelp(body: string): GuideTopic[] {
   const paragraphs = body.split(/\r?\n[ \t]*\r?\n+/).map(p => p.trim()).filter(Boolean);
