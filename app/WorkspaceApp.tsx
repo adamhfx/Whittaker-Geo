@@ -8,6 +8,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import { HelpDialog } from "./HelpDialog";
 import { LiveCalculation, WorkbookOutputs, type LiveCalculationSnapshot } from "./LiveCalculation";
 import { InputFeedback } from "./InputFeedback";
+import { ModelUpdateNotice } from "./ModelUpdateNotice";
 import "./model-editor.css";
 import {
   ArrowLeft,
@@ -63,6 +64,15 @@ type Workspace = {
   calculators: CatalogItem[];
 };
 type View = "overview" | "saved" | "catalog" | "editor" | "results" | "billing" | "models" | "settings";
+type SessionDraft = { name: string; inputs: InputValues; version: string; revision?: number; group?: string };
+function isSessionDraft(value: unknown): value is SessionDraft {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const draft = value as Partial<SessionDraft>;
+  return typeof draft.name === "string" && typeof draft.version === "string" && draft.version.length > 0 &&
+    !!draft.inputs && typeof draft.inputs === "object" && !Array.isArray(draft.inputs) &&
+    Object.values(draft.inputs).every((item) => item === null || typeof item === "string" || typeof item === "number") &&
+    (draft.revision === undefined || typeof draft.revision === "number");
+}
 const usd = (v: number) =>
   new Intl.NumberFormat("en-CA", {
     style: "currency",
@@ -170,6 +180,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false);
+  const currentEditorEntity = currentRoute?.view === "editor"
+    ? (preview ? "preview" : workspace?.user.email || "") + ":" +
+      (currentRoute.calculationId || `new:${currentRoute.calculatorId}:${currentRoute.mode || "blank"}`)
+    : "";
   const feedbackScope = draftKey + ":" + (manifest ? manifest.id + "@" + manifest.version : "");
   const currentFeedback = feedbackSnapshot?.scope === feedbackScope ? feedbackSnapshot : null;
   const receiveFeedbackSnapshot = useCallback((snapshot: LiveCalculationSnapshot) => {
@@ -298,6 +312,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       "/api/calculators/" +
         encodeURIComponent(id) +
         (version ? "?version=" + encodeURIComponent(version) : ""),
+      { cache: "no-store" },
     );
   }
   useEffect(() => {
@@ -370,12 +385,35 @@ export default function App({ preview = false }: { preview?: boolean }) {
           c = detail.calculation;
           history = detail.runs;
         }
-        const model = await loadManifest(c?.calculator_id || route.calculatorId!, c?.calculator_version);
+        let draft: SessionDraft | null = null;
+        try {
+          const stored = JSON.parse(sessionStorage.getItem(key) || "null");
+          if (isSessionDraft(stored)) draft = stored;
+        } catch {}
+        if (c && draft && draft.revision !== c.revision) draft = null;
+        const modelId = c?.calculator_id || route.calculatorId!;
+        // An unsaved draft is pinned to the version that shaped its inputs.
+        // Restore that exact manifest so a later release cannot silently
+        // discard or remap the user's session-only work.
+        const requestedVersion = c?.calculator_version || (!c ? draft?.version : undefined);
+        let model: Awaited<ReturnType<typeof loadManifest>>;
+        try {
+          model = await loadManifest(modelId, requestedVersion);
+        } catch (loadError) {
+          if (!c && draft && requestedVersion) {
+            const detail = loadError instanceof Error ? ` ${loadError.message}` : "";
+            throw new Error(`This unsaved draft uses model version ${requestedVersion}, which could not be restored. Its inputs are still saved in this browser session.${detail}`);
+          }
+          throw loadError;
+        }
         if (cancelled) return;
+        if (model.manifest.id !== modelId || (requestedVersion && model.manifest.version !== requestedVersion)) {
+          if (!c && draft && requestedVersion)
+            throw new Error(`This unsaved draft uses model version ${requestedVersion}, which could not be restored. Its inputs are still saved in this browser session.`);
+          throw new Error("The calculator version returned by the server did not match this project.");
+        }
         m = model.manifest;
-        let draft: { name: string; inputs: InputValues; version: string; revision?: number; group?: string } | null = null;
-        try { draft = JSON.parse(sessionStorage.getItem(key) || "null"); } catch {}
-        if (draft && (draft.version !== m!.version || (c && draft.revision !== c.revision) || typeof draft.name !== "string" || !draft.inputs || Array.isArray(draft.inputs) || typeof draft.inputs !== "object" || Object.values(draft.inputs).some(value => value !== null && typeof value !== "string" && typeof value !== "number"))) draft = null;
+        if (c && draft && draft.version !== model.manifest.version) draft = null;
         setCalculation(c);
         setManifest(m);
         setApproved(model.approved);
@@ -407,9 +445,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [pathname, search, loading, workspace?.user.email, preview]);
 
   useEffect(() => {
-    if (routeLoading || !draftKey || !manifest || !dirty || view !== "editor") return;
+    if (routeLoading || !draftKey || !manifest || !dirty || view !== "editor" ||
+        !currentEditorEntity || loadedEntity.current !== currentEditorEntity) return;
     try { sessionStorage.setItem(draftKey, JSON.stringify({ name, inputs, version: manifest.version, revision: calculation?.revision })); } catch {}
-  }, [inputs, name, dirty, draftKey, routeLoading, manifest, calculation?.revision, view]);
+  }, [inputs, name, dirty, draftKey, routeLoading, manifest, calculation?.revision, view, currentEditorEntity]);
 
   async function startNew(mode: "example" | "blank") {
     loadedEntity.current = "";
@@ -531,6 +570,28 @@ export default function App({ preview = false }: { preview?: boolean }) {
     navigate({ view: "editor", preview, calculationId: data.calculation.id, section: group }, true);
     setNotice("Inputs saved. Earlier completed runs are unchanged.");
     return data.calculation as Calculation;
+  }
+  function openUpdatedCopy(updatedCalculation: Calculation) {
+    setWorkspace((old) => old ? {
+      ...old,
+      calculations: [updatedCalculation, ...old.calculations.filter((item) => item.id !== updatedCalculation.id)],
+    } : old);
+    navigate({ view: "editor", preview: false, calculationId: updatedCalculation.id });
+  }
+  function updateUnsavedDraft(targetManifest: Manifest, migratedInputs: InputValues) {
+    setManifest(targetManifest);
+    setApproved(true);
+    setInputs({ ...migratedInputs });
+    setNumericDrafts({});
+    setDirty(true);
+    setFeedbackSnapshot(null);
+    setReviewedInputId(null);
+    setPendingReviewInput(null);
+    setGroup((current) => targetManifest.groups.some((item) => item.id === current)
+      ? current
+      : targetManifest.groups[0]?.id || "reservoir");
+    submission.current = null;
+    setNotice(`Draft inputs updated to model version ${targetManifest.version}. Review the input fields, then choose Calculate results when ready.`);
   }
   async function runCalculation() {
     await perform(async () => {
@@ -986,6 +1047,20 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <p className="calculator-context__description">{manifest.description}</p>
               </div>
               {workspaceMessages}
+              {!preview && view === "editor" && currentRoute?.view === "editor" &&
+                !routeLoading && currentEditorEntity && loadedEntity.current === currentEditorEntity && manifest && (
+                <ModelUpdateNotice
+                  sourceIdentity={`${workspace?.user.email || "workspace"}:${calculation?.id || draftKey}:${calculation?.revision ?? "draft"}`}
+                  calculation={calculation}
+                  manifest={manifest}
+                  inputs={inputs}
+                  name={name}
+                  canWrite={!!workspace?.canWrite && !busy}
+                  hasWriteAccess={!!workspace?.canWrite}
+                  onUpdatedCopy={openUpdatedCopy}
+                  onUpdatedDraft={updateUnsavedDraft}
+                />
+              )}
               {!approved && !isLocalModelReview && (
                 <div className="notice">
                   This model is under numerical review. Live calculations will
