@@ -96,17 +96,17 @@ function Brand({ href = "/", onNavigate }: { href?: string; onNavigate?: () => v
       }}>
       <img
         className="logo-full"
-        src="/whittaker-geo-logo.png"
+        src="/whittaker-geo-logo.svg"
         alt="Whittaker Geo"
-        width="2172"
-        height="724"
+        width="2101"
+        height="360"
       />
       <img
         className="logo-compact"
-        src="/whittaker-geo-icon.png"
+        src="/whittaker-geo-icon.svg"
         alt="Whittaker Geo"
-        width="1280"
-        height="1280"
+        width="1200"
+        height="1200"
       />
       </a>
     </div>
@@ -848,7 +848,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <span>{returnToSaved ? "Saved Calculations" : "Calculators"}</span>
               </button>
               <span className="calculator-toolbar__divider" aria-hidden="true" />
-              <img className="calculator-toolbar__mark" src="/whittaker-geo-icon.png" width="34" height="34" alt="" />
+              <img className="calculator-toolbar__mark" src="/whittaker-geo-icon.svg" width="34" height="34" alt="" />
               <div className="calculator-toolbar__model">
                 <h1>{routeLoading ? "Opening calculator…" : manifest?.name || "Calculator workspace"}</h1>
                 <span>{currentRoute?.view === "results" ? "Saved calculation results" : "Calculator workspace"}</span>

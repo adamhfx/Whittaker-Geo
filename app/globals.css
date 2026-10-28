@@ -1308,7 +1308,7 @@ body {
   width: 208px;
   height: 48px;
   max-width: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .auth-card .brand .logo-full {
   width: 240px;
@@ -1326,7 +1326,7 @@ body {
     width: 32px;
     height: 32px;
     max-width: none;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
   }
 }

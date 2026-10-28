@@ -128,7 +128,7 @@ export default function SalesPage({
       <div className="sales-grain" aria-hidden="true" />
       <nav className="sales-nav" aria-label="Primary navigation">
         <a className="sales-brand" href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "Whittaker Geo overview" : "Whittaker Geo home"}>
-          <img src="/whittaker-geo-logo.png" alt="Whittaker Geo" width="2172" height="724" />
+          <img src="/whittaker-geo-logo.svg" alt="Whittaker Geo" width="2101" height="360" />
         </a>
         <div
           id="sales-nav-links"
@@ -472,7 +472,7 @@ export default function SalesPage({
         </div>
       )}
       <footer className="sales-footer">
-        <a href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "Whittaker Geo overview" : "Whittaker Geo home"}><img src="/whittaker-geo-logo.png" alt="Whittaker Geo" width="2172" height="724" /></a>
+        <a href={signedIn ? "/workspace" : "#top"} aria-label={signedIn ? "Whittaker Geo overview" : "Whittaker Geo home"}><img src="/whittaker-geo-logo.svg" alt="Whittaker Geo" width="2101" height="360" /></a>
         <span>Private tools for considered decisions.</span>
         <span>© Whittaker Geo</span>
       </footer>

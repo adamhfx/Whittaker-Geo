@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       <article className="privacy-card">
         <header className="privacy-header">
           <a href="/signin" aria-label="Whittaker Geo sign-in">
-            <img src="/whittaker-geo-logo.png" alt="Whittaker Geo" width="240" height="80" />
+            <img src="/whittaker-geo-logo.svg" alt="Whittaker Geo" width="2101" height="360" />
           </a>
           <a className="btn ghost" href="/signin">← Back to sign in</a>
         </header>

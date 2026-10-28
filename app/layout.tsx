@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description:
     "Explore project economics with Whittaker Geo. Compare subscription plans for private saved scenarios, calculation history, and editable Excel results.",
   icons: {
-    icon: [{ url: "/whittaker-geo-icon.png", type: "image/png" }],
-    shortcut: "/whittaker-geo-icon.png",
+    icon: [{ url: "/whittaker-geo-icon.svg", type: "image/svg+xml" }],
+    shortcut: "/whittaker-geo-icon.svg",
   },
 };
 

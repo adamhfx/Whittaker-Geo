@@ -75,7 +75,7 @@
   display: block;
   height: 48px;
   width: 240px;
-  object-fit: cover;
+  object-fit: contain;
   max-width: 100%;
 }
 .sales-nav-links {
@@ -798,7 +798,7 @@
 .sales-footer img {
   height: 40px;
   width: 190px;
-  object-fit: cover;
+  object-fit: contain;
 }
 .sales-footer span:last-child {
   margin-left: auto;
